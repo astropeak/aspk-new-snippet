@@ -1,0 +1,233 @@
+* pns
+** inbox
+*** 170101, thinking and ideas
+    # -*- mode: snippet -*-
+#name : create a buffer(should not expand this)
+#expand-env : ((pcs-yas-method (helm-other-buffer '((name . "Method?") (candidates . ("allocate" "direct" "wrap")) (action . (lambda (c) c))) "Which mode "))) 
+#contributor : Astropeak
+#description : 
+#key:aaa
+this doen't work
+`(progn
+    (message "mode: %S, hook: %S" yas-minor-mode post-command-hook)
+(yas-expand-snippet
+   (cond ((string-equal pcs-yas-method "wrap")
+          "ByteBuffer buffer = ByteBuffer.wrap(${1:array});"))))`
+
+# New method:
+  many blocks, each block has a header:
+  The header format: 'var-name:value-regexp, xx:yy, ...'
+  The block expand rule: the only one simple rule: if the var matches the value regexp, then the block will be expanded.
+
+  All expanded blocks will be merged to a single snippet, and be passed to yasnippet to do the expanding. So this kind of snippet will be compiled to a yasnippet snippet.
+# --
+
+#++ method:wrap
+${1:type}Buffer ${2:buffer} = $1Buffer.wrap(${3:array});
+
+#++ method:allocate
+${1:type}Buffer ${2:buffer} = $1Buffer.allocate(${3:size});
+
+#++ method:direct
+${1:type}Buffer ${2:buffer} = $1Buffer.directAllocate(${3:size});
+
+
+the procesor will look the header for all possiable values and prompt for the user. This idea is great!!!
+more than one commands can be choosed in a pass.
+
+则学习的过程就是写模板的过程。使用模板编程时，我就全部使用的是高级概念，而不需要关注细节。比如process buffer, 这里的子项包括创建、打开、读取、写入、关闭、刷出、与数组转换、与其它类型转换 等常用操作。而这些子项都会通过提示的方式显现出来，再也不需要记那么多东西。
+
+一个var的值也可以是一个list，则所有的可选值可在一个block中指定。同时在block中需要能够获得这个var的值，也能够做一些transformation,以此将该值转换在目标中。list的元素也可是一个cons，则值也显示将分离。
+采用这种方法，多个block可被合并为一个，简化编写工作。
+缺点是依赖于这个参数的参数将不太好做了。=》可能通过定义依赖来定义一个元素的值。
+
+块的顺序会有关系，因为可以多个块会被选中。顺序通过写时保证。
+
+## Example: for processing file
+##command: open, read, write, close, flush
+##type: file, pipe, socket
+##for: read, write, append, readwrite. only applicable for command open
+
+#++ command:open, type: file, for:read
+open a file for read
+
+#++ command:open, type: pipe, for:read
+open a pipe for read
+
+
+
+#++ command:open
+close the file
+*** a new snippet sample
+    #+BEGIN_SRC text
+    ## Example: for processing file
+    ##command: open, read, write, close, flush
+    ##type: file, pipe, socket
+    ##for: read, write, append, readwrite. only applicable for command open
+
+    ,#+ ((command open) (type file) (for ((read <) (write >) (append >>) (readwrite +>))))
+    open my $fh, `for`, ${1:file} or dir "Open file failed";
+
+    ,#+ command:open, type: pipe, for:read
+    open my $fh, "-|", ${1:command} or dir "Open command failed";
+
+
+    #+END_SRC
+*** test yas-expand-snippet
+    `for` will be replaced to <
+    #+NAME: no-name
+    #+begin_src elisp
+    (yas-expand-snippet "open my $fh, \"`for`\", ${1:file};" (point) (point) '((for "<")))
+    #+end_src
+*** hatch codes.
+    #+NAME: a template, get form the new snippet file
+    #+begin_src elisp
+    (setq pns-templates
+          '(
+            ((header . (("command" . "open") ("type" . "file") ("for" . (("read" . "<") ("write" . ">") ("append" . ">>") ("readwrite" . "+>")))))
+             (content . "open my $fh, '`for`', ${1:file} or dir 'Open file failed';"))
+
+            ((header . (("command" . "open") ("type" . "pipe") ("for" . (("read" . "|-") ("write" . "-|")))))
+             (content . "open my $fh, '`for`', ${1:command} or dir 'Open command failed';"))
+            ))
+    #+end_src
+    
+    
+    process step:
+    1. for each parameter, merge to one list for selection
+    2. based on the selected result, rebuild the list, the list that not match the result should be removed.
+    3. repeat step 1, process next parameter.
+       
+       传入一个header列表，返回所有与这个列表匹配的contents
+       #+NAME: select-content
+    #+begin_src elisp
+        (defun pns-contains (list1 list2)
+          "Both list1 and list2 are assoc list. Return true if list1 contains all elements in list2"
+          (let ((rst t)
+                (e1))
+            (mapc (lambda (e2)
+                    (setq e1 (assoc (car e2) list1))
+                    (unless (and e1 (cond ((stringp (cdr e1)) (string-equal (cdr e2) (cdr e1)))
+                                          ((listp (cdr e1)) (assoc (cdr e2) (cdr e1)))))
+                      (setq rst nil)))
+                  list2)
+            rst))
+
+        (defun pns-filter-templates (header)
+          "Get all templates whose header contains parameter"
+          (delete nil
+                  (mapcar (lambda (tmpl)
+                            (when (pns-contains (cdr (assoc 'header tmpl)) header)
+                              tmpl))
+                          pns-templates) ))
+
+        (defun pns-get-contents (header)
+          "Get all matched template's content. Match means its header contains the parameter header"
+          (mapcar (lambda (tmpl) (cdr (assoc 'content tmpl)))
+                  (pns-filter-templates header)))
+
+        (pns-get-contents '())
+
+        (pns-get-contents '(("command" . "open")  ("for" . "read")))
+
+        (pns-get-contents '(("type" . "file") ))
+
+        (pns-get-contents '(("command" . "open") ("type" . "file") ("for" . "read")))
+
+    #+end_src
+    
+    #+RESULTS: select-content
+    | open my $fh, '`for`', ${1:file} or dir 'Open file failed'; |
+    
+    get header element value list
+    #+NAME: no-name
+    #+begin_src elisp
+    (defun pns-get-header-element-values (header-element-name &optional header-filter)
+      "Get all values of a header element given its name, as a list. A name e.g. type, for, command. `header-filter' is a filter to filter the pns-templates before get."
+      (unless header-filter (setq header-filter '()))
+      (delete-dups
+       (let ((rst nil))
+         (mapc (lambda (tmpl)
+                 (let* ((header (cdr (assoc 'header tmpl)))
+                        (elem (assoc header-element-name header))
+                        (value (and elem (cdr elem))))
+                   (and value (cond ((stringp value) (setq rst (append rst (list value))))
+                                    ((listp value)
+                                     (setq rst (append
+                                                rst (mapcar (lambda (ee)
+                                                              (if (listp ee) (car ee) ee))
+                                                            value))))))))
+               (pns-filter-templates header-filter))
+         rst)))
+
+    (pns-get-header-element-values "for" '(("type" . "file")))
+    #+end_src
+    
+    The basic functions ready, now built the app.
+    #+NAME: no-name
+    #+begin_src elisp
+    (defun pns-prompt-for-header (header-names)
+      "Based on the templates, prompt for each parameters"
+      (let ((headers))
+        (mapcar (lambda (key)
+                  (let ((values (pns-get-header-element-values key headers))
+                        tmp)
+                    (if (= (length values) 10000)
+                        (setq tmp (car values))
+                      (setq tmp (helm-other-buffer `((name . ,key) (candidates . ,values)
+                                                     (action . (lambda (c) c)))
+                                                   "Select")))
+                    (push (cons key tmp) headers)
+                    (cons key tmp)))
+                header-names)))
+
+    ;; a list of header element names that we will get value
+    (setq pns-header-names '("command" "type" "for"))
+
+    (pns-prompt-for-header pns-header-names)
+
+    (pns-get-contents (pns-prompt-for-header pns-header-names))
+
+    (defun pns-do-expand (header-names)
+      "given header element list, expand a snippet."
+      (let* ((header (pns-prompt-for-header header-names))
+             (templates (pns-filter-templates header))
+             tmp tmp1)
+        (mapc (lambda (tmpl)
+                (yas-expand-snippet (cdr (assoc 'content tmpl)) (point) (point)
+                                    (mapcar (lambda (elem)
+                                              (setq tmp (cdr (assoc (car elem) (cdr (assoc 'header tmpl)))))
+                                              (if (listp tmp)
+                                                  (mapc (lambda (vv)
+                                                          (if (consp vv)
+                                                              (when (string-equal (cdr elem) (car vv))
+                                                                (setq tmp1 (cdr vv)))
+                                                            (setq tmp1 vv)))
+                                                        tmp)
+                                                (setq tmp1 tmp))
+
+                                              (message "elem: %S, tmp: %S, tmp1: %S" elem tmp tmp1)
+                                              ;; elem: ("command" . "open"), tmp: "open", tmp1: "open"
+                                              ;; elem: ("type" . "file"), tmp: "file", tmp1: "file"
+                                              ;; elem: ("for" . "read"), tmp: (("read" . "<") ("write" . ">") ("append" . ">>") ("readwrite" . "+>")), tmp1: "+>"
+
+                                              (list (intern (car elem)) tmp1)
+                                              )
+                                            header)))
+              templates)
+        ))
+
+    (pns-do-expand pns-header-names)
+
+    (defun pns-main ()
+      (interactive)
+      (pns-do-expand pns-header-names))
+
+
+    #+end_src
+    
+    
+    
+    
+    
+    
