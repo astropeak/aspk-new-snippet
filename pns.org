@@ -225,9 +225,298 @@ close the file
 
 
     #+end_src
-    
-    
-    
-    
-    
-    
+*** ideas
+    header的各个元素中，每个元素之间是有关系的。目前采用的方式是随意组合。如第一个元素有2个值，第二元素有3个值，则所有可能取值有2x3=6种。
+    但还有种情况，比如第一个元素取第1个值时，第二个元素只能取前2个值；第一个元素取第2个值时， 第二个元素只能取后两个值，则所有取值有2x2处。
+    如何表示这种关系呢？使用树完全是可行的，但写起来比较复杂，也不好看。 直接指定一个元素的子节点如何？通过下标。比如(children . (0 1))。 当没有指定children时，则表示children可以取所有值。 这种其实和树的效果是一样的。
+*** the nio snippet sample
+    Mon Jan  2 09:44:32 2017
+    写这个文件花了大约一个多小时，在写的过程中，我观察结构，思考各种可能问题，着重解决分块与组合的问题。 最终想到了一种非常巧妙的方法：使用类似org mode文件的树结构来模板。
+    分块有利于模板文件的编写，修改、新增都会比较方便。组合则给进一步的封闭带来便利。这两个方面均可通过org mode文件解决。
+
+    一个模板块可以wrap其它模板块。这种主义也要支持。
+
+    心得： 必需得通过用例，才能有想法，完全空想，基本上什么也想不出。
+    #+BEGIN_SRC text
+    ## the four command are independent. To expand all of four, just expand all four step by step
+
+
+    ##TODO: define a major mode: display the source codes in java format, while all lines begin with a '#' in another look. fold function.
+
+
+    ##通过第一个参数选择要分别展开哪些宏。第一个参数与后面的参数有什么不同？ 不同点在于在写这个模板时，就是根据第一个参数进行区分的。？这样有没有什么限制？ 应该也可以写sub command，但在不同层级。 比如 #+ 表示第一层， #++表示第二层，#+++表示第三层。 这是文本文件表达树的最佳方式，就像是org mode一样。 通过树的结构，属性继承也会方便很多。同时，感觉没必要保持严格的顺序了，完全可以通过参数指定顺序。 这个想法也是非常牛逼啊！！树的结构，对于修改及新增都有很大的便利性。
+    就使用org文件吧， 这样可以继承大量代码。
+
+
+    ## #++ define global variables
+    ,#++ ((buffer-types '(byte int short char long float double)))
+
+    ## nil means the value should be provided by users.
+    ,#+ ((command . create-channel) (type . (in out)) (file-name . nil))
+    {
+        FileOutputStream fout = null;
+        try {
+            fout = new FileOutputStream(${1:file});
+            FileChannel fc = fout.getChannel();
+
+    ,#+ ((command create-buffer) (type . ,buffer-types)(method . (allocate direct-allocate) (size . nil)))
+            ByteBuffer buffer = ByteBuffer.allocate(${2:1024});
+
+    ,#+ ((command create-buffer) (type . ,buffer-types)(method . wrap) (array-name . nil)))
+            ByteBuffer buffer = ByteBuffer.wrap(${2:1024});
+
+    ,#+ ((command fill-buffer) (buffer-type . ,buffer-types) (content-type . (byte[] String)))
+            buffer.clear();
+            // fill the buffer with contents to write to a file
+            final byte message[] = { 83, 111, 109, 101, 32, 98, 121, 116, 101, 115, 46 };
+            for (int i=0; i<message.length; ++i) {
+               buffer.put( message[i] );
+            }
+
+    ## how to express: this header is dependent on create-channel, type out? I think don't try to do this, this should be ensured by the user
+    ,#+ ((comand write-buffer-to-channel))
+            buffer.flip();
+            fc.write(buffer);
+           
+
+    ,#+ ((comand read-buffer-from-channel))
+            buffer.clear();
+            while (fc.read(buffer) != -1) {
+
+    ,#+ ((command extract-buffer) (buffer-type . ,buffer-types) (content-type . (byte byte[] String)))
+                //now file contents saved in buffer, add process codes here
+                buffer.flip();
+                 int i=0;
+                 while (buffer.remaining()>0) {
+                     byte b = buffer.get();
+                     System.out.print((char)b);
+                     i++;
+                 }
+                
+    ,#+ ((comand read-buffer-from-channel))
+                buffer.clear();
+            }
+
+
+    ## here type should be the same as the above ones. All vars should be shared, if only they match. A child will inheritates property from its parent. if header 1 contains header 2, then header 1 is the parent, header 2 is the child.
+    ## So in below header, it will inheritates 'type' and 'file-name' property from the first one.
+    ,#+ ((command . create-channel))
+        } catch (FileNotFoundException ex) {
+            System.out.println(ex);
+        } catch (IOException ex) {
+            System.out.println(ex);
+        } finally {
+            try {
+                if (fout != null) {fout.close();}
+            } catch (IOException e) {
+                System.out.println(e);
+            }
+        }
+    }
+    #+END_SRC
+
+    用org文件重写，效果相当好。
+    #+BEGIN_SRC org
+    ,* doc
+    ## the four command are independent. To expand all of four, just expand all four step by step
+
+
+    ##TODO: define a major mode: display the source codes in java format, while all lines begin with a '#' in another look. fold function.
+
+
+    ##通过第一个参数选择要分别展开哪些宏。第一个参数与后面的参数有什么不同？ 不同点在于在写这个模板时，就是根据第一个参数进行区分的。？这样有没有什么限制？ 应该也可以写sub command，但在不同层级。 比如 #+ 表示第一层， #++表示第二层，#+++表示第三层。 这是文本文件表达树的最佳方式，就像是org mode一样。 通过树的结构，属性继承也会方便很多。同时，感觉没必要保持严格的顺序了，完全可以通过参数指定顺序。 这个想法也是非常牛逼啊！！树的结构，对于修改及新增都有很大的便利性。
+    就使用org文件吧， 这样可以继承大量代码。
+
+    ,* ((global-variables . (buffer-types '(byte int short char long float double))))
+      ## *+ define global variables
+
+    ,* snippet: process files with buffer and channel, nio package
+    ,** ((command . create-channel) (type . (in out)) (file-name . nil))
+      ## nil means the value should be provided by users.
+    ,*** ((command2 . init)
+    {
+        FileOutputStream fout = null;
+        try {
+            fout = new FileOutputStream(${1:file});
+            FileChannel fc = fout.getChannel();
+
+    ,*** ((command2 . cleanup))
+        } catch (FileNotFoundException ex) {
+            System.out.println(ex);
+        } catch (IOException ex) {
+            System.out.println(ex);
+        } finally {
+            try {
+                if (fout != null) {fout.close();}
+            } catch (IOException e) {
+                System.out.println(e);
+            }
+        }
+    }
+
+    ,** ((command create-buffer) (type . ,buffer-types))
+    ,*** ((method . (allocate direct-allocate) (size . nil))
+            ByteBuffer buffer = ByteBuffer.allocate(${2:1024});
+
+    ,*** ((method . wrap) (array-name . nil))
+            ByteBuffer buffer = ByteBuffer.wrap(${2:1024});
+
+    ,** ((command fill-buffer) (buffer-type . ,buffer-types) (content-type . (byte[] String)))
+            buffer.clear();
+            // fill the buffer with contents to write to a file
+            final byte message[] = { 83, 111, 109, 101, 32, 98, 121, 116, 101, 115, 46 };
+            for (int i=0; i<message.length; ++i) {
+               buffer.put( message[i] );
+            }
+
+    ## how to express: this header is dependent on create-channel, type out? I think don't try to do this, this should be ensured by the user
+    ,** ((command extract-buffer) (buffer-type . ,buffer-types) (content-type . (byte byte[] String)))
+                //now file contents saved in buffer, add process codes here
+                buffer.flip();
+                 int i=0;
+                 while (buffer.remaining()>0) {
+                     byte b = buffer.get();
+                     System.out.print((char)b);
+                     i++;
+                 }
+                
+
+    ## here type should be the same as the above ones. All vars should be shared, if only they match. A child will inheritates property from its parent. if header 1 contains header 2, then header 1 is the parent, header 2 is the child.
+    ## So in below header, it will inheritates 'type' and 'file-name' property from the first one.
+    ,** ((command write-to-channel-from-buffer))
+            buffer.flip();
+            fc.write(buffer);
+           
+    ,** ((command read-from-channel-to-buffer))
+    ,*** ((command2 part1))
+            buffer.clear();
+            while (fc.read(buffer) != -1) {
+            // process buffer content here
+
+    ,*** ((command2 part2))
+                buffer.clear();
+            }
+
+    #+END_SRC
+*** the perl processing file snippet in org mode format
+    In this entry, the processing steps are described.
+
+    #+BEGIN_SRC org
+    ,* ideas & docs
+      - if a parameter has no value, then its value should be prompt for
+        such as the '(file)' parameter.
+      - maybe add a doc string to a parameter is a good idea. 
+        And the doc string is optional. If it not exists, then the parameter key will be used. Angin a good idea.
+        A parameter is e.g. '(command open)', 'command' is the parameter's key, 'open' is the parameter's value.
+      - ((k1 v1) (k2 (v21 v22))) is the same as the two: ((k1 v1) (k2 v21)) and ((k1 v1) (k2 v22))
+        We can always flatten the formmer to the latter to ease our implementation of parse the snippet. and we can make an header has uniform format by always transform it in this format: ((k1 v1 doc1) (k2 v2 doc2) ...), and k1 is always a symbol, v1 is always a cons of (key . value), doc1 is always a string of documentation of this parameter. This idea is great!! It greatly descreases the complexity of codes, for we only have one case to handle. A header is a list of parameters.
+        
+        When writting snippet, the latter form is better. It helps removing duplicates. But the former form also works. I love this flexibility!
+      - put the header in a source block named header, put the expanded codes in a source block named content
+        Currently the the header is put in the headline, then it's hard to write long headers.
+      - Put the global parameters in the source block name global-definition
+        And all the child entry and this entry can refer to that definition
+        So just put parameters to the root entry, all the snippet can access to those.
+        
+        Seems the 'global-definition' and 'header' block have very small differences. The element(which is a parameter) in a 'global-definition' only has one possible value, while a 'header' can has may values. So we can use 'header' as 'global-definition'. 
+        
+        What we really need is global function definition. Those functions will be created and can be used in the everywhere. 
+        Currently we can only support lambda functions to ease the implementation.
+      - the processing steps of this file to transform it to a template list
+        Note: a template is a list of ((header . H) (content . C))
+        1. find the level 1 entry started with 'snippet:'
+           Should have only one such entry. root-entry
+        2. init current-templates to nil, current-header, current-content to nil,
+
+        3. set current-entry to root-entry
+
+        4. process the content of current-entry
+           Note: content of an entry is the text betwwen the entry's headline and its first child entry's headline, exclusive.
+           - for block named 'header', append all parameters of this header to current-header
+             Note: I find no need to seperate parameter and functions, because they all server as a environment variable. And our algorithm is that we only prompt for selection or input only when a parameter has mulitple values or has no value. If it has only one value, then nothing will be done, it will server as an environment value only.
+           - for block named 'content', append the content to current-content
+             without adding any newline characters. So you should add new line in the block if wanted.
+           - if this entry is a leaf, 
+             then add ((header . current-header) (content . content)) to current-templates.
+             then restore current-header and current-content to the original value.
+
+           - else for all direct child entrys:
+             loop with current-entry in all direct child entrys:
+             repeat step 4.
+
+        5. now current-templates contains all template of this snippet tree.
+
+      - helm source candidate
+        the level one snippet entry's headline and
+        the direct child's headlines of level one shotcut entry
+        will be added as helm source candidate
+
+        For both candidates, the level one snippet entry will first be processed to a templates list.
+        Note: maybe this can be processed at init stage and saved for latter use, and update when needed(such as the file has a newer version).
+        Then for the first type of candidate, the filter will be set to '()
+        for the second type of candidate, the filter will be set to source block 'filter' of that entry.
+        Note: a filter is a list of parameters, and is used to give initial value to a parameter. Then that parameter will not be prompt for selction or value.
+
+        
+    ,* snippet: processing files, open, read, write, close
+    ,** ((command open) (target file) (for ((read '<') (write '>') (append '>>') (readwrite '+>'))) (file))
+       ,#+NAME: header
+       ,#+begin_src elisp
+       ((command open) (target file)
+        (for ((read '<') (write '>') (append '>>') (readwrite '+>')))
+        (file))
+       ,#+end_src
+       
+       ,#+name: content
+       ,#+begin_src perl :results output
+       open my $fh, '`for-value`', `file` or die "Open file for `for-key` failed";
+       ,#+end_src
+       
+       Notes on variable binding:
+       For element type string, name, name-value, name-key all bind to the same string;
+       For element type cons, name is binded to the cons, name-key will be binded to (car name), name-value will be binded to (cdr name).
+       e.g.:
+       if `for` is '(read '<')', `for-value` will be 'read', `for-key` will be '<'.
+       if `target` is 'file', then `target-key`, `target-value` are all 'file'.
+       
+    ,** ((command open) (target pipe) (for ((read '|-') (write '-|'))) (command))
+       ,#+begin_src perl :results output
+       open my $fh, '`for-value`', `command` or die "Open command for `for-key` failed";
+       ,#+end_src
+       
+    ,** ((command close))
+       ,#+begin_src perl :results output
+       close $fh;
+       ,#+end_src
+       
+    ,** ((command read)  (file-handler) (to))
+    ,*** ((type line))
+        read a line from a file handler
+        ,#+begin_src perl :results output
+       `to` = <`file-handler`>;
+        ,#+end_src
+    ,*** ((type whole-content-as-string))
+        read the file's whole content as a string
+        ,#+begin_src perl :results output
+        local $/;
+        `to` = <`file-handler`>;
+        ,#+end_src
+        
+        
+    ,* shotcut
+      shotcut is a way to predefine some parameters so that these parameters will not be prompted to user for value.
+      
+    ,** open a file for read, and then close
+       This shotcut contains two header, the first one will define three element. The whole:
+       ,#+NAME: filter
+       ,#+begin_src elisp
+       (((command open) (target file) (for read))
+        ((command close)))
+       ,#+end_src
+       Element is a header, each element will be processed in turn.
+       #+end_src
+      
+
+    #+END_SRC
+
+
