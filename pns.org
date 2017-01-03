@@ -196,7 +196,7 @@
         (mapcar (lambda (key)
                   (let ((values (pns-get-header-element-values key headers))
                         tmp)
-                    (tracee values)
+                    (tracel values)
                     (if (= (length values) 1)
                         (if (and (stringp (car values)) (string-equal (car values) "nil"))
                             (setq tmp (read-string (format "%s: " key)))
@@ -204,41 +204,43 @@
                       (setq tmp (helm-other-buffer `((name . ,key) (candidates . ,values)
                                                      (action . (lambda (c) c)))
                                                    "Select")))
-                    (tracee key tmp)
+                    (tracel key tmp)
                     (push (cons key tmp) headers)
                     (cons key tmp)))
                 header-names)))
 
+    (defun pns-create-expand-env (header)
+      "Convert header to a expand-env that can be passed to yas-expand-snippet. header is a list, element is (key . value), both key and value are strings."
+      (let (tmp tmp1)
+        (mapcar (lambda (elem)
+                  (setq tmp (cdr (assoc (car elem) (cdr (assoc 'header tmpl)))))
+                  (if (listp tmp)
+                      (mapc (lambda (vv)
+                              (if (consp vv)
+                                  (when (string-equal (cdr elem) (car vv))
+                                    (setq tmp1 (cdr vv)))
+                                (setq tmp1 vv)))
+                            tmp)
+                    (if (and (stringp tmp) (string-equal tmp "nil"))
+                        (setq tmp1 (cdr elem))
+                      (setq tmp1 tmp)))
+
+                  (message "elem: %S, tmp: %S, tmp1: %S" elem tmp tmp1)
+                  ;; elem: ("command" . "open"), tmp: "open", tmp1: "open"
+                  ;; elem: ("type" . "file"), tmp: "file", tmp1: "file"
+                  ;; elem: ("for" . "read"), tmp: (("read" . "<") ("write" . ">") ("append" . ">>") ("readwrite" . "+>")), tmp1: "+>"
+                  (list (intern (car elem)) tmp1))
+                header)))
+
     (defun pns-do-expand (header-names)
       "given header element list, expand a snippet."
       (let* ((header (pns-prompt-for-header header-names))
-             (templates (pns-filter-templates header))
-             tmp tmp1)
-        (tracee header)
+             (templates (pns-filter-templates header)))
+        (tracel header)
         (mapc (lambda (tmpl)
                 (yas-expand-snippet (cdr (assoc 'content tmpl)) (point) (point)
-                                    (mapcar (lambda (elem)
-                                              (setq tmp (cdr (assoc (car elem) (cdr (assoc 'header tmpl)))))
-                                              (if (listp tmp)
-                                                  (mapc (lambda (vv)
-                                                          (if (consp vv)
-                                                              (when (string-equal (cdr elem) (car vv))
-                                                                (setq tmp1 (cdr vv)))
-                                                            (setq tmp1 vv)))
-                                                        tmp)
-                                                (if (and (stringp tmp) (string-equal tmp "nil"))
-                                                    (setq tmp1 (cdr elem))
-                                                  (setq tmp1 tmp)))
-
-                                              (message "elem: %S, tmp: %S, tmp1: %S" elem tmp tmp1)
-                                              ;; elem: ("command" . "open"), tmp: "open", tmp1: "open"
-                                              ;; elem: ("type" . "file"), tmp: "file", tmp1: "file"
-                                              ;; elem: ("for" . "read"), tmp: (("read" . "<") ("write" . ">") ("append" . ">>") ("readwrite" . "+>")), tmp1: "+>"
-                                              (list (intern (car elem)) tmp1)
-                                              )
-                                            header)))
-              templates)
-        ))
+                                    (pns-create-expand-env header)))
+              templates)))
 
     (defun pns-main ()
       (interactive)
@@ -823,7 +825,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     ;; Now the function works!!!
     (defun pns-create-templates (block-tree c-header c-content)
       "Assue content block is behind of header block or it will be error."
-      (tracee c-header)
+      (tracel c-header)
       (let ((name (pns-assoc 'name block-tree))
             (children (pns-assoc 'children block-tree)))
         (message "lenth children=%s" (length children))
@@ -851,7 +853,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                 children))))
 
     (defun pns-convert-to-string-filed (lst)
-      (tracee lst)
+      (tracel lst)
       (mapcar (lambda (parameter)
                 (cons (format "%s" (car parameter))
                       (if (> (length (cdr parameter)) 1)
@@ -916,7 +918,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     ;; (append nil (read "'((a b) (c d))"))
 
     (defun my-append (a b)
-      (tracee a b)
+      (tracel a b)
       (append (and a (read (concat "" a))) (and b (read (concat "" b)))))
 
     (setq a (append nil (read "((command open) (target file)
@@ -986,7 +988,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     ;; create temp buffer without undo record or font lock. (more efficient)
     ;; first space in temp buff name is necessary
     (set-buffer (get-buffer-create " myTemp"))
-    (tracee snippet)
+    (tracel snippet)
     (insert-file-contents snippet nil nil nil t)
 
  
@@ -1000,7 +1002,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       At create expand-env,  contains function, and prompt for input.
     - State "STARTED"    from ""           [2017-01-03 Tue 14:45]
     Now the parameter is just selected.
-*** create a function to create expand-env for yas-expand-snippet
+*** DONE create a function to create expand-env for yas-expand-snippet
+    CLOSED: [2017-01-03 Tue 16:00]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 16:00]
+    - State "STARTED"    from ""           [2017-01-03 Tue 15:54]
     Currently the codes are in another function.
     
 *** build pns-header-names dynamically based on pns-templates
