@@ -190,7 +190,44 @@
     The basic functions ready, now built the app.
     #+NAME: methods
     #+begin_src elisp
-    (defun pns-prompt-for-header (header-names)
+    (defun  pns-prompt-for-header () 
+      "Prompt for each parameter. Assumption: in the filtered templates, only one parameter key exists at pos idx. Not checked if there are two, but will use the first one silently. Snippet file should ensule this."
+      (let ((filter-header nil)
+            (templates t) (runp t)
+            first-header key values tmp input
+            (idx 0) rst)
+        (while runp
+          (setq templates (pns-filter-templates filter-header))
+          (when  templates
+            (setq first-header (pns-assoc 'header (car templates)))
+            (setq key (car (nth idx first-header)))
+            (unless key (setq runp nil))
+            (when key
+              (incf idx)
+              (tracee first-header key idx)
+              (setq values (pns-get-header-element-values key filter-header))
+              (if (= (length values) 1)
+                  (progn
+                    (setq tmp (car values))
+                    (setq input (car values))
+                    (when (string-equal (car values) "nil")
+                      ;; prompt for this key by read-string if (car vallues) is "nil"
+                      (setq input (read-string (format "%s: " key)))
+                      ))
+                ;;>1. prompt for this key by helm
+                (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
+                                                 (action . (lambda (c) c)))
+                                               "Select"))
+                (setq tmp input))
+              (push (cons key tmp) filter-header)
+              ;; this is the result
+              (message "parameter: %S" (cons key input))
+              (push (cons key input) rst)
+              )
+            ))
+        (reverse rst)))
+
+    (defun pns-prompt-for-header-old (header-names)
       "Based on the templates, prompt for each parameters"
       (let ((headers))
         (mapcar (lambda (key)
@@ -234,7 +271,7 @@
 
     (defun pns-do-expand (header-names)
       "given header element list, expand a snippet."
-      (let* ((header (pns-prompt-for-header header-names))
+      (let* ((header (pns-prompt-for-header))
              (templates (pns-filter-templates header)))
         (tracel header)
         (mapc (lambda (tmpl)
@@ -253,8 +290,8 @@
     
     #+NAME: test-
     #+begin_src elisp
-    (pns-prompt-for-header pns-header-names)
-    (pns-get-contents (pns-prompt-for-header pns-header-names))
+    (pns-prompt-for-header)
+    (pns-get-contents (pns-prompt-for-header))
     (pns-do-expand pns-header-names)
     #+end_src
     
@@ -1008,7 +1045,16 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-03 Tue 15:54]
     Currently the codes are in another function.
     
-*** build pns-header-names dynamically based on pns-templates
+*** DONE build pns-header-names dynamically based on pns-templates
+    CLOSED: [2017-01-03 Tue 17:26]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 17:26]
+      Rewrite pns-prompt-for-header. the codes not good.
+      The codes 
+    - Note taken on [2017-01-03 Tue 17:20] \\
+      Arealdy fixed the bug. And find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
+    - State "STARTED"    from ""           [2017-01-03 Tue 16:07] \\
+      This function should be modified.
+      (defun pns-prompt-for-header (header-names)
     Now it is specified in pns-main-1
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
