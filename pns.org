@@ -1100,7 +1100,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-03 Tue 17:45]
     Symbol’s value as variable is void: for-value', open or die "Open command for [yas] elisp error: Symbol’s value as variable is void: for-key failed";
 
-*** STARTED write a snippet file for java file processsing,  by nio and io
+*** DONE write a snippet file for java file processsing,  by nio
+    CLOSED: [2017-01-03 Tue 23:28]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 23:28]
+      file saved in ./snippets/file-processing.org
     - State "STARTED"    from "TODO"       [2017-01-03 Tue 20:10]
     - State "TODO"       from ""           [2017-01-03 Tue 18:17]
     create a new snippet file under ./snippets/.
@@ -1111,12 +1114,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+NAME: no-name
     #+begin_src elisp
 (setq pns-snippet-file (expand-file-name "snippets/file-processing.org"))
+(pns-main-1)
     #+end_src
 
     #+RESULTS: no-name
-    : /Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/file-processing.org
-
+    : pns-templates updated.
     
+*** write a snippet file for java file processsing,  by io
+
 *** multiple snippet files supports, integrated to helm-c-yasnippet
     Each file contains a list of templates. different file's templates are independent.
 
