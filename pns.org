@@ -1217,6 +1217,13 @@ pns.el:pns-create-expand-env:148:	elem=(size . 111), tmp=nil, tmp1=111
 Mark set
 
 
+*** STARTED add shotcut to nio snippet org file
+    - State "STARTED"    from ""           [2017-01-03 Tue 23:35]
+    one to read file, including create channel, create buffer, read from channel to buffer, .., close file.
+    one to write file.
+
+    a shotcut is just a list of expanded headers. it locates under '^* shotcut.*' entry.
+    TO the user, it works exactly the same as a snippet entry.
 
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
