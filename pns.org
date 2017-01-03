@@ -103,30 +103,36 @@
        select-content
        #+NAME: methods
     #+begin_src elisp
-        (defun pns-contains (list1 list2)
-          "Both list1 and list2 are assoc list. Return true if list1 contains all elements in list2"
-          (let ((rst t)
-                (e1))
-            (mapc (lambda (e2)
-                    (setq e1 (assoc (car e2) list1))
-                    (unless (and e1 (cond ((stringp (cdr e1)) (string-equal (cdr e2) (cdr e1)))
-                                          ((listp (cdr e1)) (assoc (cdr e2) (cdr e1)))))
-                      (setq rst nil)))
-                  list2)
-            rst))
+    (defun pns-contains (list1 list2)
+      "Both list1 and list2 are assoc list. Return true if list1 contains all elements in list2. Definition:contains: elements in list2 exists in list1. The equal functon is string-equal or ... for subelement.
+    e.g. list1 is header of a template, list2 is the selected data.
+    "
+      ;; TODO: should I consider order? 
+      (let ((rst t)
+            (e1))
+        (mapc (lambda (e2)
+                (setq e1 (assoc (car e2) list1))
+                (unless (and e1 (cond ((stringp (cdr e1))
+                                       (or (string-equal (cdr e1) "nil")
+                                           (string-equal (cdr e2) (cdr e1))))
+                                      ;; what's the logic here? =>(cdr e1) is a assoc list, while (cdr e2) always a string or something else. If (cdr e2) exists in (cdr e1)'s key set, then it means e1 contains e2.
+                                      ((listp (cdr e1)) (assoc (cdr e2) (cdr e1)))))
+                  (setq rst nil)))
+              list2)
+        rst))
 
-        (defun pns-filter-templates (header)
-          "Get all templates whose header contains parameter"
-          (delete nil
-                  (mapcar (lambda (tmpl)
-                            (when (pns-contains (cdr (assoc 'header tmpl)) header)
-                              tmpl))
-                          pns-templates) ))
+    (defun pns-filter-templates (header)
+      "Get all templates whose header contains parameter"
+      (delete nil
+              (mapcar (lambda (tmpl)
+                        (when (pns-contains (cdr (assoc 'header tmpl)) header)
+                          tmpl))
+                      pns-templates) ))
 
-        (defun pns-get-contents (header)
-          "Get all matched template's content. Match means its header contains the parameter header"
-          (mapcar (lambda (tmpl) (cdr (assoc 'content tmpl)))
-                  (pns-filter-templates header)))
+    (defun pns-get-contents (header)
+      "Get all matched template's content. Match means its header contains the parameter header"
+      (mapcar (lambda (tmpl) (cdr (assoc 'content tmpl)))
+              (pns-filter-templates header)))
 
 
     #+end_src
@@ -190,21 +196,25 @@
         (mapcar (lambda (key)
                   (let ((values (pns-get-header-element-values key headers))
                         tmp)
-                    (if (= (length values) 10000)
-                        (setq tmp (car values))
+                    (tracee values)
+                    (if (= (length values) 1)
+                        (if (and (stringp (car values)) (string-equal (car values) "nil"))
+                            (setq tmp (read-string (format "%s: " key)))
+                          (setq tmp (car values)))
                       (setq tmp (helm-other-buffer `((name . ,key) (candidates . ,values)
                                                      (action . (lambda (c) c)))
                                                    "Select")))
+                    (tracee key tmp)
                     (push (cons key tmp) headers)
                     (cons key tmp)))
                 header-names)))
-
 
     (defun pns-do-expand (header-names)
       "given header element list, expand a snippet."
       (let* ((header (pns-prompt-for-header header-names))
              (templates (pns-filter-templates header))
              tmp tmp1)
+        (tracee header)
         (mapc (lambda (tmpl)
                 (yas-expand-snippet (cdr (assoc 'content tmpl)) (point) (point)
                                     (mapcar (lambda (elem)
@@ -216,24 +226,28 @@
                                                                 (setq tmp1 (cdr vv)))
                                                             (setq tmp1 vv)))
                                                         tmp)
-                                                (setq tmp1 tmp))
+                                                (if (and (stringp tmp) (string-equal tmp "nil"))
+                                                    (setq tmp1 (cdr elem))
+                                                  (setq tmp1 tmp)))
 
                                               (message "elem: %S, tmp: %S, tmp1: %S" elem tmp tmp1)
                                               ;; elem: ("command" . "open"), tmp: "open", tmp1: "open"
                                               ;; elem: ("type" . "file"), tmp: "file", tmp1: "file"
                                               ;; elem: ("for" . "read"), tmp: (("read" . "<") ("write" . ">") ("append" . ">>") ("readwrite" . "+>")), tmp1: "+>"
-
                                               (list (intern (car elem)) tmp1)
                                               )
                                             header)))
               templates)
         ))
 
-
     (defun pns-main ()
       (interactive)
       (pns-do-expand pns-header-names))
     #+end_src
+    
+    #+RESULTS: methods
+    : pns-main
+    
     
     #+NAME: test-
     #+begin_src elisp
@@ -622,12 +636,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
 
     #+end_src
-
+    
     #+NAME: init
     #+begin_src elisp
 (require 'aspk-debug)
     #+end_src
-
+    
     #+NAME: vars
     #+begin_src elisp
     (setq pns-snippet-file "perl-file-processing.org")
@@ -867,7 +881,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       (interactive)
       ;; for open command:
       (setq pns-header-names '("command" "target" "for" "file"))
-      
+ 
       ;; for close command:
       (setq pns-header-names '("command"))
       
@@ -977,4 +991,20 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
  
     #+end_src
-
+*** DONE let the user input value if a parameter's value is "nil"
+    CLOSED: [2017-01-03 Tue 15:43]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 15:43] \\
+      Create a special case for this situation.
+      (if (and (stringp (car values)) (string-equal (car values) "nil"))
+      
+      At create expand-env,  contains function, and prompt for input.
+    - State "STARTED"    from ""           [2017-01-03 Tue 14:45]
+    Now the parameter is just selected.
+*** create a function to create expand-env for yas-expand-snippet
+    Currently the codes are in another function.
+    
+*** build pns-header-names dynamically based on pns-templates
+    Now it is specified in pns-main-1
+** run
+   First run pns-main-1 to generate pns-templates from pns-snippet-file
+   Then run pns-main to do the interactive selection and it will generates the code.
