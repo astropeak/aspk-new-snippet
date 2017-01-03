@@ -77,7 +77,8 @@
     `for` will be replaced to <
     #+NAME: no-name
     #+begin_src elisp
-    (yas-expand-snippet "open my $fh, \"`for`\", ${1:file};" (point) (point) '((for "<")))
+    (yas-expand-snippet "open my $fh, \"`for-value`\", ${1:file};" (point) (point) '((for (read "<++")) (for-value (if (consp for) (cdr for) for))))
+
     #+end_src
 *** hatch codes: given templates list, prompt for input and expand a snippet
     a template, get form the new snippet file
@@ -204,7 +205,7 @@
             (unless key (setq runp nil))
             (when key
               (incf idx)
-              (tracee first-header key idx)
+              (tracel first-header key idx)
               (setq values (pns-get-header-element-values key filter-header))
               (if (= (length values) 1)
                   (progn
@@ -221,7 +222,6 @@
                 (setq tmp input))
               (push (cons key tmp) filter-header)
               ;; this is the result
-              (message "parameter: %S" (cons key input))
               (push (cons key input) rst)
               )
             ))
@@ -262,7 +262,7 @@
                         (setq tmp1 (cdr elem))
                       (setq tmp1 tmp)))
 
-                  (message "elem: %S, tmp: %S, tmp1: %S" elem tmp tmp1)
+                  (tracel elem tmp tmp1)
                   ;; elem: ("command" . "open"), tmp: "open", tmp1: "open"
                   ;; elem: ("type" . "file"), tmp: "file", tmp1: "file"
                   ;; elem: ("for" . "read"), tmp: (("read" . "<") ("write" . ">") ("append" . ">>") ("readwrite" . "+>")), tmp1: "+>"
@@ -544,7 +544,7 @@
        
        ,#+name: content
        ,#+begin_src perl :results output
-       open my $fh, '`for-value`', `file` or die "Open file for `for-key` failed";
+       open my $fh, '`for`', `file` or die "Open file failed";
        ,#+end_src
        
        Notes on variable binding:
@@ -562,7 +562,7 @@
        
        ,#+name: content
        ,#+begin_src perl :results output
-       open my $fh, '`for-value`', `command` or die "Open command for `for-key` failed";
+       open my $fh, '`for`', `shell-command` or die "Open command failed";
        ,#+end_src
        
     ,** ((command close))
@@ -865,7 +865,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       (tracel c-header)
       (let ((name (pns-assoc 'name block-tree))
             (children (pns-assoc 'children block-tree)))
-        (message "lenth children=%s" (length children))
+        ;; (message "lenth children=%s" (length children))
         (if (= (length children) 1)
             ;;this is a leaf
             (cond ((string-equal name "header")
@@ -1067,7 +1067,24 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-03 Tue 17:33]
    find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
 
-*** Symbol’s value as variable is void: for-value
+*** CANCELLED Symbol’s value as variable is void: for-value
+    CLOSED: [2017-01-03 Tue 18:07]
+    - State "CANCELLED"  from "STARTED"    [2017-01-03 Tue 18:07] \\
+      the name represent the value, no need to write name-value. So I feel this function isn't that so useful.
+    - Note taken on [2017-01-03 Tue 17:51] \\
+      expand-env works like let*. so we can just add a function to create the variables.
+      Below codes works
+      
+          #+NAME: no-name
+          #+begin_src elisp
+          (yas-expand-snippet "open my $fh, \"`for-value`\", ${1:file};" (point) (point) '((for (read "<++")) (for-value (if (consp for) (cdr for) for))))
+          #+end_src
+    - Note taken on [2017-01-03 Tue 17:46] \\
+      for-key   should be (if (consp for) (car for) for)
+      for-value should be (if (consp for) (cdr for) for)
+      
+      This works for all expand-evn variable.
+    - State "STARTED"    from ""           [2017-01-03 Tue 17:45]
     Symbol’s value as variable is void: for-value', open or die "Open command for [yas] elisp error: Symbol’s value as variable is void: for-key failed";
 
 ** run
