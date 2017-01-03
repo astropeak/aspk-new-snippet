@@ -80,7 +80,8 @@
     (yas-expand-snippet "open my $fh, \"`for`\", ${1:file};" (point) (point) '((for "<")))
     #+end_src
 *** hatch codes: given templates list, prompt for input and expand a snippet
-    #+NAME: a template, get form the new snippet file
+    a template, get form the new snippet file
+    #+NAME: vars 
     #+begin_src elisp
     (setq pns-templates
           '(
@@ -99,7 +100,8 @@
     3. repeat step 1, process next parameter.
        
        传入一个header列表，返回所有与这个列表匹配的contents
-       #+NAME: select-content
+       select-content
+       #+NAME: methods
     #+begin_src elisp
         (defun pns-contains (list1 list2)
           "Both list1 and list2 are assoc list. Return true if list1 contains all elements in list2"
@@ -126,6 +128,14 @@
           (mapcar (lambda (tmpl) (cdr (assoc 'content tmpl)))
                   (pns-filter-templates header)))
 
+
+    #+end_src
+    
+    #+RESULTS: select-content
+    | open my $fh, '`for`', ${1:file} or dir 'Open file failed'; |
+    
+    #+NAME: test-get-contents
+    #+begin_src elisp
         (pns-get-contents '())
 
         (pns-get-contents '(("command" . "open")  ("for" . "read")))
@@ -135,12 +145,9 @@
         (pns-get-contents '(("command" . "open") ("type" . "file") ("for" . "read")))
 
     #+end_src
-    
-    #+RESULTS: select-content
-    | open my $fh, '`for`', ${1:file} or dir 'Open file failed'; |
-    
+
     get header element value list
-    #+NAME: no-name
+    #+NAME: methods
     #+begin_src elisp
     (defun pns-get-header-element-values (header-element-name &optional header-filter)
       "Get all values of a header element given its name, as a list. A name e.g. type, for, command. `header-filter' is a filter to filter the pns-templates before get."
@@ -160,11 +167,22 @@
                (pns-filter-templates header-filter))
          rst)))
 
+    #+end_src
+
+    #+NAME: test-
+    #+begin_src elisp
     (pns-get-header-element-values "for" '(("type" . "file")))
     #+end_src
+
     
+    #+NAME: vars
+    #+begin_src elisp
+    ;; a list of header element names that we will get value
+    (setq pns-header-names '("command" "type" "for"))
+    #+end_src
+
     The basic functions ready, now built the app.
-    #+NAME: no-name
+    #+NAME: methods
     #+begin_src elisp
     (defun pns-prompt-for-header (header-names)
       "Based on the templates, prompt for each parameters"
@@ -181,12 +199,6 @@
                     (cons key tmp)))
                 header-names)))
 
-    ;; a list of header element names that we will get value
-    (setq pns-header-names '("command" "type" "for"))
-
-    (pns-prompt-for-header pns-header-names)
-
-    (pns-get-contents (pns-prompt-for-header pns-header-names))
 
     (defun pns-do-expand (header-names)
       "given header element list, expand a snippet."
@@ -217,14 +229,19 @@
               templates)
         ))
 
-    (pns-do-expand pns-header-names)
 
     (defun pns-main ()
       (interactive)
       (pns-do-expand pns-header-names))
-
-
     #+end_src
+
+    #+NAME: test-
+    #+begin_src elisp
+    (pns-prompt-for-header pns-header-names)
+    (pns-get-contents (pns-prompt-for-header pns-header-names))
+    (pns-do-expand pns-header-names)
+    #+end_src
+
 *** ideas
     header的各个元素中，每个元素之间是有关系的。目前采用的方式是随意组合。如第一个元素有2个值，第二元素有3个值，则所有可能取值有2x3=6种。
     但还有种情况，比如第一个元素取第1个值时，第二个元素只能取前2个值；第一个元素取第2个值时， 第二个元素只能取后两个值，则所有取值有2x2处。
@@ -922,6 +939,13 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
        For open command, also bind the two variables.
        (setq for-value ">")
        (setq for-key "read")
-       
-
-
+** implementation
+*** tangle
+    #+name: sources
+    #+begin_src elisp :noweb yes :tangle pns.el
+    <<vars>>
+    <<methods>>
+    <<misc>>
+    <<init>>
+    #+end_src
+   
