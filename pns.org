@@ -797,7 +797,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
              (rst (list (list 'children idx) (list 'parent)))
 
              ;; parents save the current level parent block
-             (parents (list rst nil nil nil nil nil nil))
+             (parents (list rst rst rst rst rst rst rst rst rst))
              (level nil)
              (parent nil) (children nil)
              )
@@ -808,6 +808,8 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
           (setq elem (car blocks))
           (setq level (pns-assoc 'level elem))
           (setq parent (nth (- level 1) parents))
+          (unless parent (error "parent for level %s nil" (- level 1)))
+
           ;; (message "level: %s, parent: %s" level parent)
           ;; add 'parent' and 'children' property to this elem, add saved it to (parents level)
           ;; (message "before elem: %s" elem)
@@ -822,8 +824,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
           ;; both the above operations should be destructive.
           (setq children (pns-assoc 'children parent))
           ;; (message "before children: %S" children)
-          (if children (setcdr children (append  (cdr children) (list elem)))
-            (setf (assoc 'children parent) (cons 'children (list elem))))
+          (unless children (error "children nil. Parent: %S" parent))
+
+          (setcdr children (append  (cdr children) (list elem)))
           ;; (message "after  children: %S" children)
           ;; (message "rst: %S" rst)
           ;; (cdr nil)
@@ -1124,7 +1127,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     (defun  pns-prompt-for-header () 
   "Prompt for each parameter. Assumption: in the filtered templates, only one parameter key exists at pos idx. Not checked if there are two, but will use the first one silently. Snippet file should ensule this."
  
-*** if root entry don't have a header src block, then children will be nil
+*** DONE if root entry don't have a header src block, then children will be nil
+    CLOSED: [2017-01-03 Tue 22:35]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 22:35]
+    - State "STARTED"    from ""           [2017-01-03 Tue 22:26]
     Root cause is parents's second element is nil, so the children will be nil.
     Should fix by setting all element of parents to rst.
     And also throw an error when children is nil, or idx exceed the max element in parents.
