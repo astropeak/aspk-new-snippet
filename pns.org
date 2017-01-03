@@ -253,21 +253,21 @@
                     (cons key tmp)))
                 header-names)))
 
-    (defun pns-create-expand-env (header)
-      "Convert header to a expand-env that can be passed to yas-expand-snippet. header is a list, element is (key . value), both key and value are strings."
+    (defun pns-create-expand-env (header tmpl)
+      "Convert header to a expand-env that can be passed to yas-expand-snippet. header is a list, element is (key . value), both key and value are strings. The main job is handle this kind of parameter: (key (k1 v1) (k2 v2)), and changet the key to a symbol from string, change to a list from a cons"
       (let (tmp tmp1)
+        ;; elem is a parameter
         (mapcar (lambda (elem)
+                  ;; tmp is all possible values for the element key. TODO: where is definiton of tmpl?
                   (setq tmp (cdr (assoc (car elem) (cdr (assoc 'header tmpl)))))
-                  (if (listp tmp)
-                      (mapc (lambda (vv)
-                              (if (consp vv)
-                                  (when (string-equal (cdr elem) (car vv))
-                                    (setq tmp1 (cdr vv)))
-                                (setq tmp1 vv)))
-                            tmp)
-                    (if (and (stringp tmp) (string-equal tmp "nil"))
-                        (setq tmp1 (cdr elem))
-                      (setq tmp1 tmp)))
+                  ;; tmp1 is the target value
+                  (setq tmp1 (cdr elem))
+                  (cond ((listp tmp)
+                         (mapc (lambda (vv)
+                                 (if (consp vv)
+                                     (when (string-equal (cdr elem) (car vv))
+                                       (setq tmp1 (cdr vv)))))
+                               tmp)))
 
                   (tracel elem tmp tmp1)
                   ;; elem: ("command" . "open"), tmp: "open", tmp1: "open"
@@ -283,7 +283,7 @@
         (tracel header)
         (mapc (lambda (tmpl)
                 (yas-expand-snippet (cdr (assoc 'content tmpl)) (point) (point)
-                                    (pns-create-expand-env header)))
+                                    (pns-create-expand-env header tmpl)))
               templates)))
 
     (defun pns-main ()
@@ -1179,7 +1179,8 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-03 Tue 21:34]
     (name (key1 value1) (key1 value2)) works.
 
-*** STARTED can't reference another variables in header
+*** SOMEDAY can't reference another variables in header
+    - State "SOMEDAY"    from "STARTED"    [2017-01-03 Tue 22:36]
     - Note taken on [2017-01-03 Tue 22:14] \\
       this variable should be expanded before pass to yas-expand-snippet.
       May be I should give up this now.
@@ -1196,6 +1197,21 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
    I will use the commer syntax. if a name is preceeded by a commer, then we will not convert it to a string. So the definition will be changed to:
     ((buffer-types Byte Int ...))
    ((command create-buffer) (type ,buffer-types))
+
+*** DONE select type to Int, but in expanded codes it will always be Double
+    CLOSED: [2017-01-03 Tue 23:00]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 23:00] \\
+      a bug in pns-create-expand-env
+    - State "STARTED"    from ""           [2017-01-03 Tue 22:37]
+    DoubleBuffer buffer = DoubleBuffer.directAllocate(111);
+
+pns.el:pns-create-expand-env:148:	elem=(command . create-buffer), tmp=create-buffer, tmp1=create-buffer
+pns.el:pns-create-expand-env:148:	elem=(type . Short), tmp=(Byte Char Int Short Char Long Float Double), tmp1=Double
+pns.el:pns-create-expand-env:148:	elem=(method . allocate), tmp=(allocate directAllocate), tmp1=directAllocate
+pns.el:pns-create-expand-env:148:	elem=(size . 111), tmp=nil, tmp1=111
+Mark set
+
+
 
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
