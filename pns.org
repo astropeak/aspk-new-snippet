@@ -538,7 +538,7 @@
        ,#+name: header
        ,#+begin_src elisp
        ((command open) (target file)
-        (for ((read <) (write >) (append >>) (readwrite +>)))
+        (for (read <) (write >) (append >>) (readwrite +>))
         (file))
        ,#+end_src
        
@@ -557,7 +557,7 @@
     ,** ((command open) (target pipe) (for ((read '|-') (write '-|'))) (command))
        ,#+name: header
        ,#+begin_src perl :results output
-       ((command open) (target pipe) (for ((read |-) (write -|))) (command))
+       ((command open) (target pipe) (for (read |-) (write -|)) (shell-command))
        ,#+end_src
        
        ,#+name: content
@@ -1056,6 +1056,20 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       This function should be modified.
       (defun pns-prompt-for-header (header-names)
     Now it is specified in pns-main-1
+
+*** DONE create templates bug: multiple parameter values will be one
+    CLOSED: [2017-01-03 Tue 17:43]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 17:43] \\
+      Codes is correct. It is the snippet error. So modify snippet to fix it.
+      
+      This function do the conversion. recursively.
+      (defun pns-convert-to-string-filed (lst)
+    - State "STARTED"    from ""           [2017-01-03 Tue 17:33]
+   find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
+
+*** Symbol’s value as variable is void: for-value
+    Symbol’s value as variable is void: for-value', open or die "Open command for [yas] elisp error: Symbol’s value as variable is void: for-key failed";
+
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
