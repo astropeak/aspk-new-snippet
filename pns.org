@@ -117,10 +117,16 @@
                                        (or (string-equal (cdr e1) "nil")
                                            (string-equal (cdr e2) (cdr e1))))
                                       ;; what's the logic here? =>(cdr e1) is a assoc list, while (cdr e2) always a string or something else. If (cdr e2) exists in (cdr e1)'s key set, then it means e1 contains e2.
-                                      ((listp (cdr e1)) (assoc (cdr e2) (cdr e1)))))
+                                      ;; BUG here. (cdr e1) also may be a list of string.
+                                      ((and (listp (cdr e1)) (listp (car (cdr e1)))) (assoc (cdr e2) (cdr e1)))
+                                      ((and (listp (cdr e1)) (stringp (car (cdr e1))))
+                                       (member (cdr e2) (cdr e1)))
+                                      (t (error "parameter format wrong: %S" e1))))
                   (setq rst nil)))
               list2)
         rst))
+
+
 
     (defun pns-filter-templates (header)
       "Get all templates whose header contains parameter"
@@ -199,6 +205,7 @@
             (idx 0) rst)
         (while runp
           (setq templates (pns-filter-templates filter-header))
+          (unless templates (error "template nil. filter-header: %S" filter-header))
           (when  templates
             (setq first-header (pns-assoc 'header (car templates)))
             (setq key (car (nth idx first-header)))
@@ -1087,6 +1094,78 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-03 Tue 17:45]
     Symbol’s value as variable is void: for-value', open or die "Open command for [yas] elisp error: Symbol’s value as variable is void: for-key failed";
 
+*** STARTED write a snippet file for java file processsing,  by nio and io
+    - State "STARTED"    from "TODO"       [2017-01-03 Tue 20:10]
+    - State "TODO"       from ""           [2017-01-03 Tue 18:17]
+    create a new snippet file under ./snippets/.
+
+    The perl file processing snippet now works quite good. Maybe we can share headers between different language, then converting to indepenndent templates. This the key to uniform all language with same promption. But the drawbacks is maybe we need prompt for more data to make it uniform.
+    Add many lanuage's file processing apis in to one snippet file, and see how it works, do there will be some problem.
+
+    #+NAME: no-name
+    #+begin_src elisp
+(setq pns-snippet-file (expand-file-name "snippets/file-processing.org"))
+    #+end_src
+
+    
+*** multiple snippet files supports, integrated to helm-c-yasnippet
+    Each file contains a list of templates. different file's templates are independent.
+
+*** throw error when current idx has more than one parameter keys
+    Or the user will no know what going wrong.
+
+    THis function:
+    (defun  pns-prompt-for-header () 
+  "Prompt for each parameter. Assumption: in the filtered templates, only one parameter key exists at pos idx. Not checked if there are two, but will use the first one silently. Snippet file should ensule this."
+ 
+*** if root entry don't have a header src block, then children will be nil
+    Root cause is parents's second element is nil, so the children will be nil.
+    Should fix by setting all element of parents to rst.
+    And also throw an error when children is nil, or idx exceed the max element in parents.
+
+    (defun pns-convert-block-list-to-tree (blocks)
+  "Covert a block list to a tree based on level. use the children and parent property"
+  (let* ((elem nil)
+         (idx 0)
+         ;; below line will not work, the rst will change every time. Acturally, it will be the same value the last time run
+         ;; (rst '((children . (a)) (parent . nil)))
+         ;; this works though
+         (rst (list (list 'children idx) (list 'parent)))
+
+         ;; parents save the current level parent block
+         # (parents (list rst rst rst nil nil nil nil)) ;; this will work
+         (parents (list rst nil nil nil nil nil nil))
+
+*** a bug
+    for header: ((buffer-types Byte Char Int)), pns-convert-to-string-filed  not works
+
+    Below is modified vesion. seems it works
+    (defun pns-convert-to-string-filed (lst)
+  (tracel lst)
+  (mapcar (lambda (parameter)
+            (if (listp parameter)
+                (cons (format "%s" (car parameter))
+                      (if (> (length (cdr parameter)) 1)
+                          (pns-convert-to-string-filed (cdr parameter))
+                        (format "%s" (car (cdr parameter)))))
+              (format "%s" parameter)))
+          lst))
+
+*** should provide a way to define non selectable parameters.
+    e.g. buffer-types parameter just servered as an global variable, not the headers.
+
+    To fix, there are two ways: define other src names, such as 'global-definition' instead of 'header', the latter is used for prompt for input.
+    two: still use header name, but...
+    I prefer the first one.
+
+*** DONE seems if parameter is (name value1 value2), the helm selection will hang
+    CLOSED: [2017-01-03 Tue 21:49]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 21:49] \\
+      pns-contains don't consider this situation.
+    - State "STARTED"    from ""           [2017-01-03 Tue 21:34]
+    (name (key1 value1) (key1 value2)) works.
+
+    
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
