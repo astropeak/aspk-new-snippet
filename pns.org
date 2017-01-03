@@ -899,10 +899,13 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     (defun pns-convert-to-string-filed (lst)
       (tracel lst)
       (mapcar (lambda (parameter)
-                (cons (format "%s" (car parameter))
-                      (if (> (length (cdr parameter)) 1)
-                          (pns-convert-to-string-filed (cdr parameter))
-                        (format "%s" (car (cdr parameter))))))
+                (if (listp parameter)
+                    (cons (format "%s" (car parameter))
+                          (if (> (length (cdr parameter)) 1)
+                              (pns-convert-to-string-filed (cdr parameter))
+                            (format "%s" (car (cdr parameter)))))
+                  ;; for (name v1 v2 v3) cases. lst now is (v1 v2 v3)
+                  (format "%s" parameter)))
               lst))
 
     ;; This works as main function
@@ -927,7 +930,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       (interactive)
       ;; for open command:
       (setq pns-header-names '("command" "target" "for" "file"))
- 
+      
       ;; for close command:
       (setq pns-header-names '("command"))
       
@@ -1107,6 +1110,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 (setq pns-snippet-file (expand-file-name "snippets/file-processing.org"))
     #+end_src
 
+    #+RESULTS: no-name
+    : /Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/file-processing.org
+
     
 *** multiple snippet files supports, integrated to helm-c-yasnippet
     Each file contains a list of templates. different file's templates are independent.
@@ -1136,8 +1142,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
          # (parents (list rst rst rst nil nil nil nil)) ;; this will work
          (parents (list rst nil nil nil nil nil nil))
 
-*** a bug
-    for header: ((buffer-types Byte Char Int)), pns-convert-to-string-filed  not works
+*** DONE a bug: header ((buffer-types Byte Char Int)), pns-convert-to-string-filed  not works
+    CLOSED: [2017-01-03 Tue 22:25]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 22:25]
+    - State "STARTED"    from ""           [2017-01-03 Tue 22:23]
 
     Below is modified vesion. seems it works
     (defun pns-convert-to-string-filed (lst)
@@ -1165,7 +1173,24 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-03 Tue 21:34]
     (name (key1 value1) (key1 value2)) works.
 
-    
+*** STARTED can't reference another variables in header
+    - Note taken on [2017-01-03 Tue 22:14] \\
+      this variable should be expanded before pass to yas-expand-snippet.
+      May be I should give up this now.
+    - State "STARTED"    from ""           [2017-01-03 Tue 21:58]
+    e.g.
+    ((buffer-types Byte Int ...))
+   ((command create-buffer) (type buffer-types))
+   type refer to buffer-types
+
+   But in pns-templates, type's reference value 'buffer-types' will be convert to string directly.
+   ("type" . "buffer-types")
+
+   Solution: should define a method to show how to do variable reference, now they will all be converted to string.
+   I will use the commer syntax. if a name is preceeded by a commer, then we will not convert it to a string. So the definition will be changed to:
+    ((buffer-types Byte Int ...))
+   ((command create-buffer) (type ,buffer-types))
+
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
