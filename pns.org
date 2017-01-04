@@ -292,7 +292,7 @@
       (interactive)
       (pns-do-expand))
 
-    (defun pns-main-shotcut ()
+    (defun pns-main-shortcut ()
       (interactive)
       (pns-do-expand '(("command" . "create-channel") ("for" . "read") ("file-name" . "\"aaa.b\""))))
 
@@ -532,7 +532,7 @@
            
       - helm source candidate
         the level one snippet entry's headline and
-        the direct child's headlines of level one shotcut entry
+        the direct child's headlines of level one shortcut entry
         will be added as helm source candidate
         
         For both candidates, the level one snippet entry will first be processed to a templates list.
@@ -624,11 +624,11 @@
         ,#+end_src
         
         
-    ,* shotcut
-      shotcut is a way to predefine some parameters so that these parameters will not be prompted to user for value.
+    ,* shortcut
+      shortcut is a way to predefine some parameters so that these parameters will not be prompted to user for value.
       
     ,** open a file for read, and then close
-       This shotcut contains two header, the first one will define three element. The whole:
+       This shortcut contains two header, the first one will define three element. The whole:
        ,#+NAME: filter
        ,#+begin_src elisp
        (((command open) (target file) (for read))
@@ -1029,6 +1029,55 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
        For open command, also bind the two variables.
        (setq for-value ">")
        (setq for-key "read")
+*** hatch codes:  support shortcut
+    #+NAME: vars
+    #+begin_src elisp
+(defvar pns-shortcuts nil "this is a temp variable to save current list of shortcut")
+(setq pns-shortcut-entry-regexp  "^\*+\s+shortcut.*")
+    #+end_src
+
+    #+RESULTS: vars
+    : ^*+ +shortcut.*
+
+**** read all shortcuts from a snippet file
+     Input: pns-snippet-file, output: pns-shortcuts
+     #+NAME: methods
+     #+begin_src elisp
+     (defun pns-create-shortcuts (file)
+       "create a list of shortcut from org mode snippet `file'"
+       (mapcar (lambda (src-block)
+                 (list (cons 'header (mapcar (lambda (header)
+                                               (pns-convert-to-string-filed header))
+                                             (read (pns-assoc 'content src-block))))
+                       (cons 'name (pns-assoc 'heading src-block))))
+               (pns-get-all-src-blocks file pns-shortcut-entry-regexp)))
+
+     (defun pns-update-shortcuts ()
+       (interactive)
+       (setq pns-shortcuts  (pns-create-shortcuts pns-snippet-file)))
+
+
+     ;; (setq aa (pns-create-shortcuts pns-snippet-file))
+     (defun pns-main-shortcut ()
+       (interactive)
+       (let ((cand (mapcar (lambda (shortcut)
+                             (cons (pns-assoc 'name shortcut)
+                                   (pns-assoc 'header shortcut)))
+                           pns-shortcuts)))
+         (helm-other-buffer `((name . "shortcut")
+                              (candidates . ,cand)
+                              (action . (lambda (shortcut)
+                                          (mapc (lambda (header)
+                                                  (pns-do-expand header))
+                                                shortcut))))
+                            "Shortcut")))
+
+     ;; (pns-get-all-src-blocks pns-snippet-file pns-snippet-entry-regexp)
+
+     #+end_src
+
+     pns-main-shortcut do the job. but a strange thing: the snippet will be inserted to another most recent buffer!!! not current.
+
 ** implementation
 *** tangle
     #+name: sources
@@ -1231,9 +1280,19 @@ pns.el:pns-create-expand-env:148:	elem=(size . 111), tmp=nil, tmp1=111
 Mark set
 
 
-*** STARTED add shotcut to nio snippet org file
+*** DONE add shortcut to nio snippet org file
+    CLOSED: [2017-01-04 Wed 17:40]
+    - State "DONE"       from "STARTED"    [2017-01-04 Wed 17:40] \\
+      use pns-update-shortcuts to read shortcuts from snippet file and saved to pns-shortcuts
+      use pns-main-shortcut to trigger every shortcut.
+      Works very good!
+    - Note taken on [2017-01-04 Wed 17:09] \\
+      By make use of the former functions, the job is easy.
+      So it is good to write general functions. not use global variables.
+    - Note taken on [2017-01-04 Wed 17:06] \\
+      Done the basic codes. Works with little bug.
     - Note taken on [2017-01-04 Wed 13:58] \\
-      Code modification done. Possiable to support shotcut. run pns-main-shotcut to see the effect.
+      Code modification done. Possiable to support shortcut. run pns-main-shortcut to see the effect.
     - Note taken on [2017-01-04 Wed 11:42] \\
       try to impelemnt. just add a parameter filter-header will works.
       But below will cause template nill.
@@ -1249,7 +1308,7 @@ Mark set
     one to read file, including create channel, create buffer, read from channel to buffer, .., close file.
     one to write file.
 
-    a shotcut is just a list of expanded headers. it locates under '^* shotcut.*' entry.
+    a shortcut is just a list of expanded headers. it locates under '^* shortcut.*' entry.
     TO the user, it works exactly the same as a snippet entry.
 
     Solution: just pass a filter-header(current the initial value is nil, so select every template in pns-templates). Then only the needed parameters needs to be selected.
@@ -1257,10 +1316,18 @@ Mark set
 *** default value for parameter
     But seems now it's hard to add addtional data to a parameter without modifing its type.
 
+*** shortcut: string value, the '"' will missing in the generated codes.
+    e.g. after expanded, file name  is `aa.bb' instead of `"aa.bb"'
+    (file-name "aa.bb")
+
+*** shortcut: import part will be inserted after the fowwling parts
+    caused by prompt for file name. if i set value for file-name, then it is ok.
+    (file-name "aa.bb")
+
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
-
+   
 ** programming notes
 *** throw errors guard correctness, detect fault in development stage
     Then when error happens, the program stops at that place, debugging will be much easy.
@@ -1293,3 +1360,15 @@ Mark set
 
        
     pns-do-expand integrate part 1 and part2.
+*** relationship
+    |--------+-----------+------------------+---------+-------------------+---------------------------|
+    | module | templates | list of template | header  | list of parameter |                           |
+    |        |           |                  | content | :string           |                           |
+    |        | shortcuts | list of shortcut | name    | :string           |                           |
+    |        |           |                  | filter  | list of header    | header with default value |
+    |        | name      | :string          |         |                   |                           |
+    Note: the table looks unaligned because 'space' is narrow than a letter.
+
+    A shortcut is a way to 1: provide default values to parametes in a header, then those parameters will not be prompted. 2: combine many templates.
+    
+    a shortcut with empty filter let user select all possible template. The name should be "details".
