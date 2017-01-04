@@ -1265,3 +1265,31 @@ Mark set
 *** throw errors guard correctness, detect fault in development stage
     Then when error happens, the program stops at that place, debugging will be much easy.
     
+** doc
+*** Three main part of the program
+    1. get parameters from user by helm or read-string. Done by pns-prompt-for-header.
+       The input is pns-templates(now it is a global variable), but only the header part is needed.
+
+       What this fucntion done is given a list of headers, let user select parameter values if there are multiple, and finally return one unique header.
+       A header can be wrtten in a relative flexible way.
+       
+       The output is a list of cons of (key . value). The key is variable names in the snippet, the value is its value.
+       an example: pns.el:pns-do-expand:157:	header=(("command" . "create-channel") ("for" . "read") ("part" . "part1") ("file-name" . "\"aaa.b\""))
+    2. expand a snippet by yas-expand-snippet
+       Definition:  a snippet is the content part of a template.
+
+       The input is a header.
+       pns-templates defines relationship between a header and a snippet. Given a header, there will be one snippet. and the header is the expand-env.
+       
+       The output or result:
+       the snippet inserted on current buffer, current position.
+    3. parse a template file, done by pns-main-update
+       Definition: a template file is an org file with an entry tree, whose first level entry's headline starated with pns-snippet-entry-regexp. 
+       Input is a template file, specified by pns-snippet-file.
+       Output is pns-templates
+       
+       Each entry in a template file may contains two src blocks named 'header' or 'content'.
+       All 'header' src blocks from the root entry to any leaf entry(included) forms one header element, the same apllys for 'content' src blocks. And this header and content elements combined.
+
+       
+    pns-do-expand integrate part 1 and part2.
