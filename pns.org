@@ -1118,8 +1118,8 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
 
     #+RESULTS: no-name
-    : pns-templates updated.
-    
+=pns-templates updated.
+=    
 *** write a snippet file for java file processsing,  by io
 
 *** multiple snippet files supports, integrated to helm-c-yasnippet
@@ -1225,6 +1225,14 @@ Mark set
     a shotcut is just a list of expanded headers. it locates under '^* shotcut.*' entry.
     TO the user, it works exactly the same as a snippet entry.
 
+*** default value for parameter
+    But seems now it's hard to add addtional data to a parameter without modifing its type.
+
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
+
+** programming notes
+*** throw errors guard correctness, detect fault in development stage
+    Then when error happens, the program stops at that place, debugging will be much easy.
+    
