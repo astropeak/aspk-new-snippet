@@ -197,13 +197,13 @@
     The basic functions ready, now built the app.
     #+NAME: methods
     #+begin_src elisp
-    (defun  pns-prompt-for-header () 
+    (defun  pns-prompt-for-header (&optional filter-header) 
       "Prompt for each parameter. Assumption: in the filtered templates, only one parameter key exists at pos idx. Not checked if there are two, but will use the first one silently. Snippet file should ensule this."
-      (let ((filter-header nil)
-            (templates t) (runp t)
+      (let ((templates t) (runp t)
             first-header key values tmp input
             (idx 0) rst)
         (while runp
+          (tracel filter-header)
           (setq templates (pns-filter-templates filter-header))
           (unless templates (error "template nil. filter-header: %S" filter-header))
           (when  templates
@@ -213,23 +213,25 @@
             (when key
               (incf idx)
               (tracel first-header key idx)
-              (setq values (pns-get-header-element-values key filter-header))
-              (if (= (length values) 1)
-                  (progn
-                    (setq tmp (car values))
-                    (setq input (car values))
-                    (when (string-equal (car values) "nil")
-                      ;; prompt for this key by read-string if (car vallues) is "nil"
-                      (setq input (read-string (format "%s: " key)))
-                      ))
-                ;;>1. prompt for this key by helm
-                (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
-                                                 (action . (lambda (c) c)))
-                                               "Select"))
-                (setq tmp input))
-              (push (cons key tmp) filter-header)
-              ;; this is the result
-              (push (cons key input) rst)
+              (if (assoc key filter-header)
+                  (push (cons key (pns-assoc key filter-header)) rst)
+                (setq values (pns-get-header-element-values key filter-header))
+                (if (= (length values) 1)
+                    (progn
+                      (setq tmp (car values))
+                      (setq input (car values))
+                      (when (string-equal (car values) "nil")
+                        ;; prompt for this key by read-string if (car vallues) is "nil"
+                        (setq input (read-string (format "%s: " key)))
+                        ))
+                  ;;>1. prompt for this key by helm
+                  (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
+                                                   (action . (lambda (c) c)))
+                                                 "Select"))
+                  (setq tmp input))
+                (push (cons key tmp) filter-header)
+                ;; this is the result
+                (push (cons key input) rst))
               )
             ))
         (reverse rst)))
@@ -276,9 +278,9 @@
                   (list (intern (car elem)) tmp1))
                 header)))
 
-    (defun pns-do-expand (header-names)
+    (defun pns-do-expand (&optional filter-header)
       "given header element list, expand a snippet."
-      (let* ((header (pns-prompt-for-header))
+      (let* ((header (pns-prompt-for-header filter-header))
              (templates (pns-filter-templates header)))
         (tracel header)
         (mapc (lambda (tmpl)
@@ -288,7 +290,12 @@
 
     (defun pns-main ()
       (interactive)
-      (pns-do-expand pns-header-names))
+      (pns-do-expand))
+
+    (defun pns-main-shotcut ()
+      (interactive)
+      (pns-do-expand '(("command" . "create-channel") ("for" . "read") ("file-name" . "\"aaa.b\""))))
+
     #+end_src
     
     #+RESULTS: methods
@@ -690,10 +697,17 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     
     #+NAME: vars
     #+begin_src elisp
-    (setq pns-snippet-file "perl-file-processing.org")
+    (defvar pns-snippet-file nil "snippet file name")
     (setq pns-snippet-entry-regexp  "^\*+\s+snippet.*")
     ;; (pns-get-all-src-blocks pns-snippet-file pns-snippet-entry-regexp)
     #+end_src
+
+    #+NAME: init
+    #+begin_src elisp
+    ;; (setq pns-snippet-file "perl-file-processing.org")
+    (setq pns-snippet-file (expand-file-name "snippets/file-processing.org"))
+    #+end_src
+
     
     DONE. a function get all src block, (name, content, belonging-heading-level), in the same order they are defined.
     #+NAME: methods
@@ -929,7 +943,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
               pns-tmp-templates)
       )
 
-    (defun pns-main-1 ()
+    (defun pns-main-update-templates ()
       (interactive)
       ;; for open command:
       (setq pns-header-names '("command" "target" "for" "file"))
@@ -1218,12 +1232,27 @@ Mark set
 
 
 *** STARTED add shotcut to nio snippet org file
+    - Note taken on [2017-01-04 Wed 13:58] \\
+      Code modification done. Possiable to support shotcut. run pns-main-shotcut to see the effect.
+    - Note taken on [2017-01-04 Wed 11:42] \\
+      try to impelemnt. just add a parameter filter-header will works.
+      But below will cause template nill.
+      
+        (pns-do-expand '(("command" . "create-channel") ("for" ("read" "Input")))))
+
+      below one works, but "for" still be promted:
+      (pns-do-expand '(("command" . "create-channel") ("for" . "read"))))
+      This wroks as expected.
+      Fix this by adding a judge: if the element exists in filter-header, then don't select it, just use its value.
+
     - State "STARTED"    from ""           [2017-01-03 Tue 23:35]
     one to read file, including create channel, create buffer, read from channel to buffer, .., close file.
     one to write file.
 
     a shotcut is just a list of expanded headers. it locates under '^* shotcut.*' entry.
     TO the user, it works exactly the same as a snippet entry.
+
+    Solution: just pass a filter-header(current the initial value is nil, so select every template in pns-templates). Then only the needed parameters needs to be selected.
 
 *** default value for parameter
     But seems now it's hard to add addtional data to a parameter without modifing its type.
