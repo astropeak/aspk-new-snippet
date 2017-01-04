@@ -222,8 +222,9 @@
                       (setq input (car values))
                       (when (string-equal (car values) "nil")
                         ;; prompt for this key by read-string if (car vallues) is "nil"
-                        (setq input (read-string (format "%s: " key)))
-                        ))
+                        ;; read-string will change point
+                        (save-excursion
+                          (setq input (read-string (format "%s: " key))))))
                   ;;>1. prompt for this key by helm
                   (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
                                                    (action . (lambda (c) c)))
@@ -1320,10 +1321,32 @@ Mark set
     e.g. after expanded, file name  is `aa.bb' instead of `"aa.bb"'
     (file-name "aa.bb")
 
-*** shortcut: import part will be inserted after the fowwling parts
+*** DONE shortcut: import part will be inserted after the fowwling parts
+    CLOSED: [2017-01-04 Wed 21:15]
+    - State "DONE"       from "STARTED"    [2017-01-04 Wed 21:15]
+    - State "STARTED"    from ""           [2017-01-04 Wed 20:01]
     caused by prompt for file name. if i set value for file-name, then it is ok.
     (file-name "aa.bb")
 
+    This issue should be caused by helm, not yasnippet. Because helm will save current position.
+    And two helm session is nested.
+
+    After tested, it is 'read-string' that make point with wrong value.
+        in shortcut,pooint: 19803
+point: 19803
+after point: 19872
+in shortcut,pooint: 19872
+before read-string. ponint:19872
+is-buffer-file-temp called
+afeter read-string. ponint:19803
+point: 19803
+after point: 19906
+in shortcut,pooint: 19906
+point: 19906
+after point: 19961
+in shortcut,pooint: 19961
+p
+ 
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.

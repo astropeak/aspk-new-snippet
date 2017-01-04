@@ -99,7 +99,7 @@ this snippet is  used for all file related api, for different language.
 *** ((method . (allocate direct-allocate) (size . nil))
     #+name: header
     #+begin_src elisp
-   ((method allocate directAllocate) (size))
+   ((method allocate allocateDirect) (size))
     #+end_src
     
     #+name: content
@@ -226,7 +226,7 @@ this snippet is  used for all file related api, for different language.
     ((command import-needed-package))
     
     ((command  create-channel) (for read) (part part1) )
-    ((command  create-buffer) (type Double) (method allocate) (size 1024))
+    ((command  create-buffer) (type Byte)  (size 1024))
     ((command  read-from-channel-to-buffer) (part  part1))
     ((command  extract-buffer) (content-type byte ))
     ((command  read-from-channel-to-buffer) (part  part2))
