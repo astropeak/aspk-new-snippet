@@ -1182,6 +1182,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
 
     #+RESULTS: no-name
+    | key | (quote reference) |
 =pns-templates updated.
 =    
 *** write a snippet file for java file processsing,  by io
@@ -1233,13 +1234,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                         (format "%s" (car (cdr parameter)))))
               (format "%s" parameter)))
           lst))
-
-*** should provide a way to define non selectable parameters.
-    e.g. buffer-types parameter just servered as an global variable, not the headers.
-
-    To fix, there are two ways: define other src names, such as 'global-definition' instead of 'header', the latter is used for prompt for input.
-    two: still use header name, but...
-    I prefer the first one.
 
 *** DONE seems if parameter is (name value1 value2), the helm selection will hang
     CLOSED: [2017-01-03 Tue 21:49]
@@ -1314,9 +1308,83 @@ Mark set
 
     Solution: just pass a filter-header(current the initial value is nil, so select every template in pns-templates). Then only the needed parameters needs to be selected.
 
-*** default value for parameter
-    But seems now it's hard to add addtional data to a parameter without modifing its type.
+*** parameter format related
+**** default value for parameter
+     XXX But seems now it's hard to add addtional data to a parameter without modifing its type.
 
+     It can be easily added.
+     Current structure of a parameter:
+     (key (select-value real-value))
+
+     Then just add default value to the third place, 
+     (key (select-value real-value default-value)). If select-value is the same as real-value, just set they same.
+
+     The format is compatible to the old one.
+
+     Default value is displayed when selecting, if press enter, then key value will be nil.
+
+**** parse value as symbol: a reference to another key
+     why this is useful?
+     Then I can define a 'global variable'(may be in another src block instead of header), and refer to that variable in another 'header' src block.
+     This is quite useful in this situation:
+     In a shortcut, two header refers to the same variable(such as filehandle, filename), by get that info and saved to a 'global variable', we avoid prompt for that info twice.
+
+     The 'global variable' is used to collect all parameters needed by the whole shortcut headers, and in the header definition, we just pass all values.
+
+     Maybe we can use this syntax to express a variable reference:
+     (key value)      : value is treated as string
+     (key $reference) : reference is treated as a symbol. prefixed by a '$'
+     (key @doc) : doc is the document for this parameter. prefixed by a '@'. Or (key "@this is a doc contais blanks"). and (key (select-value real-value @doc-for-selected-value)) also works, it add a doc to this value.
+     It will be displayed as name for helm.
+     (key =default-value): default-value is the default value of this parameter. prefixed by a "=".
+
+     All those parameters are regular chars in lisp.
+     '#', '?' is not valid
+
+     test:
+     #+NAME: no-name
+     #+begin_src elisp
+(setq a (read "(key *reference))"))
+
+(format "%S" (nth 1 a))
+
+(format "%S" (nth 0 a))
+
+
+
+
+     #+end_src
+
+**** should provide a way to define non selectable parameters.
+     e.g. buffer-types parameter just servered as an global variable, not the headers.
+
+     To fix, there are two ways: define other src names, such as 'global-definition' instead of 'header', the latter is used for prompt for input.
+     two: still use header name, but...
+     I prefer the first one.
+
+*** CANCELLED refactory: pns-prompt-for-header
+    CLOSED: [2017-01-04 Wed 21:37]
+    - State "CANCELLED"  from ""           [2017-01-04 Wed 21:37]
+    - Note taken on [2017-01-04 Wed 21:33] \\
+      seems no need to do so. Because in shortcut we will use this feature.
+    TODO: seems we can return the real-value directly by helm. Now returned the select-value.
+
+    this function: values is a list of string. better to use a list of cons if the parameter value is cons. Then no need to convert latter.
+    
+(defun  pns-prompt-for-header (&optional filter-header) 
+
+
+            (setq values (pns-get-header-element-values key filter-header))
+
+              (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
+                                               (action . (lambda (c) c)))
+                                             "Select"))
+
+    pns.el:nil:113:	values=(create-channel create-buffer fill-buffer extract-buffer write-to-channel-from-buffer read-from-channel-to-buffer import-needed-package)
+pns.el:nil:113:	values=(read write)
+pns.el:nil:113:	values=(part1 part2)
+pns.el:nil:113:	values=(nil)
+i
 *** shortcut: string value, the '"' will missing in the generated codes.
     e.g. after expanded, file name  is `aa.bb' instead of `"aa.bb"'
     (file-name "aa.bb")
