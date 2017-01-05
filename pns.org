@@ -300,8 +300,8 @@
     #+end_src
     
     #+RESULTS: methods
-    : pns-main
-    
+==============    ==    ==    ===================pns-do-xxx
+    =    
     
     #+NAME: test-
     #+begin_src elisp
@@ -702,13 +702,13 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     (setq pns-snippet-entry-regexp  "^\*+\s+snippet.*")
     ;; (pns-get-all-src-blocks pns-snippet-file pns-snippet-entry-regexp)
     #+end_src
-
+    
     #+NAME: init
     #+begin_src elisp
     ;; (setq pns-snippet-file "perl-file-processing.org")
     (setq pns-snippet-file (expand-file-name "snippets/file-processing.org"))
     #+end_src
-
+    
     
     DONE. a function get all src block, (name, content, belonging-heading-level), in the same order they are defined.
     #+NAME: methods
@@ -1036,10 +1036,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 (defvar pns-shortcuts nil "this is a temp variable to save current list of shortcut")
 (setq pns-shortcut-entry-regexp  "^\*+\s+shortcut.*")
     #+end_src
-
+    
     #+RESULTS: vars
-    : ^*+ +shortcut.*
-
+=@
+==@
+==@
+=    
 **** read all shortcuts from a snippet file
      Input: pns-snippet-file, output: pns-shortcuts
      #+NAME: methods
@@ -1076,9 +1078,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      ;; (pns-get-all-src-blocks pns-snippet-file pns-snippet-entry-regexp)
 
      #+end_src
-
+     
      pns-main-shortcut do the job. but a strange thing: the snippet will be inserted to another most recent buffer!!! not current.
-
+     
 ** implementation
 *** tangle
     #+name: sources
@@ -1133,7 +1135,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       This function should be modified.
       (defun pns-prompt-for-header (header-names)
     Now it is specified in pns-main-1
-
+    
 *** DONE create templates bug: multiple parameter values will be one
     CLOSED: [2017-01-03 Tue 17:43]
     - State "DONE"       from "STARTED"    [2017-01-03 Tue 17:43] \\
@@ -1142,8 +1144,8 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       This function do the conversion. recursively.
       (defun pns-convert-to-string-filed (lst)
     - State "STARTED"    from ""           [2017-01-03 Tue 17:33]
-   find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
-
+    find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
+    
 *** CANCELLED Symbol’s value as variable is void: for-value
     CLOSED: [2017-01-03 Tue 18:07]
     - State "CANCELLED"  from "STARTED"    [2017-01-03 Tue 18:07] \\
@@ -1152,10 +1154,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       expand-env works like let*. so we can just add a function to create the variables.
       Below codes works
       
-          #+NAME: no-name
-          #+begin_src elisp
+      #+NAME: no-name
+      #+begin_src elisp
           (yas-expand-snippet "open my $fh, \"`for-value`\", ${1:file};" (point) (point) '((for (read "<++")) (for-value (if (consp for) (cdr for) for))))
-          #+end_src
+      #+end_src
     - Note taken on [2017-01-03 Tue 17:46] \\
       for-key   should be (if (consp for) (car for) for)
       for-value should be (if (consp for) (cdr for) for)
@@ -1163,7 +1165,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       This works for all expand-evn variable.
     - State "STARTED"    from ""           [2017-01-03 Tue 17:45]
     Symbol’s value as variable is void: for-value', open or die "Open command for [yas] elisp error: Symbol’s value as variable is void: for-key failed";
-
+    
 *** DONE write a snippet file for java file processsing,  by nio
     CLOSED: [2017-01-03 Tue 23:28]
     - State "DONE"       from "STARTED"    [2017-01-03 Tue 23:28]
@@ -1171,32 +1173,32 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from "TODO"       [2017-01-03 Tue 20:10]
     - State "TODO"       from ""           [2017-01-03 Tue 18:17]
     create a new snippet file under ./snippets/.
-
+    
     The perl file processing snippet now works quite good. Maybe we can share headers between different language, then converting to indepenndent templates. This the key to uniform all language with same promption. But the drawbacks is maybe we need prompt for more data to make it uniform.
     Add many lanuage's file processing apis in to one snippet file, and see how it works, do there will be some problem.
-
+    
     #+NAME: no-name
     #+begin_src elisp
 (setq pns-snippet-file (expand-file-name "snippets/file-processing.org"))
 (pns-main-1)
     #+end_src
-
+    
     #+RESULTS: no-name
     | key | (quote reference) |
-=pns-templates updated.
-=    
+    =pns-templates updated.
+    =    
 *** write a snippet file for java file processsing,  by io
-
+    
 *** multiple snippet files supports, integrated to helm-c-yasnippet
     Each file contains a list of templates. different file's templates are independent.
-
+    
 *** throw error when current idx has more than one parameter keys
     Or the user will no know what going wrong.
-
+    
     THis function:
     (defun  pns-prompt-for-header () 
-  "Prompt for each parameter. Assumption: in the filtered templates, only one parameter key exists at pos idx. Not checked if there are two, but will use the first one silently. Snippet file should ensule this."
- 
+    "Prompt for each parameter. Assumption: in the filtered templates, only one parameter key exists at pos idx. Not checked if there are two, but will use the first one silently. Snippet file should ensule this."
+    
 *** DONE if root entry don't have a header src block, then children will be nil
     CLOSED: [2017-01-03 Tue 22:35]
     - State "DONE"       from "STARTED"    [2017-01-03 Tue 22:35]
@@ -1204,44 +1206,44 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     Root cause is parents's second element is nil, so the children will be nil.
     Should fix by setting all element of parents to rst.
     And also throw an error when children is nil, or idx exceed the max element in parents.
-
+    
     (defun pns-convert-block-list-to-tree (blocks)
-  "Covert a block list to a tree based on level. use the children and parent property"
-  (let* ((elem nil)
-         (idx 0)
-         ;; below line will not work, the rst will change every time. Acturally, it will be the same value the last time run
-         ;; (rst '((children . (a)) (parent . nil)))
-         ;; this works though
-         (rst (list (list 'children idx) (list 'parent)))
-
-         ;; parents save the current level parent block
-         # (parents (list rst rst rst nil nil nil nil)) ;; this will work
-         (parents (list rst nil nil nil nil nil nil))
-
+    "Covert a block list to a tree based on level. use the children and parent property"
+    (let* ((elem nil)
+    (idx 0)
+    ;; below line will not work, the rst will change every time. Acturally, it will be the same value the last time run
+    ;; (rst '((children . (a)) (parent . nil)))
+    ;; this works though
+    (rst (list (list 'children idx) (list 'parent)))
+    
+    ;; parents save the current level parent block
+    # (parents (list rst rst rst nil nil nil nil)) ;; this will work
+    (parents (list rst nil nil nil nil nil nil))
+    
 *** DONE a bug: header ((buffer-types Byte Char Int)), pns-convert-to-string-filed  not works
     CLOSED: [2017-01-03 Tue 22:25]
     - State "DONE"       from "STARTED"    [2017-01-03 Tue 22:25]
     - State "STARTED"    from ""           [2017-01-03 Tue 22:23]
-
+      
     Below is modified vesion. seems it works
     (defun pns-convert-to-string-filed (lst)
-  (tracel lst)
-  (mapcar (lambda (parameter)
-            (if (listp parameter)
-                (cons (format "%s" (car parameter))
-                      (if (> (length (cdr parameter)) 1)
-                          (pns-convert-to-string-filed (cdr parameter))
-                        (format "%s" (car (cdr parameter)))))
-              (format "%s" parameter)))
-          lst))
-
+    (tracel lst)
+    (mapcar (lambda (parameter)
+    (if (listp parameter)
+    (cons (format "%s" (car parameter))
+    (if (> (length (cdr parameter)) 1)
+    (pns-convert-to-string-filed (cdr parameter))
+    (format "%s" (car (cdr parameter)))))
+    (format "%s" parameter)))
+    lst))
+    
 *** DONE seems if parameter is (name value1 value2), the helm selection will hang
     CLOSED: [2017-01-03 Tue 21:49]
     - State "DONE"       from "STARTED"    [2017-01-03 Tue 21:49] \\
       pns-contains don't consider this situation.
     - State "STARTED"    from ""           [2017-01-03 Tue 21:34]
     (name (key1 value1) (key1 value2)) works.
-
+    
 *** SOMEDAY can't reference another variables in header
     - State "SOMEDAY"    from "STARTED"    [2017-01-03 Tue 22:36]
     - Note taken on [2017-01-03 Tue 22:14] \\
@@ -1250,31 +1252,31 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-03 Tue 21:58]
     e.g.
     ((buffer-types Byte Int ...))
-   ((command create-buffer) (type buffer-types))
-   type refer to buffer-types
-
-   But in pns-templates, type's reference value 'buffer-types' will be convert to string directly.
-   ("type" . "buffer-types")
-
-   Solution: should define a method to show how to do variable reference, now they will all be converted to string.
-   I will use the commer syntax. if a name is preceeded by a commer, then we will not convert it to a string. So the definition will be changed to:
+    ((command create-buffer) (type buffer-types))
+    type refer to buffer-types
+    
+    But in pns-templates, type's reference value 'buffer-types' will be convert to string directly.
+    ("type" . "buffer-types")
+    
+    Solution: should define a method to show how to do variable reference, now they will all be converted to string.
+    I will use the commer syntax. if a name is preceeded by a commer, then we will not convert it to a string. So the definition will be changed to:
     ((buffer-types Byte Int ...))
-   ((command create-buffer) (type ,buffer-types))
-
+    ((command create-buffer) (type ,buffer-types))
+    
 *** DONE select type to Int, but in expanded codes it will always be Double
     CLOSED: [2017-01-03 Tue 23:00]
     - State "DONE"       from "STARTED"    [2017-01-03 Tue 23:00] \\
       a bug in pns-create-expand-env
     - State "STARTED"    from ""           [2017-01-03 Tue 22:37]
     DoubleBuffer buffer = DoubleBuffer.directAllocate(111);
-
-pns.el:pns-create-expand-env:148:	elem=(command . create-buffer), tmp=create-buffer, tmp1=create-buffer
-pns.el:pns-create-expand-env:148:	elem=(type . Short), tmp=(Byte Char Int Short Char Long Float Double), tmp1=Double
-pns.el:pns-create-expand-env:148:	elem=(method . allocate), tmp=(allocate directAllocate), tmp1=directAllocate
-pns.el:pns-create-expand-env:148:	elem=(size . 111), tmp=nil, tmp1=111
-Mark set
-
-
+    
+    pns.el:pns-create-expand-env:148:	elem=(command . create-buffer), tmp=create-buffer, tmp1=create-buffer
+    pns.el:pns-create-expand-env:148:	elem=(type . Short), tmp=(Byte Char Int Short Char Long Float Double), tmp1=Double
+    pns.el:pns-create-expand-env:148:	elem=(method . allocate), tmp=(allocate directAllocate), tmp1=directAllocate
+    pns.el:pns-create-expand-env:148:	elem=(size . 111), tmp=nil, tmp1=111
+    Mark set
+    
+    
 *** DONE add shortcut to nio snippet org file
     CLOSED: [2017-01-04 Wed 17:40]
     - State "DONE"       from "STARTED"    [2017-01-04 Wed 17:40] \\
@@ -1292,55 +1294,55 @@ Mark set
       try to impelemnt. just add a parameter filter-header will works.
       But below will cause template nill.
       
-        (pns-do-expand '(("command" . "create-channel") ("for" ("read" "Input")))))
-
+      (pns-do-expand '(("command" . "create-channel") ("for" ("read" "Input")))))
+      
       below one works, but "for" still be promted:
       (pns-do-expand '(("command" . "create-channel") ("for" . "read"))))
       This wroks as expected.
       Fix this by adding a judge: if the element exists in filter-header, then don't select it, just use its value.
-
+      
     - State "STARTED"    from ""           [2017-01-03 Tue 23:35]
     one to read file, including create channel, create buffer, read from channel to buffer, .., close file.
     one to write file.
-
+    
     a shortcut is just a list of expanded headers. it locates under '^* shortcut.*' entry.
     TO the user, it works exactly the same as a snippet entry.
-
+    
     Solution: just pass a filter-header(current the initial value is nil, so select every template in pns-templates). Then only the needed parameters needs to be selected.
-
+    
 *** parameter format related
 **** default value for parameter
      XXX But seems now it's hard to add addtional data to a parameter without modifing its type.
-
+     
      It can be easily added.
      Current structure of a parameter:
      (key (select-value real-value))
-
+     
      Then just add default value to the third place, 
      (key (select-value real-value default-value)). If select-value is the same as real-value, just set they same.
-
+     
      The format is compatible to the old one.
-
+     
      Default value is displayed when selecting, if press enter, then key value will be nil.
-
+     
 **** parse value as symbol: a reference to another key
      why this is useful?
      Then I can define a 'global variable'(may be in another src block instead of header), and refer to that variable in another 'header' src block.
      This is quite useful in this situation:
      In a shortcut, two header refers to the same variable(such as filehandle, filename), by get that info and saved to a 'global variable', we avoid prompt for that info twice.
-
+     
      The 'global variable' is used to collect all parameters needed by the whole shortcut headers, and in the header definition, we just pass all values.
-
+     
      Maybe we can use this syntax to express a variable reference:
      (key value)      : value is treated as string
      (key $reference) : reference is treated as a symbol. prefixed by a '$'
      (key @doc) : doc is the document for this parameter. prefixed by a '@'. Or (key "@this is a doc contais blanks"). and (key (select-value real-value @doc-for-selected-value)) also works, it add a doc to this value.
      It will be displayed as name for helm.
      (key =default-value): default-value is the default value of this parameter. prefixed by a "=".
-
+     
      All those parameters are regular chars in lisp.
      '#', '?' is not valid
-
+     
      test:
      #+NAME: no-name
      #+begin_src elisp
@@ -1354,67 +1356,71 @@ Mark set
 
 
      #+end_src
-
+     
 **** should provide a way to define non selectable parameters.
      e.g. buffer-types parameter just servered as an global variable, not the headers.
-
+     
      To fix, there are two ways: define other src names, such as 'global-definition' instead of 'header', the latter is used for prompt for input.
      two: still use header name, but...
      I prefer the first one.
-
+     
 *** CANCELLED refactory: pns-prompt-for-header
     CLOSED: [2017-01-04 Wed 21:37]
     - State "CANCELLED"  from ""           [2017-01-04 Wed 21:37]
     - Note taken on [2017-01-04 Wed 21:33] \\
       seems no need to do so. Because in shortcut we will use this feature.
     TODO: seems we can return the real-value directly by helm. Now returned the select-value.
-
+    
     this function: values is a list of string. better to use a list of cons if the parameter value is cons. Then no need to convert latter.
     
-(defun  pns-prompt-for-header (&optional filter-header) 
-
-
-            (setq values (pns-get-header-element-values key filter-header))
-
-              (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
-                                               (action . (lambda (c) c)))
-                                             "Select"))
-
+    (defun  pns-prompt-for-header (&optional filter-header) 
+    
+    
+    (setq values (pns-get-header-element-values key filter-header))
+    
+    (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
+    (action . (lambda (c) c)))
+    "Select"))
+    
     pns.el:nil:113:	values=(create-channel create-buffer fill-buffer extract-buffer write-to-channel-from-buffer read-from-channel-to-buffer import-needed-package)
-pns.el:nil:113:	values=(read write)
-pns.el:nil:113:	values=(part1 part2)
-pns.el:nil:113:	values=(nil)
-i
+    pns.el:nil:113:	values=(read write)
+    pns.el:nil:113:	values=(part1 part2)
+    pns.el:nil:113:	values=(nil)
+    i
 *** shortcut: string value, the '"' will missing in the generated codes.
     e.g. after expanded, file name  is `aa.bb' instead of `"aa.bb"'
     (file-name "aa.bb")
-
+    
 *** DONE shortcut: import part will be inserted after the fowwling parts
     CLOSED: [2017-01-04 Wed 21:15]
     - State "DONE"       from "STARTED"    [2017-01-04 Wed 21:15]
     - State "STARTED"    from ""           [2017-01-04 Wed 20:01]
     caused by prompt for file name. if i set value for file-name, then it is ok.
     (file-name "aa.bb")
-
+    
     This issue should be caused by helm, not yasnippet. Because helm will save current position.
     And two helm session is nested.
-
+    
     After tested, it is 'read-string' that make point with wrong value.
-        in shortcut,pooint: 19803
-point: 19803
-after point: 19872
-in shortcut,pooint: 19872
-before read-string. ponint:19872
-is-buffer-file-temp called
-afeter read-string. ponint:19803
-point: 19803
-after point: 19906
-in shortcut,pooint: 19906
-point: 19906
-after point: 19961
-in shortcut,pooint: 19961
-p
- 
+    in shortcut,pooint: 19803
+    point: 19803
+    after point: 19872
+    in shortcut,pooint: 19872
+    before read-string. ponint:19872
+    is-buffer-file-temp called
+    afeter read-string. ponint:19803
+    point: 19803
+    after point: 19906
+    in shortcut,pooint: 19906
+    point: 19906
+    after point: 19961
+    in shortcut,pooint: 19961
+    p
+    
+*** write function test codes
+    Target: a test is in the "test-method" src block. The result is in the "test-result" src block.
+    Provide a function to run all the test, and print not passed cases.
+    
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
@@ -1422,12 +1428,30 @@ p
 ** programming notes
 *** throw errors guard correctness, detect fault in development stage
     Then when error happens, the program stops at that place, debugging will be much easy.
+*** write test for each function
+    This helps understand the function. and also a regretion test.
+*** use uniform data format. If not the same, first convert to the same
+    This will greatly reduce complexsity of codes. 
     
+    In this project, the parameter has tow form:
+    (key value) and (key (display-value real-value)).
+    
+    So there are lots of codes that handle the difference of those tow froms.
+    
+    Good way is: first convert to uniform format before processing.  This applys in many places.
+*** input-parser: a program should have a uniform/stable internal format for representing the input data
+    Then we can change the original input format easily, just write a new input parser.
+
+    In this project, the input data is an org mode file. The internal format is a lists of template.
+    We can easily change the input date to a string, or a list, just write a new parser for that data format.
+
+    We can name this function as xxx-input-parser, it accepts one type of input data, and always return the internal input format. The xxx-input-parser function call different coolier functions to process input data, based on their type.
+
 ** doc
 *** Three main part of the program
     1. get parameters from user by helm or read-string. Done by pns-prompt-for-header.
        The input is pns-templates(now it is a global variable), but only the header part is needed.
-
+       
        What this fucntion done is given a list of headers, let user select parameter values if there are multiple, and finally return one unique header.
        A header can be wrtten in a relative flexible way.
        
@@ -1435,7 +1459,7 @@ p
        an example: pns.el:pns-do-expand:157:	header=(("command" . "create-channel") ("for" . "read") ("part" . "part1") ("file-name" . "\"aaa.b\""))
     2. expand a snippet by yas-expand-snippet
        Definition:  a snippet is the content part of a template.
-
+       
        The input is a header.
        pns-templates defines relationship between a header and a snippet. Given a header, there will be one snippet. and the header is the expand-env.
        
@@ -1448,7 +1472,7 @@ p
        
        Each entry in a template file may contains two src blocks named 'header' or 'content'.
        All 'header' src blocks from the root entry to any leaf entry(included) forms one header element, the same apllys for 'content' src blocks. And this header and content elements combined.
-
+       
        
     pns-do-expand integrate part 1 and part2.
 *** relationship
@@ -1459,7 +1483,197 @@ p
     |        |           |                  | filter  | list of header    | header with default value |
     |        | name      | :string          |         |                   |                           |
     Note: the table looks unaligned because 'space' is narrow than a letter.
-
+    
     A shortcut is a way to 1: provide default values to parametes in a header, then those parameters will not be prompted. 2: combine many templates.
     
     a shortcut with empty filter let user select all possible template. The name should be "details".
+*** parameter format
+    Maybe its better to use struct to express a parameter.
+    
+    The parameter struct definition. Use struct is it can be extented easily.
+    #+NAME: no-name
+    #+begin_src elisp
+    (defstruct pns-value
+      display
+      real
+      )
+
+    (defstruct pns-parameter
+      key 
+      values  ;; a list of pns-value
+      doc
+      default-value
+      reference ;; the referenced variabled string name
+      not-prompt-p ;; should this parameter not be prompted. in case this in only used as variable referenced by other elements.
+      )
+
+    (setq a (make-pns-parameter :key "command" :default-value "aaaaa"))
+
+    (pns-parameter-default-value a)
+
+    #+end_src
+    
+**** the new parser
+     #+NAME: vars-hatch
+     #+begin_src elisp
+     (setq pns-token-reference "\\$")
+     (setq pns-token-default-value "=")
+     (setq pns-token-doc "@")
+     #+end_src
+     
+     #+NAME: methods-hatch
+     #+begin_src elisp :results output
+     (defun pns-parse-parameter (parameter)
+       "parse a parameter to the pns-parameter struct. The parameter is read form the snippet file, are a list of symbols"
+       ;; a input parameter is in this format:
+       ;; 1. (key value)
+       ;; 2. (key (display-value real-value) )
+       ;; an element may be a symbol, or a string, and there are special elemnt, which start with a special character.
+       (let (para elem pp)
+
+         ;; convert all to string
+         (setq para
+               (mapcar (lambda (element)
+                         (cond ((stringp element) (format "\"%s\"" element))
+                               ((symbolp element) (format "%s" element))
+                               ((listp element)
+                                (mapcar (lambda (elem)
+                                          (cond ((stringp elem) (format "\"%s\"" elem))
+                                                ((symbolp elem) (format "%s" elem))
+                                                (t (error "Elem type wrong: %S" elem))))
+                                        element)
+                                )
+                               (t (error "Parameter's element type wrong, only symbol or string accepted: %S" element))))
+                       parameter))
+
+         ;; make pns-parameter
+         (setq pp (make-pns-parameter))
+         (setf (pns-parameter-key pp) (pop para))
+         (tracee pp)
+         (unless (pns-parameter-key pp)
+           (error "Parameter is nil: %S" para))
+
+         (while para
+           (setq elem (pop para))
+           (tracee elem)
+           (cond
+            ;; parse values
+            ((listp elem)
+             (setf (pns-parameter-values pp) (append (list (cons (nth 0 elem) (nth 1 elem))) (pns-parameter-values pp))))
+
+            ;; BUG: if $ not at the begining, still matched.
+            ;; parse doc
+            ((and (stringp elem) (string-match pns-token-doc elem))
+             (setf (pns-parameter-doc pp) (substring elem 1)))
+
+            ;; parse reference
+            ((and (stringp elem) (string-match pns-token-reference elem))
+             (setf (pns-parameter-reference pp) (substring elem 1)))
+
+            ;; parse default-value
+            ((and (stringp elem) (string-match pns-token-default-value elem))
+             (setf (pns-parameter-default-value pp) (substring elem 1)))
+
+            (t (message "here")
+               (unless (stringp elem) (error "Element is not string: %S" elem))
+               (setf (pns-parameter-values pp) (append (list (cons elem elem)) (pns-parameter-values pp))))
+            )
+           )
+         (tracee pp)
+         pp))
+
+     (defun pns-parse-header (header)
+       (mapcar (lambda (parameter)
+                 (pns-parse-parameter parameter))
+               header))
+
+     (defun pns-parse-templates (templates)
+       (mapcar (lambda (tmpl)
+                 (pns-parse-header (pns-assoc 'header tmpl)))
+               templates))
+
+     (defun pns-do-xxx ()
+       (pns-parse-templates pns-tmp-templates))
+
+     (defun pns-format-parameter (parameter)
+       (format " key: %s\n values: %s\n doc: %s\n default-value: %s\n reference: %s\n not-prompt-p: %s\n\n"
+               (pns-parameter-key parameter)
+               (pns-parameter-values parameter)
+               (pns-parameter-doc parameter)
+               (pns-parameter-default-value parameter)
+               (pns-parameter-reference parameter)
+               (pns-parameter-not-prompt-p parameter))
+       )
+
+     (message "%S" (mapcar (lambda (header)
+                             (mapcar (lambda (parameter)
+                                       (pns-format-parameter parameter))
+                                     header))
+                           (pns-do-xxx)))
+     #+end_src
+     
+     
+     this function convert the snippet file's src blocks tree to a the lisp repreent part. The main job is merge 'header' and 'content' src blocks.
+     
+     #+name: test-input 
+     #+BEGIN_SRC org :tangle /tmp/pns.x.y/1.org :mkdirp yes
+     ,* snippet: aaa
+       ,#+name: header
+       ,#+begin_src elisp
+        ((g-file-name "=abc.txt") (g-file-handler =$fh))
+       ,#+end_src
+
+       aaaa
+
+     ,** aaaaa
+        ,#+name: header
+        ,#+begin_src elisp
+        ((command open "@open a file") (target file "@not a pipe")
+         (for =write (read <) (write >) (append >>) (readwrite +>))
+         (file-name $g-file-name) (file-handler $g-file-handler))
+        ,#+end_src
+        aaa 
+        
+        ,#+name: content
+        ,#+begin_src perl :results output
+        open my `file-handler`, `for`, `file-name` or die "Open file failed";
+        ,#+end_src
+        aaa
+     ,** bbbbb
+        ,#+name: header
+        ,#+begin_src elisp
+        ((command close "@close a file") (file-handler $g-file-handler))
+        ,#+end_src
+        aaaa 
+        ,#+name: content
+        ,#+begin_src perl :results output
+        close `file-handler`;
+        ,#+end_src
+
+        aaaa
+
+     #+END_SRC
+        
+        #+name: test-input
+        #+NAME: test-methods for pns-create-templates
+        #+begin_src elisp
+     (setq snippet-file "/tmp/pns.x.y/1.org")
+
+     (setq pns-tmp-header nil)
+     (setq pns-tmp-templates nil)
+     (pns-create-templates
+      (pns-convert-block-list-to-tree (pns-get-all-src-blocks snippet-file pns-snippet-entry-regexp))
+      nil nil)
+     ;; the result is in pns-tmp-templates
+     (message "%S" pns-tmp-templates)
+        #+end_src
+        
+        #+RESULTS: test-methods
+     : (((header (g-file-name "=abc.txt") (g-file-handler =$fh) (command open "@open a file") (target file "@not a pipe") (for =write (read <) (write >) (append >>) (readwrite +>)) (file-name $g-file-name) (file-handler $g-file-handler)) (content . "   open my `file-handler`, `for`, `file-name` or die \"Open file failed\";
+     : ")) ((header (g-file-name "=abc.txt") (g-file-handler =$fh) (command close "@close a file") (file-handler $g-file-handler)) (content . "   close `file-handler`;
+     : ")))
+        
+        
+        
+        
+    
