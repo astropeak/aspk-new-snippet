@@ -300,7 +300,7 @@
     #+end_src
     
     #+RESULTS: methods
-==============    ==    ==    ===================pns-do-xxx
+    ==============    ==    ==    ===================pns-do-xxx
     =    
     
     #+NAME: test-
@@ -1038,10 +1038,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
     
     #+RESULTS: vars
-=@
-==@
-==@
-=    
+    =@
+    ==@
+    ==@
+    =    
 **** read all shortcuts from a snippet file
      Input: pns-snippet-file, output: pns-shortcuts
      #+NAME: methods
@@ -1183,14 +1183,72 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 (pns-main-1)
     #+end_src
     
-    #+RESULTS: no-name
-    | key | (quote reference) |
-    =pns-templates updated.
-    =    
 *** write a snippet file for java file processsing,  by io
     
-*** multiple snippet files supports, integrated to helm-c-yasnippet
+*** DONE multiple snippet files supports, integrated to helm-c-yasnippet
+    CLOSED: [2017-01-05 Thu 11:48]
+    - State "DONE"       from "STARTED"    [2017-01-05 Thu 11:48] \\
+      tested. With little bug for org.org snippet.
+    - Note taken on [2017-01-05 Thu 11:44] \\
+      codes write done. Based on the underlining functions, the function can be created quite easy.
+    - Note taken on [2017-01-05 Thu 10:56] \\
+      one snippet file is a module. all files is a list of module, pns-modules.
+    - State "STARTED"    from ""           [2017-01-05 Thu 10:08]
+      What finished now is processing a single snippet file, which has two parts: a snippet entry and a shortcut entry.
     Each file contains a list of templates. different file's templates are independent.
+    
+    #+NAME: vars
+    #+begin_src elisp
+(defvar pns-modules nil "List of modules. a module corespongidng to a snippet file")
+(defvar pns-module-name nil "this var is used to save current module name when processing")
+(defvar pns-snippet-dir (expand-file-name "./snippets") "The directory for all snipppet files")
+    #+end_src
+    
+    create pns-modules
+    #+NAME: methods
+    #+begin_src elisp
+    (defun pns-create-module-1 (file)
+      (let (pns-templates pns-shortcuts (pns-snippet-file file))
+        (pns-main-update-templates)
+        (pns-update-shortcuts)
+        (list (cons 'name (file-name-nondirectory file))
+              (cons 'templates pns-templates)
+              (cons 'shortcuts pns-shortcuts))))
+
+    (defun pns-create-modules (dir)
+      ;; iterate all file names under directory dir with an optional filter function, recursively
+      (require 'f)
+      (mapcar (lambda (file)
+                ;; (message "File: %s" file)
+                ;; Here file is file name, add processing codes here
+                (pns-create-module-1 file))
+              ;; the second parameter can be a function filtering the file names.
+              (f-files dir nil t)))
+
+    (defun pns-create-modules-run ()
+      "A run funcion alwasy has no parameter and no return value"
+      (interactive)
+      (setq pns-modules (pns-create-modules pns-snippet-dir)))
+    #+end_src
+    
+    select module with helm
+    #+NAME: methods
+    #+begin_src elisp
+    (defun pns-main-module ()
+      "using helm to select a module and run. Input is pns-modules"
+      (interactive)
+      (let ((cand (mapcar (lambda (module)
+                            (cons (pns-assoc 'name module) module))
+                          pns-modules)))
+        (helm-other-buffer `((name . "module")
+                             (candidates . ,cand)
+                             (action . (lambda (module)
+                                         (let ((pns-templates (pns-assoc 'templates module))
+                                               (pns-shortcuts (pns-assoc 'shortcuts module)))
+                                           (pns-main-shortcut)))))
+                           "Module")))
+    #+end_src
+
     
 *** throw error when current idx has more than one parameter keys
     Or the user will no know what going wrong.
@@ -1446,7 +1504,45 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     We can easily change the input date to a string, or a list, just write a new parser for that data format.
 
     We can name this function as xxx-input-parser, it accepts one type of input data, and always return the internal input format. The xxx-input-parser function call different coolier functions to process input data, based on their type.
+*** emacs lisp global variable, and funtion interface design
+    the -contains? function from dash package don't add a third parameter, but it use a global variable -compare-fn to used as compare function.
+    Since emacs list is dynamic binding, so we can use this idiom to express this without change the global value of '-comare-fn' value:
+    #+NAME: no-name
+    #+begin_src elisp :results value
+    (let ((-compare-fn (lambda (a b) (equal (+ 1 a) b))))
+      (-contains? '(1 2 3) 2)
+      )
+    ;; and here -contains-fn still its original value.
+    #+end_src
+    
+    This teckniques are used common when search regexp:
+    #+NAME: no-name
+    #+begin_src elisp
+    (let* (
+           (name "\\(header\\|content\\)")
+           (case-fold-search t)  ;; makes the searching ignore case
+           (regexp (concat org-babel-src-name-regexp name "[ \t(]*[\r\n]\\(?:^#.*[\r\n]\\)*"
+                           (substring org-babel-src-block-regexp 1))))
+      (re-search-forward regexp nil t))
 
+    #+end_src
+    
+    -contains? documents
+    #+BEGIN_SRC text
+    -contains? (list element)
+
+Return non-nil if list contains element.
+
+The test for equality is done with equal, or with -compare-fn if that's non-nil.
+
+Alias: -contains-p
+
+(-contains? '(1 2 3) 1) ;; => t
+(-contains? '(1 2 3) 2) ;; => t
+(-contains? '(1 2 3) 4) ;; => nil
+
+    #+END_SRC
+    
 ** doc
 *** Three main part of the program
     1. get parameters from user by helm or read-string. Done by pns-prompt-for-header.
@@ -1487,6 +1583,8 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     A shortcut is a way to 1: provide default values to parametes in a header, then those parameters will not be prompted. 2: combine many templates.
     
     a shortcut with empty filter let user select all possible template. The name should be "details".
+    
+    One snippet file is one module, a module's name property is used to selected by helm. then we call pns-main-shortcut.
 *** parameter format
     Maybe its better to use struct to express a parameter.
     
