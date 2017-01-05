@@ -1,0 +1,41 @@
+* snippet
+** iterate all file names under a directory, recursively, with an optional filter function
+   #+name: header
+   #+begin_src emacs-lisp
+((command iterate-all-file-names) (dir) (recursivep (yes t) (no nil)))
+   #+end_src
+   
+   #+name: content
+   #+begin_src emacs-lisp
+   ;; iterate all file names under directory `dir` with an optional filter function, recursively
+   (require 'f)
+   (mapc (lambda (file)
+           (message "File: %s" file) 
+           ;; Here file is file name, add processing codes here
+
+           )
+         ;; the second parameter can be a function filtering the file names.
+         (f-files `dir` nil `recursivep`))
+   #+end_src
+   
+   #+NAME: no-name
+   #+begin_src elisp
+      ;; iterate all file names under directory "." with an optional filter function, recursively
+   (require 'f)
+   (mapc (lambda (file)
+           (message "File: %s" file) 
+           ;; Here file is file name, add processing codes here
+
+           )
+         ;; the second parameter can be a function filtering the file names.
+         (f-files "." nil t))
+
+   #+end_src
+
+* shortcut
+** details
+   This entry is used to delete every snippet.
+   #+NAME: header
+   #+begin_src elisp
+   (())
+   #+end_src

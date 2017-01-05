@@ -1,0 +1,99 @@
+* snippet
+** src block
+
+*** header src block
+    #+name: header
+    #+BEGIN_SRC elisp
+    ((command header-src-block))
+    #+END_SRC
+    
+    #+name: content
+    #+BEGIN_SRC org
+    ,#+name: header
+    ,#+begin_src emacs-lisp
+
+    ,#+end_src
+
+    #+END_SRC
+    
+    
+    
+*** content src block
+    #+name: header
+    #+BEGIN_SRC elisp
+    ((command content-src-block)
+(lang "c++" "c" "cc" "cmake" "csharp" "css" "emacs-lisp" "erlang" "html" "inf-ruby" "java" "javascript" "js" "js2" "js3" "jsp" "less-css" "lua" "nxml" "objc" "org" "perl" "python" "rhtml" "rspec" "ruby" "scala" "scss" "sh" "snippet" "web")
+)
+    #+END_SRC
+    
+    #+name: content
+    #+BEGIN_SRC org
+    ,#+name: content
+    ,#+begin_src `lang`
+
+    ,#+end_src
+
+    #+END_SRC
+    
+    
+** snippet file
+
+    #+name: header
+    #+BEGIN_SRC elisp
+    ((command whole-snippet-file) 
+(lang "c++" "c" "cc" "cmake" "csharp" "css" "emacs-lisp" "erlang" "html" "inf-ruby" "java" "javascript" "js" "js2" "js3" "jsp" "less-css" "lua" "nxml" "objc" "org" "perl" "python" "rhtml" "rspec" "ruby" "scala" "scss" "sh" "snippet" "web")
+)
+    #+END_SRC
+
+    #+name: content
+   #+BEGIN_SRC org
+   ,* snippet
+   ,** aa
+      ,#+name: header
+      ,#+begin_src emacs-lisp
+      
+      ,#+end_src
+      
+      ,#+name: content
+      ,#+begin_src `lang`
+
+      ,#+end_src
+      
+   ,* shortcut
+   ,** details
+      This entry is used to delete every snippet.
+      ,#+NAME: header
+      ,#+begin_src elisp
+      (())
+      ,#+end_src
+      
+      aaa
+    
+   #+END_SRC
+
+      
+* shortcut
+  
+** both src block
+   #+NAME: header
+   #+begin_src elisp
+   (
+    ((command header-src-block))
+    ((command content-src-block))
+    )
+   #+end_src  
+   
+** whole snippet file
+   #+NAME: header
+   #+begin_src elisp
+   (
+    ((command whole-snippet-file))
+    )
+   #+end_src  
+   
+** details
+   This entry is used to delete every snippet.
+   #+NAME: header
+   #+begin_src elisp
+   (())
+   #+end_src
