@@ -1657,8 +1657,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       ;; (pns-get-all-src-blocks snippet-file pns-snippet-entry-regexp))
      #+end_src
      
-     
 ** run
+   - Note taken on [2017-01-06 Fri 21:23]
+   First run pns-create-modules-run to generate pns-modules. This will searching all files under pns-snippet-dir, each file should have two entries: '* snippet: xxx' and '* shortcut: yyy', or there will be an error.
+   Then run pns-main-module to select a snippet.
+
+   The old method, also applicable.
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
    
