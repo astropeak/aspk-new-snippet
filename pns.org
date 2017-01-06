@@ -1256,7 +1256,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                                            (pns-main-shortcut)))))
                            "Module")))
     #+end_src
-
+    
     
 *** throw error when current idx has more than one parameter keys
     Or the user will no know what going wrong.
@@ -1494,11 +1494,167 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       maybe we can just remove the leading ','.
     - State "STARTED"    from ""           [2017-01-05 Thu 11:51]
     So the expanded content will contains a ',' before.
-        ,#+name: content
-,#+begin_src csharp
+    ,#+name: content
+    ,#+begin_src csharp
+    
+    ,#+end_src
+    
+*** use headings to select detailed snippets instead of the fisrt parameter
+    
+*** add mode support
+    Only that mode's snippet can be selected.
+    With a prefix, select form all modes.
+    
+    Then I should add another field to module: mode
+    
+    create all mode dir
+    #+NAME: no-name
+    #+begin_src elisp
 
-,#+end_src
+    (mapcar (lambda (mode)
+              (setq dir (format "%s/%s-mode" pns-snippet-dir mode))
+              (unless (file-exists-p dir) (message "Creating dir: %s" dir) (mkdir dir t))
+              )
+            '("c++" "c" "cc" "cmake" "csharp" "css" "emacs-lisp" "erlang" "html" "inf-ruby" "java" "javascript" "js" "js2" "js3" "jsp" "less-css" "lua" "nxml" "objc" "org" "perl" "python" "rhtml" "rspec" "ruby" "scala" "scss" "sh" "snippet" "web"))
 
+    #+end_src
+    
+    shortcut may be a general idea. It can combine any snippet sources. The aspk-code-snippet works good seems. we should only use key words to search for a snippet, wether if it is a snippet or a shortcut.
+
+*** pns should also support the yas snippet function.
+    for simple snippet, aspk-code-snippet works better. simple snippet can be created quickly.
+
+    But for complex snippet, aspk-new-snippet is better. The writting is quite complex.
+    
+*** STARTED new idea: delete shortcut, create expand env dynamically and look backward, every headlines are selectable
+    - State "STARTED"    from ""           [2017-01-06 Fri 15:08]
+      Already have many thinkings, writting many notes.
+    1. headlines selection:
+       - if it is a leaf entry, then just expand its contents. if a variable has no binding, look backword for that variable. if not exists in every parents, then prompt the user for value.
+       - else, all the children entrys will be expanded. The variable resolving method is the same.
+       - so, the tree structure of all entrys is important.
+       THink: should headlines should be merged for selection? =>We can  mergeed to see the effect at first.
+    2. then shortcut is not needed.
+       
+    This idea is great 
+    
+    On implementation:
+    1. we should get all variable names in the snippet contents. So that we can prompt the user for value it it not exists in env(and parent env).
+       Maybe we can use a new syntax for this. such as %var-name, and %(var-name default-value), and %(var-name value1 value2 ), and %(var-name (value1-display value1-real) (value2-diaply value2-real)), that is,  the same format as the original header. And here support variable reference will be easy, just compile %(var1 $ref) to `ref` instead of `var1`.
+       
+       In fact just embbed the original header in the contents. 
+       The new syntax will be compiled to `var-name` syntax and expand-env before passed to yas-expand-snippet.
+       So we only need to compile this format to the current format.
+       
+       Why not just use $var-name? =>we want preserve the old syntax for local selection/input.
+       Why not just use `var-name` => we want have default value
+       
+       The finally effects is: 
+       1. writtig snippet is just the same as method provided by yasnippet, but with new syntax added(the % syntax).
+          
+       2. specify snippets hierachy / relationship by org entry tree.
+          - Each entry is a snippet of all the children's snippets.
+          - child entry can inheritate env variable from parent entry.
+          - *BUT* sometimes not all children should be included. On one condition, include this child, but on anothe condition, include that child. The decision is decided by a env variable of the parent. 
+            => I think this can be fixed by a annotation named precondition:  @(precondition (var1 value11 value12) (var2 value21))
+            This snippet will be included only when var1 equals value11 or value12, and var2 equals value21.
+            Dynamic binding is great!! seems Fixed.
+            
+            Another problem:
+            Some snippets should be seperated to two parts. How to resolve this? by tree structure, seems not good. 
+            => this problems can be fixed by simplely following this rule: all the following siblings of an entry will be placed at $0 of this entry's snippets. Perfectly fixed!!
+            
+            
+    according above rules,  I rewrite the java file processing snippet file:
+    c:/Users/luooofuq/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org
+    
+    Some findings:
+        1. when expand an entry, two parameters should be passed:
+           1. the caller, by parent entry or by end user
+           2. the env variables.
+              The env saves all possiable values for all defined and referenced variables. This should be uniform for both callers.  
+              By for parent entry caller, the variables who already have values should only have this exact value in the env, instead of all possiable values.
+              Then the codes can process in the same way.
+        2. with the new methods, this var is shared easily by many snippets
+           @(vars (for  (read "Input") (write "Output")))
+        3. embedded variable definiton syntax
+           `var-name value1 value2 (value3-display value3-real) value4`
+           Only one variable can be defined with this syntax.
+        4. formal variable definiton syntax
+           @(vars (var1-name value1 value2 (value3-display value3-real) value4)  var2-name  ...)
+           Many variables can be defined with this syntax. The var1-name is the same as the above var-name.
+        5. Notes on the two variable definition syntax
+           They have the same effects in perspective of variable creation and value getting. 
+           The difference is that for embedded syntax, the var-name will be included in the snippets content, while for formal syntax, it will be removed from snippets content.
+           The below two are exactly the same:
+           #+name: formal syntax
+           #+BEGIN_SRC perl
+           @(vars (file-name "aaa.txt"))
+           open my $fh, "<", `file-name`;
+           #+END_SRC
+
+           #+name: embedded syntax
+           #+BEGIN_SRC perl
+           open my $fh, "<", `file-name "aaa.txt"`;
+           #+END_SRC
+
+           Most time we will use embedded syntax since it is convienint.
+        6. the if annotation works like an if statement, used for check precondition is fullfilled.
+            @(if (for write))
+           Currently we only support if one variable value is some value, but we don't support one variable value is not some value. Do we need this? 
+           => We can add a new annotation @(unless) to express this when we need this.
+           There can be many if statements within one single template text.
+       
+       Seems this way is perfect!! without any pitfalls. great!!
+
+           
+       About the structure:
+       - template: assoc list of below element. Represent an org mode file entry.
+         - name: string. this is the head line of the entry
+         - defined variables: list of list of variable name and their possiable values.
+           All variables defined, either formlly by @(vars) annotation, or by embedded syntax `var value`.
+           Order is respected.
+         - hungry variables: list of variable names, which is a string. This is the variables that need getting value, either form env, or end user.
+           either specified by @(get) annotation, or by embedded syntax `var value`.
+           Order is respected.
+         - precondition variables: assoc list of ((equal . (A)) (notequal . (A))), A: list of (var value).
+           in two parts: equal and not equal, either specified by @(if ) or @(unless).
+           Order is respected.
+         - text: string.
+           with all annotation and embedded syntax removed.
+         - children: list of template
+           Nil if this is a leaf entry.
+         - parent: template.
+           Nil if this is a root entry.
+
+      How to expand a snippet:
+      Praemter:
+      1. the template that to be expanded:template
+      2. [optional]already filled variables: list of cons of (varname . value)
+      3. [optional]caller: symbol of parent or user.
+         
+      Processing steps:
+      1. prepare the variable value pool, which specify all possiable values for a variable, is a list of all element of parent's defined variables.
+         Seems this step only need be done once. and saved in the env field of a template. =>can be done on the fly and memorized.
+      2. If caller is nil:
+         if filledVariables is nil, set caller to 'user,
+         else set caller to 'parent.
+      3. check the precondition 
+         if failed , return
+      4. get values for hungry variables.
+         First search in the already filled variables, then from user.
+      5. put this variable to already filled variables.
+      6. call yas-expand-snippet to expand the snippet, pass the text, and already filled variables.
+      7. process children. For each child, repeat step 1~7.
+         Note: already filled variables should be the same for all siblings. This makes sure no polution for each other.
+
+     Nother notes: may be we can concat all text part of a template, and its children, and only call yas-expand-snippet for only one time.
+     Or we can just make yas-expand-snippet a implementation to a virtual function of expand-snippet.
+
+
+     On the variable syntax:
+     (var-name value1 (value2-display value2-real) :doc "doc to this variable" value3 :reference var2)
+     use ':key value' pair to express propertys of the variable.
 
 ** run
    First run pns-main-1 to generate pns-templates from pns-snippet-file
@@ -1520,10 +1676,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     Good way is: first convert to uniform format before processing.  This applys in many places.
 *** input-parser: a program should have a uniform/stable internal format for representing the input data
     Then we can change the original input format easily, just write a new input parser.
-
+    
     In this project, the input data is an org mode file. The internal format is a lists of template.
     We can easily change the input date to a string, or a list, just write a new parser for that data format.
-
+    
     We can name this function as xxx-input-parser, it accepts one type of input data, and always return the internal input format. The xxx-input-parser function call different coolier functions to process input data, based on their type.
 *** emacs lisp global variable, and funtion interface design
     the -contains? function from dash package don't add a third parameter, but it use a global variable -compare-fn to used as compare function.
@@ -1563,7 +1719,12 @@ Alias: -contains-p
 (-contains? '(1 2 3) 4) ;; => nil
 
     #+END_SRC
-    
+*** annotation is a great way for adding syntax to a existing grammer
+    I use annotation to add below syntaxs to org mode file grammer:
+    1. define variables formally
+    2. the if statement
+    3. get variable value
+
 ** doc
 *** Three main part of the program
     1. get parameters from user by helm or read-string. Done by pns-prompt-for-header.
