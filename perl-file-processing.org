@@ -1,0 +1,150 @@
+
+* ideas & docs
+  - if a parameter has no value, then its value should be prompt for
+    such as the '(file)' parameter.
+  - maybe add a doc string to a parameter is a good idea. 
+    And the doc string is optional. If it not exists, then the parameter key will be used. Angin a good idea.
+    A parameter is e.g. '(command open)', 'command' is the parameter's key, 'open' is the parameter's value.
+  - ((k1 v1) (k2 (v21 v22))) is the same as the two: ((k1 v1) (k2 v21)) and ((k1 v1) (k2 v22))
+    We can always flatten the formmer to the latter to ease our implementation of parse the snippet. and we can make an header has uniform format by always transform it in this format: ((k1 v1 doc1) (k2 v2 doc2) ...), and k1 is always a symbol, v1 is always a cons of (key . value), doc1 is always a string of documentation of this parameter. This idea is great!! It greatly descreases the complexity of codes, for we only have one case to handle. A header is a list of parameters.
+    
+    When writting snippet, the latter form is better. It helps removing duplicates. But the former form also works. I love this flexibility!
+  - put the header in a source block named header, put the expanded codes in a source block named content
+    Currently the the header is put in the headline, then it's hard to write long headers.
+  - Put the global parameters in the source block name global-definition
+    And all the child entry and this entry can refer to that definition
+    So just put parameters to the root entry, all the snippet can access to those.
+    
+    Seems the 'global-definition' and 'header' block have very small differences. The element(which is a parameter) in a 'global-definition' only has one possible value, while a 'header' can has may values. So we can use 'header' as 'global-definition'. 
+    
+    What we really need is global function definition. Those functions will be created and can be used in the everywhere. 
+    Currently we can only support lambda functions to ease the implementation.
+  - the processing steps of this file to transform it to a template list
+    Note: a template is a list of ((header . H) (content . C))
+    1. find the level 1 entry started with 'snippet:'
+       Should have only one such entry. root-entry
+    2. init current-templates to nil, current-header, current-content to nil,
+       
+    3. set current-entry to root-entry
+       
+    4. process the content of current-entry
+       Note: content of an entry is the text betwwen the entry's headline and its first child entry's headline, exclusive.
+       - for block named 'header', append all parameters of this header to current-header
+         Note: I find no need to seperate parameter and functions, because they all server as a environment variable. And our algorithm is that we only prompt for selection or input only when a parameter has mulitple values or has no value. If it has only one value, then nothing will be done, it will server as an environment value only.
+       - for block named 'content', append the content to current-content
+         without adding any newline characters. So you should add new line in the block if wanted.
+       - if this entry is a leaf, 
+         then add ((header . current-header) (content . content)) to current-templates.
+         then restore current-header and current-content to the original value.
+         
+       - else for all direct child entrys:
+         loop with current-entry in all direct child entrys:
+         repeat step 4.
+         
+    5. now current-templates contains all template of this snippet tree.
+       
+  - helm source candidate
+    the level one snippet entry's headline and
+    the direct child's headlines of level one shortcut entry
+    will be added as helm source candidate
+    
+    For both candidates, the level one snippet entry will first be processed to a templates list.
+    Note: maybe this can be processed at init stage and saved for latter use, and update when needed(such as the file has a newer version).
+    Then for the first type of candidate, the filter will be set to '()
+    for the second type of candidate, the filter will be set to source block 'filter' of that entry.
+    Note: a filter is a list of parameters, and is used to give initial value to a parameter. Then that parameter will not be prompt for selction or value.
+    
+    
+* snippet: processing files, open, read, write, close
+  #+name: header
+  #+begin_src elisp
+  ((snippet-name xxxxx))
+  #+end_src
+  
+** ((command open) (target file) (for ((read '<') (write '>') (append '>>') (readwrite '+>'))) (file))
+   #+name: header
+   #+begin_src elisp
+   ((command open) (target file)
+    (for (read <) (write >) (append >>) (readwrite +>))
+    (file))
+   #+end_src
+   
+   #+name: content
+   #+begin_src perl :results output
+   open my $fh, '`for`', `file` or die "Open file failed";
+   #+end_src
+   
+   Notes on variable binding:
+   For element type string, name, name-value, name-key all bind to the same string;
+   For element type cons, name is binded to the cons, name-key will be binded to (car name), name-value will be binded to (cdr name).
+   e.g.:
+   if `for` is '(read '<')', `for-value` will be 'read', `for-key` will be '<'.
+   if `target` is 'file', then `target-key`, `target-value` are all 'file'.
+   
+** ((command open) (target pipe) (for ((read '|-') (write '-|'))) (command))
+   #+name: header
+   #+begin_src perl :results output
+   ((command open) (target pipe) (for (read |-) (write -|)) (shell-command))
+   #+end_src
+   
+   #+name: content
+   #+begin_src perl :results output
+   open my $fh, '`for`', `shell-command` or die "Open command failed";
+   #+end_src
+   
+** ((command close))
+   #+name: header
+   #+begin_src perl :results output
+   ((command close))
+   #+end_src
+   
+   
+   #+name: content
+   #+begin_src perl :results output
+   close $fh;
+   #+end_src
+   
+** ((command read)  (file-handler) (to))
+   #+name: header
+   #+begin_src perl :results output
+   ((command read)  (file-handler) (to))
+   #+end_src
+   
+*** ((type line))
+    #+name: header
+    #+begin_src perl :results output
+   ((type line))
+    #+end_src
+    
+    
+    read a line from a file handler
+    #+name: content
+    #+begin_src perl :results output
+   `to` = <`file-handler`>;
+    #+end_src
+*** ((type whole-content-as-string))
+    #+name: header
+    #+begin_src perl :results output
+   ((type whole-content-as-string))
+    #+end_src
+    
+    
+    read the file's whole content as a string
+    #+name: content
+    #+begin_src perl :results output
+    local $/;
+    `to` = <`file-handler`>;
+    #+end_src
+    
+    
+* shortcut
+  shortcut is a way to predefine some parameters so that these parameters will not be prompted to user for value.
+  
+** open a file for read, and then close
+   This shortcut contains two header, the first one will define three element. The whole:
+   #+NAME: filter
+   #+begin_src elisp
+   (((command open) (target file) (for read))
+    ((command close)))
+   #+end_src
+   Element is a header, each element will be processed in turn.
