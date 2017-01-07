@@ -2,6 +2,7 @@
   #+name: content
   #+begin_src java
   @(vars (for  (read "Input") (write "Output")))
+  @(get for)
   #+end_src
 ** import needed package
    #+name: content
@@ -119,42 +120,5 @@
    fc.write(buffer);
    #+end_src
    
-   
 * snippet
-* shortcut: aaa
-** read file content
-   The file-name in create-channel will be prompt. and only this one.
-
-   #+NAME: header
-   #+begin_src elisp
-   (
-    ((command import-needed-package))
-    
-    ((command  create-channel) (for read) (part part1) )
-    ((command  create-buffer) (type Byte)  (size 1024))
-    ((command  read-from-channel-to-buffer) (part  part1))
-    ((command  extract-buffer) (content-type byte ))
-    ((command  read-from-channel-to-buffer) (part  part2))
-
-    ((command  create-channel) (for read) (part part2))
-    )
-   #+end_src
-** a test
-    #+NAME: header
-   #+begin_src elisp
-   (
-    ((command  create-channel) (for read) (part part1) )
-    ((command  create-buffer) (type Double) (method allocate) (size 1024))
-    ((command  read-from-channel-to-buffer) (part  part1))
-    ((command  extract-buffer) (content-type byte ))
-    ((command  read-from-channel-to-buffer) (part  part2))
-
-    ((command  create-channel) (for read) (part part2))
-    )
-   #+end_src
-** details
-   This entry is used to delete every snippet.
-    #+NAME: header
-   #+begin_src elisp
-   (())
-   #+end_src
+* shortcut

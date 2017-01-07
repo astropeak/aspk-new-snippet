@@ -715,7 +715,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+begin_src elisp
     (setq pns-src-block-name-regexp "\\(header\\|content\\)")
     #+end_src
-
+    
     #+NAME: methods
     #+begin_src elisp
     (defun pns-get-all-src-blocks (snippet &optional entry name)
@@ -1517,7 +1517,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     
     But for complex snippet, aspk-new-snippet is better. The writting is quite complex.
     
-*** STARTED new idea: delete shortcut, create expand env dynamically and look backward, every headlines are selectable
+*** DONE new idea: delete shortcut, create expand env dynamically and look backward, every headlines are selectable
+    CLOSED: [2017-01-07 Sat 20:06]
+    - State "DONE"       from "STARTED"    [2017-01-07 Sat 20:06] \\
+      Code finished. Call pns-expand-template-by-name to expand a template by selecting its name.
+      The snippets/java-mode/file-processing.org is the template file.
+      Works perfectly!!
     - State "STARTED"    from ""           [2017-01-06 Fri 15:08]
       Already have many thinkings, writting many notes.
 **** doc
@@ -1603,16 +1608,16 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
         About the structure:
         - template: assoc list of below element. Represent an org mode file entry.
           - name: string. this is the head line of the entry
-          - defined variables: list of list of variable name and their possiable values.
+          - defined variables(var-table): list of list of variable name and their possiable values.
             All variables defined, either formlly by @(vars) annotation, or by embedded syntax `var value`.
             Order is respected.
-          - hungry variables: list of variable names, which is a string. This is the variables that need getting value, either form env, or end user.
+          - hungry variables(hungry-vars): list of variable names, which is a string. This is the variables that need getting value, either form env, or end user.
             either specified by @(get) annotation, or by embedded syntax `var value`.
             Order is respected.
-          - precondition variables: assoc list of ((equal . (A)) (notequal . (A))), A: list of (var value).
+          - precondition variables(precondition-table): assoc list of ((equal . (A)) (notequal . (A))), A: list of (var value).
             in two parts: equal and not equal, either specified by @(if ) or @(unless).
             Order is respected.
-          - text: string.
+          - text: string. This is the content passed to yas-expand-snippet.
             with all annotation and embedded syntax removed.
           - children: list of template
             Nil if this is a leaf entry.
@@ -1622,7 +1627,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
        How to expand a snippet:
        Praemter:
        1. the template that to be expanded:template
-       2. [optional]already filled variables: list of cons of (varname . value)
+       2. [optional]already filled variables: list of list of (varname  value)
        3. [optional]caller: symbol of parent or user.
           
        Processing steps:
@@ -1648,14 +1653,397 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       (var-name value1 (value2-display value2-real) :doc "doc to this variable" value3 :reference var2)
       use ':key value' pair to express propertys of the variable.
 **** codes
+     Get the src block tree, Just reuse the old codes.
      #+NAME: no-name
      #+begin_src elisp
+     (setq file (expand-file-name "./snippets/java-mode/file-processing.org"))
 
-     
+     ;; get all src block in file
+     (setq a (pns-get-all-src-blocks file))
+     (setq b (pns-convert-block-list-to-tree a))
+     ;; b now is the tree
 
-     ;; (pns-convert-block-list-to-tree
-      ;; (pns-get-all-src-blocks snippet-file pns-snippet-entry-regexp))
+     (defun pns-print-tree-1 (tree)
+       ;; (message "Tree: %s" tree)
+       (message "level: %s, heading: %s"
+                (pns-assoc 'level tree)
+                (pns-assoc 'heading tree))
+       (mapc (lambda (tt)
+               (if (listp tt)
+                   (pns-print-tree-1 tt))
+               )
+             (pns-assoc 'children tree)))
+
+
+     (progn
+       (message "######### Tree Start ############")
+       (pns-print-tree-1 b)
+
+       (message "######### Tree End ############")
+       nil)
+
      #+end_src
+     
+     parse src block tree node's content part.
+     #+NAME: methods
+     #+begin_src elisp
+     ;; src = annotation + text-src
+     ;; text = replace `var value` syntax with `var` in text-src
+     (defun pns-src-parser (src)
+       "Convert src, which is the src block's content, to a assoc list of some fields of templates: var-table, hungry-vars, precondition-table, text"
+       ;; (message "src: %s" src)
+       (let (hungry-vars hungry-vars1 var-table var-table1 precondition-table text)
+         (multiple-value-setq
+             ;; annotation is a list of (annotaton-name value), the same part after @.
+             ;; text-src is the remaining src, where all `var value` syntax will be inspected.
+             (annotations text-src)
+           (pns-src-parser--consume-annotation src))
+
+         (multiple-value-setq
+             ;; hungry-vars is the vars of get annotation
+             ;; precondition-table is the vars of if annotation
+             (hungry-vars precondition-table var-table)
+           (pns-src-parser--parse-annotation annotations))
+
+         (multiple-value-setq
+             (hungry-vars1 var-table1 text)
+           (pns-src-parser--parse-text text-src))
+
+         `((var-table . ,(append var-table var-table1))
+           (hungry-vars . ,(append hungry-vars hungry-vars1))
+           (precondition-table . ,precondition-table)
+           (text . ,text))))
+
+     (defun pns-src-parser--consume-annotation (src)
+       (let (rst text-src (last-point 1))
+         (condition-case *error-info*
+             (progn
+               (and (get-buffer " myTemp") (kill-buffer " myTemp"))
+               (set-buffer (get-buffer-create " myTemp"))
+               (insert src))
+           (error
+            (message "Error happened: %S" *error-info*)
+            (debug *error-info*)
+            (list "Error: Fail to get snippet name. Error info below" *error-info*)))
+
+         (goto-char (point-min))
+         (while (re-search-forward "^\s*[^\\]?@\\(.*\\)$" (point-max) t)
+           (match-string 1)
+           ;; here (match-string 1) is the matched text by first (), add processing codes here
+           ;; (message "Matched string %S" (match-string 1))
+           (add-to-list 'rst (read (match-string 1)) 'append)
+           (setq last-point (match-end 0))
+           )
+         (setq text-src (buffer-substring-no-properties last-point (point-max)))
+         (kill-buffer " myTemp")
+         (list rst text-src)))
+
+
+     (defun pns-src-parser--parse-annotation (annotations)
+       (let (hungry-vars precondition-table var-table)
+         (mapc
+          (lambda (elem)
+            ;; (message "elem=%s" elem)
+            (cond ((equal (car elem) 'get)
+                   (setq hungry-vars (append hungry-vars (cdr elem))))
+                  ((equal (car elem) 'if)
+                   (setq precondition-table (append precondition-table (cdr elem))))
+                  ((equal (car elem) 'vars)
+                   (setq var-table (append var-table (cdr elem))))
+                  (t (error "Unsupported annotation: %S" elem))))
+          annotations
+          )
+         (list hungry-vars precondition-table var-table)))
+
+     (defun pns-src-parser--parse-text (text-src)
+       (let (hungry-vars var-table rst text tmp)
+         (condition-case *error-info*
+             (progn
+               (and (get-buffer " myTemp") (kill-buffer " myTemp"))
+               (set-buffer (get-buffer-create " myTemp"))
+               (insert text-src))
+           (error
+            (message "Error happened: %S" *error-info*)
+            (debug *error-info*)
+            (list "Error: Fail to get snippet name. Error info below" *error-info*)))
+
+         (goto-char (point-min))
+         (while (re-search-forward "`\\([^`]+\\)`" (point-max) t)
+           ;; (while (re-search-forward "" (point-max) t)
+           (match-string 1)
+           ;; here (match-string 1) is the matched text by first (), add processing codes here
+           (message "Matched string %S" (match-string 1))
+           (setq tmp (read (format "(%s)" (match-string 1))))
+           (add-to-list 'rst tmp 'append)
+           (replace-match (format "`%s`" (car tmp)))
+           )
+         (setq text (buffer-substring-no-properties (point-min) (point-max)))
+         (kill-buffer " myTemp")
+         (setq hungry-vars (mapcar (lambda (x) (car x)) rst))
+         (setq var-table (delete nil
+                                 (mapcar (lambda (x)
+                                           (when (> (length x) 1)
+                                             x)) rst)))
+         (list hungry-vars var-table text)))
+
+
+     #+end_src
+     
+     So for this src:
+     #+NAME: test-pns-src-parser-input
+     #+begin_src elisp
+     "@(get method)
+     @(if (method allocate allocateDirect))
+     `type`Buffer buffer = `type`Buffer.`method`(`size 1024`);"
+     #+end_src
+     
+     The result of pns-src-parser is:
+     #+NAME: test-pns-src-parser-result
+     #+begin_src elisp
+     (
+      (var-table (size 1024)) ;;because type and method don't have possiable values, so don't put them in var-table. Then we ensure the variable resolving rule.
+      (hungry-vars method type size) ;;Note method is the first hungry var, because it is defined by @(get method), and this line is the first line in src
+      (precondition-table (method allocate allocateDirect))
+      (text . "`type`Buffer buffer = `type`Buffer.`method`(`size`);")
+      )
+     #+end_src
+     
+     Some test codes:
+     #+NAME: no-name
+     #+begin_src elisp
+     (setq aa      "@(get method)
+               @(if (method allocate allocateDirect))
+          @(vars xxx)
+          @(get type)
+          @(vars (for (read <) (write >)))
+               `type`Buffer buffer = `type`Buffer.`method`(`size 1024`);"
+           )
+
+     (setq bb (pns-src-parser--consume-annotation aa))(setq cc (pns-src-parser--parse-annotation (car bb)))
+
+
+     ;; (pns-src-parser--parse-text "`type`Buffer buffer = `type`Buffer.`method`(`size 1024`);")
+     (pns-src-parser--parse-text (nth 1 bb))
+
+     (setq dd (pns-src-parser aa))
+
+
+
+     (defun pns-print-tree-2 (tree)
+       ;; (message "Tree: %s" tree)
+       (message "level: %s, heading: %s"
+                (pns-assoc 'level tree)
+                (pns-assoc 'heading tree))
+       (when (pns-assoc 'content tree)
+         (message "src paser result: %S" (pns-src-parser (pns-assoc 'content tree))))
+       (mapc (lambda (tt)
+               (if (listp tt)
+                   (pns-print-tree-2 tt))
+               )
+             (pns-assoc 'children tree)))
+
+     (pns-print-tree-2 b)
+     #+end_src
+     pns-src-parser works correctly for all srcs in the java-mode/file-processing file. Great!!!
+     
+     
+     Processing template, selecting with helm...
+     #+NAME: methods
+     #+begin_src elisp
+     (defun pns-convert-input-tree-to-template-tree (tree &optional parent)
+       "change the 'content to a src parser. return a template, which is a tree."
+       ;; *Important*: rst should have dynamic value, or it will alwasy get the old addresss.
+       (let ((rst (list '(i-am-root . t) '(name . "root")
+                        (cons 'dummy ;; create a number string with length 16
+                              (replace-regexp-in-string " " "0" (format "%16s" (random 10000000000000000)))))))
+         (when (pns-assoc 'content tree)
+           (setq rst (pns-src-parser (pns-assoc 'content tree)))
+           (push (cons 'parent parent) rst)
+           (push (cons 'name (pns-assoc 'heading tree)) rst))
+         ;; (tracee rst)
+         (setcdr rst (append  (cdr rst)
+                              (list (cons 'children
+                                          (delete nil
+                                                  (mapcar (lambda (tt)
+                                                            ;; (tracee tt)
+                                                            (if (listp tt)
+                                                                (pns-change-tree tt rst)))
+                                                          (pns-assoc 'children tree)))))))
+         rst))
+
+
+     (defun pns-print-template-tree (tree &optional height)
+       "This print a tree in a nice format"
+       (or height (setq height 0))
+       (let ((msg-func (lambda (info &rest args)
+                         (apply 'message (cons (format "%s%s" (make-string height ? ) info) args))))
+             tmp)
+
+         (funcall msg-func "--------------------")
+         (mapc (lambda (field)
+                 (when (pns-assoc field tree)
+                   (setq tmp (pns-assoc field tree))
+                   (when (stringp tmp) (setq tmp (replace-regexp-in-string "\n" "\\\\n" tmp)))
+                   (funcall msg-func "%s: %S" field tmp)
+                   ))
+               '(name hungry-vars var-table precondition-table text))
+
+         (mapc (lambda (tt)
+                 (pns-print-template-tree tt (+ 4 height)))
+               (pns-assoc 'children tree)))
+       nil)
+
+
+     (defun pns-create-template-new (file)
+       "create template(which is a tree) given FILE, which is an org mode template file"
+       (let ((tree (pns-convert-input-tree-to-template-tree (pns-convert-block-list-to-tree (pns-get-all-src-blocks file)))))
+         tree))
+
+     (defun pns-create-template-table (template &optional rst)
+       "Create a name to template object table, given template. Key is name, value is template. this table can be used as helm candidates"
+       (let (aaa)
+         (unless (assoc 'i-am-root template)
+           (setq rst (append (list (cons (pns-assoc 'name template) template)) rst)))
+         (mapc (lambda (tt)
+                 (setq rst (pns-create-template-table tt rst)))
+               (pns-assoc 'children template)))
+       rst)
+
+     (defun pns-get-var-table (template)
+       "Get the var table for the template, with parent's var table mergetd"
+       (let ((rst (pns-assoc 'var-table template))
+             (parent (pns-assoc 'parent template)))
+         (while parent
+           (message "parent name: %S" (pns-assoc 'name parent))
+           (setq rst (append (pns-assoc 'var-table parent) rst))
+           (setq parent (pns-assoc 'parent parent)))
+         (reverse rst)))
+
+     (defun pns-get-hungry-values (template &optional filled-vars)
+       "Get hungry for a template. Return a list of list of varname and value, (var-symbol value)"
+       (let ((hungry-vars (pns-assoc 'hungry-vars template))
+             (var-table (pns-get-var-table template))
+             possiable-values)
+         (mapcar (lambda (var)
+                   ;; change (read "Input") to (read . "Input")
+                   (setq possiable-values (mapcar (lambda (elem)
+                                                    (if (listp elem)
+                                                        (cons (nth 0 elem) (nth 1 elem))
+                                                      elem))
+                                                  (pns-assoc var var-table)))
+                   ;; (message "var: %S, possiable-values: %S" var possiable-values)
+                   (message "## Getting value for hungry var %s" var)
+                   (list var
+                         (cond
+                          ;; first search in filled-vars
+                          ((assoc var filled-vars) (nth 1 (assoc var filled-vars)))
+                          ;; get from helm
+                          ((> (length possiable-values) 1)
+                           (helm-other-buffer
+                            `(((name . ,(format "%s" var))
+                               (candidates . ,possiable-values)
+                               (action . (lambda (c ) c))
+                               (accept-empty . t)))
+                            (pns-assoc 'name template)))
+                          ;; get by read-string
+                          ((>= (length possiable-values) 0)
+                           (save-excursion (read-string (format "%s. %s[%s]: "
+                                                                (pns-assoc 'name template)
+                                                                var (or (car possiable-values) "")) nil nil (car possiable-values))))
+                          (t (error "Impossible to be here")))))
+                 hungry-vars)))
+
+
+     (defun pns-get-real-value-for-var (var-name display-value template)
+       "Get real value for var with display-value"
+       (let* ((var-table (pns-get-var-table template))
+              (var-values (pns-assoc var-name var-table))
+              (rst display-value))
+         (mapc (lambda (value)
+                 (when (and (listp value) (equal display-value (car value)))
+                   (setq rst (nth 1 value))))
+               var-values)
+         (message "Get real value for var $S with display-value %S: %S" var-name display-value rst)
+         rst))
+
+     (defun pns-expand-tempalte (template &optional filled-vars caller)
+       "Expand a template, recursively."
+       (interactive)
+       (or caller
+           (setq caller (if filled-vars 'parent 'user)))
+
+       (let (hungry-vars text (check-passed t) (var-table (pns-get-var-table template)))
+         (pns-print-template-tree template)
+         (message "Filled-Vars: %S" filled-vars)
+         (message "Expanding %s" (pns-assoc 'name template))
+
+         ;; check precondition
+         (when (equal caller 'parent)
+           (mapc (lambda (var-value)
+                   (let* ((name (car var-value))
+                          (expected-values
+                           (mapcar (lambda (elem)
+                                     ;; elem is the display value symbol for var name.
+                                     ;; convert from display to real
+                                     ;;convert symbol to string
+                                     (format "%s" (pns-get-real-value-for-var name elem template))
+                                     )
+                                   (cdr var-value)))
+                          (real (car (pns-assoc name filled-vars))))
+                     (unless (member real expected-values)
+                       (setq check-passed nil)
+                       (message "Precondition checking not pass for name: %s. Expected: %s, real: %s"
+                                name expected-values real))))
+                 (pns-assoc 'precondition-table template)))
+
+         (when check-passed
+           (setq text (pns-assoc 'text template))
+           (setq hungry-vars (pns-get-hungry-values template filled-vars))
+           ;; (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
+           ;; expand this
+           (yas-expand-snippet  text (point) (point) hungry-vars)
+
+           ;; expand all children
+           (mapc (lambda (tmpl)
+                   (pns-expand-tempalte tmpl hungry-vars 'parent))
+                 (pns-assoc 'children template))))
+       (message "Done"))
+
+
+     (setq pns-template-file (expand-file-name "./snippets/java-mode/file-processing.org"))
+     (defun pns-expand-template-by-name ()
+       "Use helm select which template to be expanded, based on its name. The input is a global variable pns-template-file saving the template file name."
+       (interactive)
+       (let ((template
+              (save-excursion
+                (helm-other-buffer
+                 `(((name . "Template")
+                    (candidates . ,(pns-create-template-table (pns-create-templates-new pns-template-file)))
+                    (action . (lambda (template )
+                                template))
+                    (accept-empty . t)))
+                 "Template"))))
+         (pns-expand-tempalte template)))
+     #+end_src
+     
+     Test codes of above:
+     #+NAME: no-name
+     #+begin_src elisp
+     (setq file (expand-file-name "./snippets/java-mode/file-processing.org"))
+
+     (setq dd (pns-convert-input-tree-to-template-tree b nil))
+
+     (pns-print-template-tree dd)
+
+     (pns-print-template-tree (pns-create-templates-new file))
+
+     (setq aa (pns-create-templates-new file))
+
+     (setq bb (pns-create-template-table aa))
+
+     (setq pns-src-parser-input-file "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org")
+     #+end_src
+
      
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
@@ -1731,6 +2119,9 @@ Alias: -contains-p
     2. the if statement
     3. get variable value
 
+*** create a unique name for every concepts, things, and there relationships
+    This will make programming very clear!!!
+    
 ** doc
 *** Three main part of the program
     1. get parameters from user by helm or read-string. Done by pns-prompt-for-header.
