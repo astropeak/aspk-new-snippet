@@ -486,7 +486,7 @@
 *** the perl processing file snippet in org mode format
     In this entry, the processing steps are described.
     
-    #+BEGIN_SRC org :tangle perl-file-processing.org
+    #+BEGIN_SRC org 
     ,* ideas & docs
       - if a parameter has no value, then its value should be prompt for
         such as the '(file)' parameter.
@@ -2293,7 +2293,7 @@ Alias: -contains-p
      this function convert the snippet file's src blocks tree to a the lisp repreent part. The main job is merge 'header' and 'content' src blocks.
      
      #+name: test-input 
-     #+BEGIN_SRC org :tangle /tmp/pns.x.y/1.org :mkdirp yes
+     #+BEGIN_SRC org :disabled-tangle /tmp/pns.x.y/1.org :mkdirp yes
      ,* snippet: aaa
        ,#+name: header
        ,#+begin_src elisp
