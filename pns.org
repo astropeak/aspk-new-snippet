@@ -2001,7 +2001,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
            (setq hungry-vars (pns-get-hungry-values template filled-vars))
            ;; (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
            ;; expand this
-           (yas-expand-snippet  text (point) (point) hungry-vars)
+           (if (region-active-p)
+               (yas-expand-snippet  text (region-beginning) (region-end) hungry-vars)
+             (yas-expand-snippet  text  (point) (point) hungry-vars))
 
            ;; expand all children
            (mapc (lambda (tmpl)
