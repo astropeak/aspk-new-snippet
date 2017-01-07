@@ -1532,7 +1532,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
        - so, the tree structure of all entrys is important.
        THink: should headlines should be merged for selection? =>We can  mergeed to see the effect at first.
      - then shortcut is not needed.
-        
+       
      This idea is great 
      
      On implementation:
@@ -1589,23 +1589,23 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
             @(vars (file-name "aaa.txt"))
             open my $fh, "<", `file-name`;
             #+END_SRC
-
+            
             #+name: embedded syntax
             #+BEGIN_SRC perl
             open my $fh, "<", `file-name "aaa.txt"`;
             #+END_SRC
-
+            
             Most time we will use embedded syntax since it is convienint.
          6. the if annotation works like an if statement, used for check precondition is fullfilled.
-             @(if (for write))
+            @(if (for write))
             Currently we only support if one variable value is some value, but we don't support one variable value is not some value. Do we need this? 
             => We can add a new annotation @(unless) to express this when we need this.
             There can be many if statements within one single template text.
-        
-        Seems this way is perfect!! without any pitfalls. great!!
-
             
-        About the structure:
+         Seems this way is perfect!! without any pitfalls. great!!
+         
+         
+         About the structure:
         - template: assoc list of below element. Represent an org mode file entry.
           - name: string. this is the head line of the entry
           - defined variables(var-table): list of list of variable name and their possiable values.
@@ -1623,9 +1623,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
             Nil if this is a leaf entry.
           - parent: template.
             Nil if this is a root entry.
-
-       How to expand a snippet:
-       Praemter:
+            
+        How to expand a snippet:
+        Praemter:
        1. the template that to be expanded:template
        2. [optional]already filled variables: list of list of (varname  value)
        3. [optional]caller: symbol of parent or user.
@@ -1644,14 +1644,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
        6. call yas-expand-snippet to expand the snippet, pass the text, and already filled variables.
        7. process children. For each child, repeat step 1~7.
           Note: already filled variables should be the same for all siblings. This makes sure no polution for each other.
-
-      Nother notes: may be we can concat all text part of a template, and its children, and only call yas-expand-snippet for only one time.
-      Or we can just make yas-expand-snippet a implementation to a virtual function of expand-snippet.
-
-
-      On the variable syntax:
-      (var-name value1 (value2-display value2-real) :doc "doc to this variable" value3 :reference var2)
-      use ':key value' pair to express propertys of the variable.
+          
+       Nother notes: may be we can concat all text part of a template, and its children, and only call yas-expand-snippet for only one time.
+       Or we can just make yas-expand-snippet a implementation to a virtual function of expand-snippet.
+       
+       
+       On the variable syntax:
+       (var-name value1 (value2-display value2-real) :doc "doc to this variable" value3 :reference var2)
+       use ':key value' pair to express propertys of the variable.
 **** codes
      Get the src block tree, Just reuse the old codes.
      #+NAME: no-name
@@ -1756,7 +1756,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
          (list hungry-vars precondition-table var-table)))
 
      (defun pns-src-parser--parse-text (text-src)
-       (let (hungry-vars var-table rst text tmp)
+       (let (hungry-vars var-table rst text tmp
+                         (random-string ;; create a number string with length 16
+                          (replace-regexp-in-string " " "0" (format "%16s" (random 10000000000000000)))))
          (condition-case *error-info*
              (progn
                (and (get-buffer " myTemp") (kill-buffer " myTemp"))
@@ -1768,6 +1770,16 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
             (list "Error: Fail to get snippet name. Error info below" *error-info*)))
 
          (goto-char (point-min))
+         ;;ensure the randome-string not exists
+         (while (re-search-forward random-string (point-max) t)
+           (setq random-string (replace-regexp-in-string " " "0" (format "%16s" (random 10000000000000000)))))
+
+         (goto-char (point-min))
+         ;; replace all '\`' to random-string temporarily, after process all `` blocks, we will replace back.
+         (while (re-search-forward "\\\\`" (point-max) t)
+           (replace-match random-string))
+
+         (goto-char (point-min))
          (while (re-search-forward "`\\([^`]+\\)`" (point-max) t)
            ;; (while (re-search-forward "" (point-max) t)
            (match-string 1)
@@ -1777,6 +1789,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
            (add-to-list 'rst tmp 'append)
            (replace-match (format "`%s`" (car tmp)))
            )
+
+         (goto-char (point-min))
+         ;; replace back
+         (while (re-search-forward random-string  (point-max) t)
+           (replace-match "\\\\`"))
+
          (setq text (buffer-substring-no-properties (point-min) (point-max)))
          (kill-buffer " myTemp")
          (setq hungry-vars (mapcar (lambda (x) (car x)) rst))
@@ -1785,8 +1803,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                                            (when (> (length x) 1)
                                              x)) rst)))
          (list hungry-vars var-table text)))
-
-
      #+end_src
      
      So for this src:
@@ -2046,6 +2062,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      (setq pns-src-parser-input-file "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org")
      #+end_src
 
+*** DONE not recogonize '\`', the backquote is ignored
+    CLOSED: [2017-01-07 Sat 23:39]
+    - State "DONE"       from ""           [2017-01-07 Sat 23:39]
      
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
@@ -2056,6 +2075,63 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
    
+** tools
+*** convert snippets in  aspk-code-snippets to aspk-new-snippets format
+    given a directory, convert all snippets file under that dir to a single org file. each file is an entry, the headline is the name of that snippet, the src block is the contnet.
+
+    Run this code block, then call pns-expand-template-by-name interactively, then all snippets files under pcs-snippet-dir/perl-mode can be selected.
+
+    #+NAME: no-name
+    #+begin_src elisp
+    (defun pns-tool-convert-aspk-code-snippets-to-new (dir output-file)
+      (with-current-buffer (find-file-noselect output-file)
+        (erase-buffer))
+      (let (name value)
+        (mapc (lambda (file)
+                ;; (message "file=%s" file)
+                (condition-case *error-info*
+                    (progn
+                      (and (get-buffer " myTemp") (kill-buffer " myTemp"))
+                      (set-buffer (get-buffer-create " myTemp"))
+                      (insert-file-contents file nil nil nil t))
+                  (error
+                   (message "Error happened: %S" *error-info*)
+                   (debug *error-info*)
+                   (list "Error: Fail to get snippet name. Error info below" *error-info*)))
+
+                (goto-char (point-min))
+                ;; (re-search-forward "^\s*#\s*name\s*:\s*\\(.*\\)" (point-max))
+                (when (re-search-forward "^\s*#\s*name\s*:\s*\\(.*\\)"(point-max) t)
+                  (match-string 1)
+                  ;; here (match-string 1) is the matched text by first (), add processing codes here
+                  (message "Matched string %s" (match-string 1))
+                  (setq name (match-string 1))
+                  (when (re-search-forward "^\s*#\s*--\s*\n"(point-max) t)
+                    (setq value (buffer-substring-no-properties (match-end 0) (point-max))))
+                  (with-current-buffer (find-file-noselect output-file)
+                    ;; (erase-buffer)
+                    (goto-char (point-max))
+                    (insert (format "\n* %s\n#+name:content\n#+begin_src java\n%s\n#+end_src" name value))
+                    (save-buffer)))
+                (kill-buffer " myTemp"))
+              (f-files dir nil t))))
+
+    ;; test:
+    (let ((file "/tmp/aa.org") )
+      ;; (when (file-exists-p file)
+      ;;   (delete-file file))
+      (pns-tool-convert-aspk-code-snippets-to-new
+       (expand-file-name (format "%s/perl-mode" pcs-snippet-dir))
+       file))
+
+    ;; "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org"
+    (setq pns-template-file "/tmp/aa.org")
+    ;; then run pns-expand-template-by-name
+    #+end_src
+
+    #+RESULTS: no-name
+    : /tmp/aa.org
+
 ** programming notes
 *** throw errors guard correctness, detect fault in development stage
     Then when error happens, the program stops at that place, debugging will be much easy.
@@ -2336,15 +2412,15 @@ Alias: -contains-p
         #+name: test-input
         #+NAME: test-methods for pns-create-templates
         #+begin_src elisp
-     (setq snippet-file "/tmp/pns.x.y/1.org")
+        (setq snippet-file "/tmp/pns.x.y/1.org")
 
-     (setq pns-tmp-header nil)
-     (setq pns-tmp-templates nil)
-     (pns-create-templates
-      (pns-convert-block-list-to-tree (pns-get-all-src-blocks snippet-file pns-snippet-entry-regexp pns-src-block-name-regexp))
-      nil nil)
-     ;; the result is in pns-tmp-templates
-     (message "%S" pns-tmp-templates)
+        (setq pns-tmp-header nil)
+        (setq pns-tmp-templates nil)
+        (pns-create-templates
+         (pns-convert-block-list-to-tree (pns-get-all-src-blocks snippet-file pns-snippet-entry-regexp pns-src-block-name-regexp))
+         nil nil)
+        ;; the result is in pns-tmp-templates
+        (message "%S" pns-tmp-templates)
         #+end_src
         
         #+RESULTS: test-methods
