@@ -746,14 +746,15 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
         (prog1 (reverse rst)
           (kill-buffer " myTemp"))))
 
-    (defun pns-get-src-block-info (name)
-      "Return a accoc list of block info, searching form current position, current buffer. If no src blocks, return nil, and position will not be moved.
+    (defun pns-get-src-block-info (&optional name)
+      "Return a accoc list of block info, searching form current position, current buffer. If no src blocks, return nil, and position will not be moved. NAME should has \\(\\).
     The codes are copied form org-babel-find-named-block "
       (interactive)
-      (or name (setq name "\\(.*\\)"))
+      ;; (or name (setq name "\\(.*\\)"))
       (let* ((case-fold-search t)
-             (regexp (concat org-babel-src-name-regexp name "[ \t(]*[\r\n]\\(?:^#.*[\r\n]\\)*"
-                             (substring org-babel-src-block-regexp 1))))
+             (regexp (if name (concat org-babel-src-name-regexp name "[ \t(]*[\r\n]\\(?:^#.*[\r\n]\\)*"
+                                      (substring org-babel-src-block-regexp 1))
+                       org-babel-src-block-regexp)))
 
         (when (re-search-forward regexp nil t)
           (append
@@ -761,14 +762,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
            (list (cons 'beginning (match-beginning 0))
                  (cons 'end (match-end 0)))
            ;; src block name, lang, content
-           (let ((property-name '(nil name nil lang nil nil content)))
+           (let ((property-name '(nil name lang lang nil content content)))
              (mapcar (lambda (idx)
                        (cons (nth idx property-name)
                              (if (equal (nth idx property-name) 'content)
                                  (pns-unquote-src-block-content
                                   (substring-no-properties (or (match-string idx) "")))
                                (substring-no-properties (or (match-string idx) "")))))
-                     '(1 3 6)))
+                     (if name '(1 3 6) '(1 2 5))))
            ;; belonging heading and level
            (save-excursion
              (let ((p (point)))
@@ -2036,12 +2037,13 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
               (save-excursion
                 (helm-other-buffer
                  `(((name . "Template")
-                    (candidates . ,(pns-create-template-table (pns-create-templates-new pns-template-file)))
+                    (candidates . ,(pns-create-template-table (pns-create-template-new pns-template-file)))
                     (action . (lambda (template )
                                 template))
                     (accept-empty . t)))
                  "Template"))))
          (pns-expand-tempalte template)))
+
      #+end_src
      
      Test codes of above:
@@ -2055,7 +2057,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
      (pns-print-template-tree (pns-create-templates-new file))
 
-     (setq aa (pns-create-templates-new file))
+     (setq aa (pns-create-template-new file))
 
      (setq bb (pns-create-template-table aa))
 
@@ -2066,6 +2068,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     CLOSED: [2017-01-07 Sat 23:39]
     - State "DONE"       from ""           [2017-01-07 Sat 23:39]
      
+*** DONE src blocks can't be found when #+name: xxx not exists
+    CLOSED: [2017-01-08 Sun 11:47]
+    - State "DONE"       from "STARTED"    [2017-01-08 Sun 11:47]
+    - State "STARTED"    from ""           [2017-01-07 Sat 23:57]
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
    First run pns-create-modules-run to generate pns-modules. This will searching all files under pns-snippet-dir, each file should have two entries: '* snippet: xxx' and '* shortcut: yyy', or there will be an error.
@@ -2111,7 +2117,8 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                   (with-current-buffer (find-file-noselect output-file)
                     ;; (erase-buffer)
                     (goto-char (point-max))
-                    (insert (format "\n* %s\n#+name:content\n#+begin_src java\n%s\n#+end_src" name value))
+                    ;; (insert (format "\n* %s\n#+name:content\n#+begin_src java\n%s\n#+end_src" name value))
+                    (insert (format "\n* %s\n#+begin_src java\n%s\n#+end_src" name value))
                     (save-buffer)))
                 (kill-buffer " myTemp"))
               (f-files dir nil t))))
@@ -2126,6 +2133,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
     ;; "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org"
     (setq pns-template-file "/tmp/aa.org")
+
     ;; then run pns-expand-template-by-name
     #+end_src
 
