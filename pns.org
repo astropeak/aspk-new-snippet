@@ -1785,7 +1785,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
            ;; (while (re-search-forward "" (point-max) t)
            (match-string 1)
            ;; here (match-string 1) is the matched text by first (), add processing codes here
-           (message "Matched string %S" (match-string 1))
+           ;; (message "Matched string %S" (match-string 1))
            (setq tmp (read (format "(%s)" (match-string 1))))
            (add-to-list 'rst tmp 'append)
            (replace-match (format "`%s`" (car tmp)))
@@ -1926,15 +1926,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                (pns-assoc 'children template)))
        rst)
 
-     (defun pns-get-var-table (template)
-       "Get the var table for the template, with parent's var table mergetd"
-       (let ((rst (pns-assoc 'var-table template))
-             (parent (pns-assoc 'parent template)))
-         (while parent
-           (message "parent name: %S" (pns-assoc 'name parent))
-           (setq rst (append (pns-assoc 'var-table parent) rst))
-           (setq parent (pns-assoc 'parent parent)))
-         (reverse rst)))
+     (defun pns-get-var-table (template-element)
+       "Get the var table for the template, with parent's var table mergetd. Seem we should get all parent's var table"
+       (when template-element
+         (reverse
+          (append (pns-get-var-table (pns-get-template-element-parent template-element))
+                  (pns-assoc 'var-table template-element)))))
 
      (defun pns-get-hungry-values (template &optional filled-vars)
        "Get hungry for a template. Return a list of list of varname and value, (var-symbol value)"
@@ -2072,6 +2069,229 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     CLOSED: [2017-01-08 Sun 11:47]
     - State "DONE"       from "STARTED"    [2017-01-08 Sun 11:47]
     - State "STARTED"    from ""           [2017-01-07 Sat 23:57]
+*** DONE use new tree format
+    CLOSED: [2017-01-08 Sun 14:55]
+    - State "DONE"       from "STARTED"    [2017-01-08 Sun 14:55] \\
+      Rewrite many functions. Now Works good!!
+    - Note taken on [2017-01-08 Sun 11:54] \\
+      two new functions that convert block to template tree added. Now modify the old codes to adapte this change
+    - State "STARTED"    from ""           [2017-01-08 Sun 11:47]
+    
+    convert src blocks to a tree. With a root element
+    #+NAME: no-name
+    #+begin_src elisp
+    (require 'aspk-tree)
+    (defun pns-convert-block-list-to-tree-coolie (&optional parent)
+      "Use two gloabl variables. pns-tobe-converted-block-list: the src blocks; pns-convert-block-list-tree the output tree"
+      (let (level  parent-level (run-p t) elem)
+        (or parent (setq parent aspk/tree-head-element))
+        (setq parent-level (and (listp parent) (pns-assoc 'level parent)))
+        (or parent-level (setq parent-level 0))
+
+        (while (and run-p pns-tobe-converted-block-list)
+          (setq elem (car pns-tobe-converted-block-list))
+          (setq level (pns-assoc 'level elem))
+          ;; (message "level:%d, parent-level:%d" level parent-level)
+          (cond ((> level parent-level)
+                 ;; (message "level: %d, heading: %s" level (pns-assoc 'heading elem))
+                 (pop pns-tobe-converted-block-list)
+                 (aspk/tree-add-element pns-convert-block-list-tree parent elem)
+                 (pns-convert-block-list-to-tree-new elem))
+                (t (setq run-p nil)))
+          )))
+
+    (defun pns-convert-block-list-to-tree (blocks)
+      (let ((pns-convert-block-list-tree (aspk/tree-create))
+            (pns-tobe-converted-block-list blocks))
+        (pns-convert-block-list-to-tree-coolie)
+        ;; replace the head element
+        (setcar pns-convert-block-list-tree '((heading . "root") (level . 0) (content . "")))
+        pns-convert-block-list-tree))
+
+
+    #+end_src
+
+    convert input tree to template tree:
+    #+NAME: no-name
+    #+begin_src elisp
+    (defun pns-convert-input-tree-to-template-tree (input-tree)
+      "Convert the input-tree destructively to a template tree"
+      (aspk/tree-iterate
+       input-tree
+       (lambda (elem-subtree parent-subtree depth)
+         (setcar elem-subtree
+                 (append
+                  (list `(name . ,(pns-assoc 'heading (car elem-subtree))))
+                  (pns-src-parser (pns-assoc 'content (car elem-subtree)))))))
+      input-tree)
+
+    #+end_src
+
+    cretea template name table, done
+    #+NAME: no-name
+    #+begin_src elisp
+    (defun pns-create-template-table (&optional rst)
+      "Create a name to template object table(list of cons), given template. Key is name, value is template. this table can be used as helm candidates"
+      (let (rst)
+        (maphash (lambda (key val)
+                   (aspk/tree-iterate (pns-assoc 'template val)
+                                      ;; (lambda (elem parent depth)
+                                      (lambda (elem-subtree parent-subtree depth)
+                                        (setq rst (append (list (cons (pns-assoc 'name (car elem-subtree))
+                                                                      (car elem-subtree)))
+                                                          rst)))))
+                 pns-template-set)
+        rst))
+    ;; (setq a (pns-create-template-table))
+
+    ;; (setq a (pns-create-template-new pns-template-file))
+    ;; (setq b (pns-create-template-table a))
+
+    (defun pns-expand-template-by-name ()
+      "Use helm select which template to be expanded, based on its name. The input is a global variable pns-template-file saving the template file name."
+      (interactive)
+      (let ((template
+             (save-excursion
+               (helm-other-buffer
+                `(((name . "Template")
+                   (candidates . ,(pns-create-template-table))
+                   (action . (lambda (template )
+                               template))
+                   (accept-empty . t)))
+                "Template"))))
+        (message "Template: %S" template)
+        (pns-expand-tempalte template)))
+    #+end_src
+
+    create template:
+    #+NAME: no-name
+    #+begin_src elisp
+    ;; 一个template对应一个org文件的tree.
+    ;; 对于多个文件，则对应的对象为 template-set，为一个hash，key为文件的相对路径，值为一个assoc list: ((mode . "emacs-lisp") (templat . template-object) (undate-time . last-undeated-time)).
+
+    (setq pns-template-set (make-hash-table :test 'equal))
+
+    (defun pns-create-template-new (file)
+      "create template(which is a tree) given FILE, which is an org mode template file"
+      (let ((tree (pns-convert-input-tree-to-template-tree (pns-convert-block-list-to-tree (pns-get-all-src-blocks file)))))
+        tree))
+
+    (defun pns-update-template-list ()
+      "Create/update template for all files under pns-snippet-dir, the result saved in pns-template-list"
+      ;; iterate all file names under directory dir with an optional filter function, recursively
+(interactive)
+      (require 'f)
+      (let (rfile elem time elem2 tmpl)
+        (mapc (lambda (file)
+                (setq rfile (replace-regexp-in-string pns-snippet-dir "" file))
+                (and (equal file rfile) (error "Impossiable"))
+                (setq elem (gethash rfile pns-template-set))
+                (setq time (time-to-seconds (nth 5 (file-attributes file 'string))))
+                ;; (message "File: %s, time: %d" file time)
+
+                (unless (and elem (<= time (pns-assoc 'update-time elem)))
+                  (message "Updating template for file %s" rfile)
+                  (setq tmpl (pns-create-template-new file))
+                  (setq elem2 (list (cons 'update-time time)
+                                    (cons 'template tmpl)))
+                  (pns-upadte-template-parent-children-map tmpl)
+                  (puthash rfile elem2 pns-template-set)))
+              (f-files pns-snippet-dir nil t)))
+      (message "Done"))
+
+    (defun pns-set-assoc (key value list)
+      "set key value to new value in assoc list, destructively"
+      ;; (message "key: %S, list: %S" key list)
+      (setcdr (assoc key list) value)
+      )
+    ;; (setq a '((name . "TOM") (age . 13)))
+    ;; (pns-assoc 'name a)
+    ;; (pns-set-assoc 'age 18 a)
+
+    ;; This hash save a template's parent and children elements. Key is a template element, value is a assoc list: ((parent . parent-element)(children . list-of-children-element))
+    (setq pns-template-parent-children-map (make-hash-table :test 'eq))
+
+    (defun pns-upadte-template-parent-children-map (template)
+      "update the map in pns-template-parent-children-map of template tree"
+      (aspk/tree-iterate
+       template
+       (lambda (elem-subtree parent-subtree depth)
+         (puthash (car elem-subtree)
+                  (list (cons 'parent (car parent-subtree))
+                        (cons 'children (mapcar 'car (cdr elem-subtree))))
+                  pns-template-parent-children-map))))
+
+    (defun pns-get-template-element-parent (template-element)
+      (let (rst)
+        (setq rst (gethash template-element pns-template-parent-children-map))
+        (or rst (error "value not exist for template-element %S" template-element))
+        (pns-assoc 'parent rst)))
+
+    (defun pns-get-template-element-children (template-element)
+      (let (rst)
+        (setq rst (gethash template-element pns-template-parent-children-map))
+        (or rst (error "value not exist for template-element %S" template-element))
+        (pns-assoc 'children rst)))
+
+    (setq pns-template-set (make-hash-table :test 'equal))
+
+    (pns-update-template-list)
+
+    #+end_src
+
+    Expand a template:
+    #+NAME: no-name
+    #+begin_src elisp
+    (defun pns-expand-tempalte (template-element &optional filled-vars caller)
+      "Expand a template-element, recursively."
+      (interactive)
+      (or caller
+          (setq caller (if filled-vars 'parent 'user)))
+
+      (let (hungry-vars text (check-passed t) (var-table (pns-get-var-table template-element)))
+        ;; (pns-print-template-tree template-element)
+        (message "Filled-Vars: %S" filled-vars)
+        (message "Expanding %s" (pns-assoc 'name template-element))
+
+        ;; check precondition
+        (when (equal caller 'parent)
+          (mapc (lambda (var-value)
+                  (let* ((name (car var-value))
+                         (expected-values
+                          (mapcar (lambda (elem)
+                                    ;; elem is the display value symbol for var name.
+                                    ;; convert from display to real
+                                    ;;convert symbol to string
+                                    (format "%s" (pns-get-real-value-for-var name elem template-element))
+                                    )
+                                  (cdr var-value)))
+                         (real (car (pns-assoc name filled-vars))))
+                    (unless (member real expected-values)
+                      (setq check-passed nil)
+                      (message "Precondition checking not pass for name: %s. Expected: %s, real: %s"
+                               name expected-values real))))
+                (pns-assoc 'precondition-table template-element)))
+
+        (when check-passed
+          (message "Template-Element: %S" template-element)
+          (setq text (pns-assoc 'text template-element))
+          (setq hungry-vars (pns-get-hungry-values template-element filled-vars))
+          (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
+          ;; expand this
+          (if (region-active-p)
+              (yas-expand-snippet  text (region-beginning) (region-end) hungry-vars)
+            (yas-expand-snippet  text  (point) (point) hungry-vars))
+
+          ;; expand all children
+          (mapc (lambda (tmpl)
+                  (pns-expand-tempalte tmpl hungry-vars 'parent))
+                (pns-get-template-element-children template-element))))
+      ;; (pns-assoc 'children template-element))))
+      (message "Done"))
+
+    #+end_src
+
+
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
    First run pns-create-modules-run to generate pns-modules. This will searching all files under pns-snippet-dir, each file should have two entries: '* snippet: xxx' and '* shortcut: yyy', or there will be an error.
@@ -2138,7 +2358,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
 
     #+RESULTS: no-name
-    : /tmp/aa.org
+    : pns-convert-input-tree-to-template-tree
 
 ** programming notes
 *** throw errors guard correctness, detect fault in development stage
