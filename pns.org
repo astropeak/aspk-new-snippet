@@ -2039,23 +2039,28 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
         tree))
 
     (defun pns-update-template-list ()
-      "Create/update template for all files under pns-snippet-dir, the result saved in pns-template-list"
+      "Create/update template for all files under pns-snippet-dir, the result saved in pns-template-set"
       ;; iterate all file names under directory dir with an optional filter function, recursively
-(interactive)
+      (interactive)
       (require 'f)
-      (let (rfile elem time elem2 tmpl)
+      (let (rfile elem time elem2 tmpl mode)
         (mapc (lambda (file)
                 (setq rfile (replace-regexp-in-string pns-snippet-dir "" file))
                 (and (equal file rfile) (error "Impossiable"))
                 (setq elem (gethash rfile pns-template-set))
                 (setq time (time-to-seconds (nth 5 (file-attributes file 'string))))
                 ;; (message "File: %s, time: %d" file time)
+                ;; (or mode (error "Mode is nil for file %s" file))
 
                 (unless (and elem (<= time (pns-assoc 'update-time elem)))
                   (message "Updating template for file %s" rfile)
                   (setq tmpl (pns-create-template-new file))
+                  (with-temp-buffer (insert file) (goto-char (point-min))
+                                    (when (re-search-forward "/\\([a-z-]*\\)-mode/" nil t)
+                                      (setq mode (match-string 1))))
                   (setq elem2 (list (cons 'update-time time)
-                                    (cons 'template tmpl)))
+                                    (cons 'template tmpl)
+                                    (cons 'mode mode)))
                   (pns-upadte-template-parent-children-map tmpl)
                   (puthash rfile elem2 pns-template-set)))
               (f-files pns-snippet-dir nil t)))
