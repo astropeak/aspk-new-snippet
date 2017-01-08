@@ -815,55 +815,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
             (push (append (list (cons 'leafp t)) elem) rst)))
         (reverse rst)))
 
-    (defun pns-convert-block-list-to-tree (blocks)
-      "Covert a block list to a tree based on level. use the children and parent property"
-      (let* ((elem nil)
-             (idx 0)
-             ;; below line will not work, the rst will change every time. Acturally, it will be the same value the last time run
-             ;; (rst '((children . (a)) (parent . nil)))
-             ;; this works though
-             (rst (list (list 'children idx) (list 'parent)))
-
-             ;; parents save the current level parent block
-             (parents (list rst rst rst rst rst rst rst rst rst))
-             (level nil)
-             (parent nil) (children nil)
-             )
-
-        (tracel elem rst parents level parent children idx)
-
-        (while blocks
-          (setq elem (car blocks))
-          (setq level (pns-assoc 'level elem))
-          (setq parent (nth (- level 1) parents))
-          (unless parent (error "parent for level %s nil" (- level 1)))
-
-          ;; (message "level: %s, parent: %s" level parent)
-          ;; add 'parent' and 'children' property to this elem, add saved it to (parents level)
-          ;; (message "before elem: %s" elem)
-          ;; (setq elem (append elem `((children . (a)) ,(cons 'parent (list parent)))))
-          (setq elem (append elem (list (list 'children (format "%s-%s" (incf idx) level))
-                                        (list 'parent parent)
-                                        )))
-          ;; (message "after  elem: %s" elem)
-          (setf (nth level parents) elem)
-
-          ;; add this elem to parent as a child
-          ;; both the above operations should be destructive.
-          (setq children (pns-assoc 'children parent))
-          ;; (message "before children: %S" children)
-          (unless children (error "children nil. Parent: %S" parent))
-
-          (setcdr children (append  (cdr children) (list elem)))
-          ;; (message "after  children: %S" children)
-          ;; (message "rst: %S" rst)
-          ;; (cdr nil)
-
-          (setq blocks (cdr blocks)))
-        rst))
-
-
-
     ;; a bug in emacs lisp: seems a list with the same symbol elemnt will has the same address.
     ;; (eq (list 'a 'b) (list 'a 'b))
     ;; After I change this line :
@@ -1867,28 +1818,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      Processing template, selecting with helm...
      #+NAME: methods
      #+begin_src elisp
-     (defun pns-convert-input-tree-to-template-tree (tree &optional parent)
-       "change the 'content to a src parser. return a template, which is a tree."
-       ;; *Important*: rst should have dynamic value, or it will alwasy get the old addresss.
-       (let ((rst (list '(i-am-root . t) '(name . "root")
-                        (cons 'dummy ;; create a number string with length 16
-                              (replace-regexp-in-string " " "0" (format "%16s" (random 10000000000000000)))))))
-         (when (pns-assoc 'content tree)
-           (setq rst (pns-src-parser (pns-assoc 'content tree)))
-           (push (cons 'parent parent) rst)
-           (push (cons 'name (pns-assoc 'heading tree)) rst))
-         ;; (tracee rst)
-         (setcdr rst (append  (cdr rst)
-                              (list (cons 'children
-                                          (delete nil
-                                                  (mapcar (lambda (tt)
-                                                            ;; (tracee tt)
-                                                            (if (listp tt)
-                                                                (pns-change-tree tt rst)))
-                                                          (pns-assoc 'children tree)))))))
-         rst))
-
-
      (defun pns-print-template-tree (tree &optional height)
        "This print a tree in a nice format"
        (or height (setq height 0))
@@ -1910,21 +1839,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                (pns-assoc 'children tree)))
        nil)
 
-
-     (defun pns-create-template-new (file)
-       "create template(which is a tree) given FILE, which is an org mode template file"
-       (let ((tree (pns-convert-input-tree-to-template-tree (pns-convert-block-list-to-tree (pns-get-all-src-blocks file)))))
-         tree))
-
-     (defun pns-create-template-table (template &optional rst)
-       "Create a name to template object table, given template. Key is name, value is template. this table can be used as helm candidates"
-       (let (aaa)
-         (unless (assoc 'i-am-root template)
-           (setq rst (append (list (cons (pns-assoc 'name template) template)) rst)))
-         (mapc (lambda (tt)
-                 (setq rst (pns-create-template-table tt rst)))
-               (pns-assoc 'children template)))
-       rst)
 
      (defun pns-get-var-table (template-element)
        "Get the var table for the template, with parent's var table mergetd. Seem we should get all parent's var table"
@@ -1980,67 +1894,8 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
          (message "Get real value for var $S with display-value %S: %S" var-name display-value rst)
          rst))
 
-     (defun pns-expand-tempalte (template &optional filled-vars caller)
-       "Expand a template, recursively."
-       (interactive)
-       (or caller
-           (setq caller (if filled-vars 'parent 'user)))
-
-       (let (hungry-vars text (check-passed t) (var-table (pns-get-var-table template)))
-         (pns-print-template-tree template)
-         (message "Filled-Vars: %S" filled-vars)
-         (message "Expanding %s" (pns-assoc 'name template))
-
-         ;; check precondition
-         (when (equal caller 'parent)
-           (mapc (lambda (var-value)
-                   (let* ((name (car var-value))
-                          (expected-values
-                           (mapcar (lambda (elem)
-                                     ;; elem is the display value symbol for var name.
-                                     ;; convert from display to real
-                                     ;;convert symbol to string
-                                     (format "%s" (pns-get-real-value-for-var name elem template))
-                                     )
-                                   (cdr var-value)))
-                          (real (car (pns-assoc name filled-vars))))
-                     (unless (member real expected-values)
-                       (setq check-passed nil)
-                       (message "Precondition checking not pass for name: %s. Expected: %s, real: %s"
-                                name expected-values real))))
-                 (pns-assoc 'precondition-table template)))
-
-         (when check-passed
-           (setq text (pns-assoc 'text template))
-           (setq hungry-vars (pns-get-hungry-values template filled-vars))
-           ;; (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
-           ;; expand this
-           (if (region-active-p)
-               (yas-expand-snippet  text (region-beginning) (region-end) hungry-vars)
-             (yas-expand-snippet  text  (point) (point) hungry-vars))
-
-           ;; expand all children
-           (mapc (lambda (tmpl)
-                   (pns-expand-tempalte tmpl hungry-vars 'parent))
-                 (pns-assoc 'children template))))
-       (message "Done"))
-
 
      (setq pns-template-file (expand-file-name "./snippets/java-mode/file-processing.org"))
-     (defun pns-expand-template-by-name ()
-       "Use helm select which template to be expanded, based on its name. The input is a global variable pns-template-file saving the template file name."
-       (interactive)
-       (let ((template
-              (save-excursion
-                (helm-other-buffer
-                 `(((name . "Template")
-                    (candidates . ,(pns-create-template-table (pns-create-template-new pns-template-file)))
-                    (action . (lambda (template )
-                                template))
-                    (accept-empty . t)))
-                 "Template"))))
-         (pns-expand-tempalte template)))
-
      #+end_src
      
      Test codes of above:
@@ -2078,7 +1933,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-08 Sun 11:47]
     
     convert src blocks to a tree. With a root element
-    #+NAME: no-name
+    #+NAME: methods
     #+begin_src elisp
     (require 'aspk-tree)
     (defun pns-convert-block-list-to-tree-coolie (&optional parent)
@@ -2096,7 +1951,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                  ;; (message "level: %d, heading: %s" level (pns-assoc 'heading elem))
                  (pop pns-tobe-converted-block-list)
                  (aspk/tree-add-element pns-convert-block-list-tree parent elem)
-                 (pns-convert-block-list-to-tree-new elem))
+                 (pns-convert-block-list-to-tree-coolie elem))
                 (t (setq run-p nil)))
           )))
 
@@ -2112,7 +1967,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
 
     convert input tree to template tree:
-    #+NAME: no-name
+    #+NAME: methods
     #+begin_src elisp
     (defun pns-convert-input-tree-to-template-tree (input-tree)
       "Convert the input-tree destructively to a template tree"
@@ -2128,7 +1983,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
 
     cretea template name table, done
-    #+NAME: no-name
+    #+NAME: methods
     #+begin_src elisp
     (defun pns-create-template-table (&optional rst)
       "Create a name to template object table(list of cons), given template. Key is name, value is template. this table can be used as helm candidates"
@@ -2150,6 +2005,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     (defun pns-expand-template-by-name ()
       "Use helm select which template to be expanded, based on its name. The input is a global variable pns-template-file saving the template file name."
       (interactive)
+      (pns-update-template-list)
       (let ((template
              (save-excursion
                (helm-other-buffer
@@ -2164,7 +2020,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
 
     create template:
-    #+NAME: no-name
+    #+NAME: methods
     #+begin_src elisp
     ;; 一个template对应一个org文件的tree.
     ;; 对于多个文件，则对应的对象为 template-set，为一个hash，key为文件的相对路径，值为一个assoc list: ((mode . "emacs-lisp") (templat . template-object) (undate-time . last-undeated-time)).
@@ -2233,14 +2089,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
         (or rst (error "value not exist for template-element %S" template-element))
         (pns-assoc 'children rst)))
 
-    (setq pns-template-set (make-hash-table :test 'equal))
+    ;; (setq pns-template-set (make-hash-table :test 'equal))
 
-    (pns-update-template-list)
+    ;; (pns-update-template-list)
 
     #+end_src
 
     Expand a template:
-    #+NAME: no-name
+    #+NAME: methods
     #+begin_src elisp
     (defun pns-expand-tempalte (template-element &optional filled-vars caller)
       "Expand a template-element, recursively."
