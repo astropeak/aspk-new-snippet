@@ -1849,37 +1849,38 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
      (defun pns-get-hungry-values (template &optional filled-vars)
        "Get hungry for a template. Return a list of list of varname and value, (var-symbol value)"
-       (let ((hungry-vars (pns-assoc 'hungry-vars template))
-             (var-table (pns-get-var-table template))
-             possiable-values)
-         (mapcar (lambda (var)
-                   ;; change (read "Input") to (read . "Input")
-                   (setq possiable-values (mapcar (lambda (elem)
-                                                    (if (listp elem)
-                                                        (cons (nth 0 elem) (nth 1 elem))
-                                                      elem))
-                                                  (pns-assoc var var-table)))
-                   ;; (message "var: %S, possiable-values: %S" var possiable-values)
-                   (message "## Getting value for hungry var %s" var)
-                   (list var
-                         (cond
-                          ;; first search in filled-vars
-                          ((assoc var filled-vars) (nth 1 (assoc var filled-vars)))
-                          ;; get from helm
-                          ((> (length possiable-values) 1)
-                           (helm-other-buffer
-                            `(((name . ,(format "%s" var))
-                               (candidates . ,possiable-values)
-                               (action . (lambda (c ) c))
-                               (accept-empty . t)))
-                            (pns-assoc 'name template)))
-                          ;; get by read-string
-                          ((>= (length possiable-values) 0)
-                           (save-excursion (read-string (format "%s. %s[%s]: "
-                                                                (pns-assoc 'name template)
-                                                                var (or (car possiable-values) "")) nil nil (car possiable-values))))
-                          (t (error "Impossible to be here")))))
-                 hungry-vars)))
+       (save-excursion
+         (let ((hungry-vars (pns-assoc 'hungry-vars template))
+               (var-table (pns-get-var-table template))
+               possiable-values)
+           (mapcar (lambda (var)
+                     ;; change (read "Input") to (read . "Input")
+                     (setq possiable-values (mapcar (lambda (elem)
+                                                      (if (listp elem)
+                                                          (cons (nth 0 elem) (nth 1 elem))
+                                                        elem))
+                                                    (pns-assoc var var-table)))
+                     ;; (message "var: %S, possiable-values: %S" var possiable-values)
+                     (message "## Getting value for hungry var %s" var)
+                     (list var
+                           (cond
+                            ;; first search in filled-vars
+                            ((assoc var filled-vars) (nth 1 (assoc var filled-vars)))
+                            ;; get from helm
+                            ((> (length possiable-values) 1)
+                             (helm-other-buffer
+                              `(((name . ,(format "%s" var))
+                                 (candidates . ,possiable-values)
+                                 (action . (lambda (c ) c))
+                                 (accept-empty . t)))
+                              (pns-assoc 'name template)))
+                            ;; get by read-string
+                            ((>= (length possiable-values) 0)
+                             (save-excursion (read-string (format "%s. %s[%s]: "
+                                                                  (pns-assoc 'name template)
+                                                                  var (or (car possiable-values) "")) nil nil (car possiable-values))))
+                            (t (error "Impossible to be here")))))
+                   hungry-vars))))
 
 
      (defun pns-get-real-value-for-var (var-name display-value template)
@@ -2005,18 +2006,23 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     (defun pns-expand-template-by-name ()
       "Use helm select which template to be expanded, based on its name. The input is a global variable pns-template-file saving the template file name."
       (interactive)
-      (pns-update-template-list)
+
+      (save-excursion (pns-update-template-list))
+      (message "in 1 pns-expand-template-by-name Buffer:%S" (current-buffer))
+
       (let ((template
              (save-excursion
                (helm-other-buffer
                 `(((name . "Template")
                    (candidates . ,(pns-create-template-table))
-                   (action . (lambda (template )
-                               template))
+                   (action . (lambda (tmpl) tmpl))
                    (accept-empty . t)))
                 "Template"))))
         (message "Template: %S" template)
+
+        (message "in 2 pns-expand-template-by-name Buffer:%S" (current-buffer))
         (pns-expand-tempalte template)))
+
     #+end_src
 
     create template:
@@ -2101,6 +2107,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     (defun pns-expand-tempalte (template-element &optional filled-vars caller)
       "Expand a template-element, recursively."
       (interactive)
+      (message "in pns-expand-tempalte Buffer:%S" (current-buffer))
       (or caller
           (setq caller (if filled-vars 'parent 'user)))
 
@@ -2129,7 +2136,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                 (pns-assoc 'precondition-table template-element)))
 
         (when check-passed
-          (message "Template-Element: %S" template-element)
+          (message "Template-Element: %S, buffer: %S" template-element (current-buffer))
           (setq text (pns-assoc 'text template-element))
           (setq hungry-vars (pns-get-hungry-values template-element filled-vars))
           (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
@@ -2284,6 +2291,17 @@ Alias: -contains-p
 *** create a unique name for every concepts, things, and there relationships
     This will make programming very clear!!!
     
+*** 基础代码要做好，要与上层逻辑代码分离
+    这个项目中，在tree的实现上，花费了太多的时间，就是因为将tree的实现与其它逻辑搅在一起了。
+
+    最后调用了之前写的tree模块，问题很快得到解决。
+
+*** 编程的难点在哪里？
+    - 函数、API用错，可能是由于笔误，记忆不清，理解不够等
+    - 一直在重复，以前的经验没有用上。
+    
+    目前通过编写snippet，以上问题都能够得到解决。 
+ 
 ** doc
 *** Three main part of the program
     1. get parameters from user by helm or read-string. Done by pns-prompt-for-header.
