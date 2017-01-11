@@ -1,3 +1,37 @@
+* create an object/instance given class name 
+  Yes, something like:
+
+Class<?> clazz = Class.forName(className);
+Constructor<?> ctor = clazz.getConstructor(String.class);
+Object object = ctor.newInstance(new Object[] { ctorArgument });
+That will only work for a single string parameter of course, but you can modify it pretty easily.
+
+Note that the class name has to be a fully-qualified one, i.e. including the namespace. For nested classes, you need to use a dollar (as that's what the compiler uses). For example:
+
+package foo;
+
+public class Outer
+{
+    public static class Nested {}
+}
+To obtain the Class object for that, you'd need Class.forName("foo.Outer$Nested").
+
+#+begin_src java :classname Test
+Class<?> clazz = Class.forName(`class`);
+Constructor<?> ctor = clazz.getConstructor(`constructor-args "such as String.class"`);
+Object `object-name` = ctor.newInstance(new Object[] {`real-args`});
+#+end_src
+
+Note:
+The class name should be the full name, such as "java.lang.String".
+
+
+if you don't know what conctuctor the class has, Use Class.getConstructors() then instead and see what's available. You have to depend on an implementation in order to instantiate a class. If you create an instance without calling one of their constructors with appropriate arguments, you're not playing fair to their classes, which would expect to be instantiated properly. I suggest you mandate a particular signature. – Jon Skeet Sep 8 '10 at 20:50
+
+** pns issue: import the needed packages
+   We can add a new annotation: @(import packageA packageB ...)
+   Then after the codes expanded, add 'import statement' to the file at the begining(better to add to behind the existing imports, and check if that already be exists).
+
 * snippet: reflection
 ** call 
 * shortcut
