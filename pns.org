@@ -2158,7 +2158,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       (message "Done"))
 
     #+end_src
+*** multiple src blocks in one entry will be treadted as if they are in different entry
+    Currently we assume there are only one src bolck in an entry
+*** don't parse `(xxx yyy)` as hungry var
+    Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
+*** add an annotation: @(repeat count)
+    Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
 
+    e.g. when create a class, the field is a this kind.
 
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
@@ -2212,21 +2219,19 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
               (f-files dir nil t))))
 
     ;; test:
-    (let ((file "/tmp/aa.org") )
+    (let ((file (expand-file-name "snippets/aa.org")))
       ;; (when (file-exists-p file)
       ;;   (delete-file file))
       (pns-tool-convert-aspk-code-snippets-to-new
-       (expand-file-name (format "%s/perl-mode" pcs-snippet-dir))
+       (expand-file-name (format "%s/emacs-lisp-mode" pcs-snippet-dir))
        file))
 
     ;; "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org"
-    (setq pns-template-file "/tmp/aa.org")
+    ;; (setq pns-template-file "/tmp/aa.org")
 
     ;; then run pns-expand-template-by-name
     #+end_src
 
-    #+RESULTS: no-name
-    : pns-convert-input-tree-to-template-tree
 
 ** programming notes
 *** throw errors guard correctness, detect fault in development stage
@@ -2307,6 +2312,11 @@ Alias: -contains-p
     
     目前通过编写snippet，以上问题都能够得到解决。 
  
+*** 感觉emacs的坑太多了。。以及dynamic好处、坏处分析
+    很容易出错，并且错误提示很不明显，都不知道到底哪错了。
+    还有dynamic scoping也容易出错。如果有个临时变量忘记放在let中，则可能造成非常诡异的问题。或者回调函数中引用了一个全局变量xyz, 并将它传给map.但map中也定义了一个xyz，则此时回调函数中的xyz会绑定到map中的这个，造成问题。 在aspk/tree-iterate中遇到过一例。
+    但dynamic scoping也有好处，可以通过全局变量达到传递参数的效果。
+    
 ** doc
 *** Three main part of the program
     1. get parameters from user by helm or read-string. Done by pns-prompt-for-header.
