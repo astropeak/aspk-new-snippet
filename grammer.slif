@@ -20,7 +20,7 @@ C ~ [\w] +
 forStatement ::= for Body End action => do_for
 for           ~ '@for' blanks_maybe
 
-ifStatement ::= If1 Body End action => do_if
+ifStatement ::= If '(' expr ')'Body End action => do_if
 Body ::= BodyLine* action => do_body
 End ::= optEnd | empty
 empty ::=
@@ -36,7 +36,7 @@ BodyLine ~ [[:graph:]]
 blanks_maybe ~ [ \t]*
 # :lexeme ~ blanks_maybe
 
-If1 ::= If expr
+# If1 ::= If expr
 If ~ '@if' blanks_maybe
 
 :lexeme    ~ BodyLine priority=>-1
@@ -44,4 +44,4 @@ If ~ '@if' blanks_maybe
 # :lexeme    ~ If priority=>2
 # :lexeme    ~ for priority=>2
 :discard   ~ whitespace
-whitespace ~ [\s]+
+whitespace ~ [\s]+ 
