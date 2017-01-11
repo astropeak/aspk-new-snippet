@@ -5,21 +5,39 @@ statement ::=
     ifStatement 
   |forStatement
 
+expr ::= 
+    A '||' expr action =>do_expr_or
+  |A '&&' expr action =>do_expr_and
+  |'(' expr ')' action =>do_expr_paren
+  |A action=>do_expr_elem
+
+A::= B '==' C 
+  |B '!=' C
+  |B
+B ~ [\w] +
+C ~ [\w] +
+ 
 forStatement ::= for Body End action => do_for
 for           ~ '@for' blanks_maybe
 
-ifStatement ::= If Body End action => do_if
+ifStatement ::= If1 Body End action => do_if
 Body ::= BodyLine* action => do_body
 End ::= optEnd | empty
 empty ::=
 optEnd   ~ '@end'
-BodyLine ~ [[:print:]] +
+# BodyLine ~ [[:print:]] +
+BodyLine ~ [[:graph:]] 
+# BodyLine ~ [a-zA-Z] +
 # a line with only contains below @,i,f,and blanks will be considered as a lexeme If.
 # BodyLine can also match this pattern but it can contains other words.
 # but If has high priority, so if the matched string is the same, If will win.
 # Problem is: 'fi@' will also be matched as If.
-If           ~ '@if' blanks_maybe
+# If           ~ '@if' blanks_maybe
 blanks_maybe ~ [ \t]*
+# :lexeme ~ blanks_maybe
+
+If1 ::= If expr
+If ~ '@if' blanks_maybe
 
 :lexeme    ~ BodyLine priority=>-1
 # :lexeme    ~ optEnd priority=>1

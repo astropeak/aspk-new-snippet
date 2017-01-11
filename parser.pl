@@ -11,12 +11,12 @@ my $value_ref = $grammar->parse( \$input, 'My_Actions' );
 
 sub My_Actions::do_add {
     my ( undef, $t1, undef, $t2 ) = @_;
-return $t1 + $t2;
+    return $t1 + $t2;
 }
 
 sub My_Actions::do_multiply {
     my ( undef, $t1, undef, $t2 ) = @_;
-return $t1 * $t2;
+    return $t1 * $t2;
 }
 sub My_Actions::do_if {
     my ( undef, $judgement, $body, $end ) = @_;
@@ -28,9 +28,35 @@ sub My_Actions::do_for {
     # print "judgement: $judgement\nbody: $body\nend: $end\n";
     print "for statement end here\n\n";
 }
+sub My_Actions::do_expr_elem {
+    print "do_expr_elem statement end here\n\n";
+}
+sub My_Actions::do_expr_and {
+    print "do_expr_and statement end here\n\n";
+}
+sub My_Actions::do_expr_or {
+    print "do_expr_or statement end here\n\n";
+}
+sub My_Actions::do_expr_paren {
+    print "do_expr_paren statement end here\n\n";
+}
+
+sub My_Actions::do_expr_elem {
+    print "do_expr_elem statement end here\n\n";
+}
 sub My_Actions::do_body {
     shift @_;
     for my $b (@_) {
-         print "body line: $b\n";
+        print "body line: $b\n";
     }
+}
+sub My_Actions::AUTOLOAD {
+    my $program = $AUTOLOAD;
+    print "name: $AUTOLOAD \n";
+    # $program =~ s/.*:://;
+    # system($program, @_);
+}
+
+sub My_Actions::do_whitespace {
+    print "do_whitespace statement end here\n\n";
 }
