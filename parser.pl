@@ -1,21 +1,11 @@
 use Marpa::R2;
 
 my $dsl =sub {open my $fh, '<', $_[0] or die "Can not open file"; local $/; <$fh>;}
-->('grammer.slif'); 
+->('grammer.slif');
 
 my $grammar = Marpa::R2::Scanless::G->new( { source => \$dsl } );
-my $input = <<'END_OF_SN';
-@if aa
-    aa
-@if      bbbb
-
-@if  
-    ee
-
-@if
-    ccc 
-END_OF_SN
-
+my $input = sub {open my $fh, '<', $_[0] or die "Can not open file"; local $/; <$fh>;}
+->('input-src');
 
 my $value_ref = $grammar->parse( \$input, 'My_Actions' );
 
@@ -32,6 +22,11 @@ sub My_Actions::do_if {
     my ( undef, $judgement, $body, $end ) = @_;
     # print "judgement: $judgement\nbody: $body\nend: $end\n";
     print "if statement end here\n\n";
+}
+sub My_Actions::do_for {
+    my ( undef, $judgement, $body, $end ) = @_;
+    # print "judgement: $judgement\nbody: $body\nend: $end\n";
+    print "for statement end here\n\n";
 }
 sub My_Actions::do_body {
     shift @_;
