@@ -1,27 +1,7 @@
 use Marpa::R2;
 
-my $dsl = <<'END_OF_DSL';
-    :default ::= action => [name,values]
-    lexeme default = latm => 1
-    ifStatements ::=ifStatement*
-    ifStatement ::= If Body End action => do_if
-    Body ::= BodyLine* action => do_body
-    End ::= optEnd | empty
-    empty ::=
-    optEnd ~ '@end'
-    BodyLine ~ [a-z@ ] +
-    # a line with only contains below @,i,f,and blanks will be considered as a lexeme If.
-    # BodyLine can also match this pattern but it can contains other words.
-    # but If has high priority, so if the matched string is the same, If will win.
-    # Problem is: 'fi@' will also be matched as If.
-    If ~ '@if' blanks_maybe
-    blanks_maybe ~ [ \t]*
-
-    :lexeme ~ optEnd priority=>1
-    :lexeme ~ If priority=>2
-    :discard ~ whitespace
-    whitespace ~ [\s]+
-END_OF_DSL
+my $dsl =sub {open my $fh, '<', $_[0] or die "Can not open file"; local $/; <$fh>;}
+->('grammer.slif'); 
 
 my $grammar = Marpa::R2::Scanless::G->new( { source => \$dsl } );
 my $input = <<'END_OF_SN';
