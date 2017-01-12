@@ -43,5 +43,6 @@ If ~ '@if' blanks_maybe
 # :lexeme    ~ optEnd priority=>1
 # :lexeme    ~ If priority=>2
 # :lexeme    ~ for priority=>2
-:discard   ~ whitespace
+:discard   ~ whitespace 
 whitespace ~ [\s]+ 
+event '^b' = predicted BodyLine
