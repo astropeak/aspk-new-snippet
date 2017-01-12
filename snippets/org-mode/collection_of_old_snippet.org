@@ -1,0 +1,34 @@
+
+* create visual function in emacs lisp, act as interface, a variable save the real function, and can be bind dynamically
+#+begin_src java
+* $1
+  #+NAME: vars
+  #+begin_src elisp :noweb yes
+  (defvar ${1:function}-function nil "The function that ${2:description}")
+  #+end_src
+  
+  
+  #+NAME: init
+  #+begin_src elisp
+  (setq $1-function '$1-${4:xxx})
+  #+end_src
+  
+  #+NAME: methods
+  #+begin_src elisp
+  (defun $1 (${3:args})
+    "$2"
+    (funcall $1-function $3))
+  
+  (defun $1-$4 ($3)
+    "$2"
+    $0
+    )
+  #+end_src
+  
+  #+NAME: test-$1
+  #+begin_src elisp :noweb yes
+  <<sources>>
+  ($1 args)
+  #+end_src
+ 
+#+end_src

@@ -300,7 +300,8 @@
     #+end_src
     
     #+RESULTS: methods
-    ==============    ==    ==    ===================pns-do-xxx
+=pns-tool-convert-all
+=    ==============    ==    ==    ===================pns-do-xxx
     =    
     
     #+NAME: test-
@@ -2164,14 +2165,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
 *** add an annotation: @(repeat count)
     Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
-
+    
     e.g. when create a class, the field is a this kind.
-
+    
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
    First run pns-create-modules-run to generate pns-modules. This will searching all files under pns-snippet-dir, each file should have two entries: '* snippet: xxx' and '* shortcut: yyy', or there will be an error.
    Then run pns-main-module to select a snippet.
-
+   
    The old method, also applicable.
    First run pns-main-1 to generate pns-templates from pns-snippet-file
    Then run pns-main to do the interactive selection and it will generates the code.
@@ -2179,12 +2180,13 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 ** tools
 *** convert snippets in  aspk-code-snippets to aspk-new-snippets format
     given a directory, convert all snippets file under that dir to a single org file. each file is an entry, the headline is the name of that snippet, the src block is the contnet.
-
+    
     Run this code block, then call pns-expand-template-by-name interactively, then all snippets files under pcs-snippet-dir/perl-mode can be selected.
-
-    #+NAME: no-name
+    
+    #+NAME: methods
     #+begin_src elisp
     (defun pns-tool-convert-aspk-code-snippets-to-new (dir output-file)
+      "Convert all snippets(native style) in DIR to a single org mode file OUTPUT-FILE. each file becomes an entry"
       (with-current-buffer (find-file-noselect output-file)
         (erase-buffer))
       (let (name value)
@@ -2218,25 +2220,25 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                 (kill-buffer " myTemp"))
               (f-files dir nil t))))
 
+
     ;; test:
-    (let* ((mode "perl")
-           (file (expand-file-name (format    "%s/%s-mode/collection_of_old_snippet.org" pns-snippet-dir mode))))
-      ;; (when (file-exists-p file)
-      ;;   (delete-file file))
-      (pns-tool-convert-aspk-code-snippets-to-new
-       (expand-file-name (format "%s/%s-mode" pcs-snippet-dir mode))
-       file))
+    (defun pns-tool-convert-all ()
+      (interactive)
+      (mapc (lambda (mode)
+              (let ((file (expand-file-name (format    "%s/%s-mode/collection_of_old_snippet.org" pns-snippet-dir mode)))
+                    (dir (expand-file-name (format "%s/%s-mode" pcs-snippet-dir mode))))
+                ;; (when (file-exists-p file)
+                ;;   (delete-file file))
+                (when (file-exists-p dir)
+                  (pns-tool-convert-aspk-code-snippets-to-new dir file))))
+            pcs--mode-names))
 
     ;; "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org"
     ;; (setq pns-template-file "/tmp/aa.org")
 
     ;; then run pns-expand-template-by-name
     #+end_src
-
-    #+RESULTS: no-name
-    | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/write-content-to-a-file--by-print | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/variable-that-control-newline---line-end | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/string-length | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/set-system-date-time--Can-only-run-under-linux--Depended-linux-command--sudo--w3m--date--Time-zone-is-chengdu- | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/set-store-regexp-to-a-scalar-variable | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/search-text--string-from-a-file-given-pattern-regexp | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/read-a-line-from-a-file-handler | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/read-a-file-line-by-line--by-while | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/process-each-line-from-stdin--with-the-provided-codes | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/open-a-shell-command-as-file-for-write--by-pipe | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/open-a-shell-command-as-file-for-read--by-pipe | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/open-a-file-for-write | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/open-a-file-for-read-and-write | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/open-a-file-for-read | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/open-a-file-for-append | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/open--read-and-close-a-file | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/loop-hash-key-and-value--while | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/iterate-on-an-array--by-foreach | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/iterate-on-a-hash--both-key-and-value | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/iterate-all-file-names-under-a-directory--recursively--with-an-optional-filter-function- | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-values-form---parse-a-string-given-a-template--match--by-regexp | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-string-from-array-of-string-numbers--join | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-directory-part-and-base-part-of-a-full-file-name--return-as-an-array--First-element-is-directory--second-is-base- | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-current-working-directory--cwd | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-current-username | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-current-process-number | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-current-line-number--function-name-and-file-name--by-call | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-current-date-time-as-string--in-a-special-format--year-month-day---hour-minute-seconds---microseconds | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-all-values-as-array-of-a-hash | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-all-keys-as-array-of-a-hash | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get-absolute-path-from-given-relative-path | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get---read-whole-content-of-a-file-in-one-pass-as-string | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/get---create-unique-file-name-by-suffix-a---1-----2---given-a-file-name | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/flush-contents-to-a-file--by-make-it-hot | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/example--iterate-yas-snippet-name-field-property | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/error--exception-handling--try-catch-block--try--eval--catch--if-------throw--die | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/document--splice--add--get--or-delete-multiple-elements-at-any-position-in-an-array- | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/document--quite-current-iterate--quite-whole-iterate--break-and-continue | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/document--new-line-characters--and-there-conversion | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/document--grep | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/document--check-file-property--such-as-existance--modify-time--permision | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/delete-duplicate-elements-from-an-array--by-grep--like-unique | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/delete-and-get-multiple-elements-from-array--use-splice--at-any-position | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/delete-and-get-a-element-from-array--use-shift--at-the-begining | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/delete-and-get-a-element-from-array--use-pop--at-the-end | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/create-directory-if-not-exists--recursively | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/create-autoload-function-for-undefined-functions--a-best-usage-is-change-shell-command-to-native-function | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/create-a-derived-class--inheritates-from-a-base-class | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/create-a-base-class--without-inheritance | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/close-a-file | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/check-if-the-calling-context-is-array-list-wanted-or-scalar--by-wantarray | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/check-if-a-scalar-variable-is-defined | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/check-if-a-key-exists-in-a-hash | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/check-if-a-file-is-a-regular-file | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/check-if-a-file-is-a-directory | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/check-if-a-file-exists | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/add-multiple-elements-to-array--use-unshift--at-begining | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/add-multiple-elements-to-array--use-splice--Then-elements-can-be-added-at-any-position- | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/add-multiple-elements-to-array--use-push--at-end--append | c:/Users/luooofuq/Dropbox/project/aspk-code-snippets/snippets/perl-mode/20170111-112738-301 |
-
-
+                    
 ** programming notes
 *** throw errors guard correctness, detect fault in development stage
     Then when error happens, the program stops at that place, debugging will be much easy.
@@ -2301,21 +2303,21 @@ Alias: -contains-p
     1. define variables formally
     2. the if statement
     3. get variable value
-
+       
 *** create a unique name for every concepts, things, and there relationships
     This will make programming very clear!!!
     
 *** 基础代码要做好，要与上层逻辑代码分离
     这个项目中，在tree的实现上，花费了太多的时间，就是因为将tree的实现与其它逻辑搅在一起了。
-
+    
     最后调用了之前写的tree模块，问题很快得到解决。
-
+    
 *** 编程的难点在哪里？
     - 函数、API用错，可能是由于笔误，记忆不清，理解不够等
     - 一直在重复，以前的经验没有用上。
-    
+      
     目前通过编写snippet，以上问题都能够得到解决。 
- 
+    
 *** 感觉emacs的坑太多了。。以及dynamic好处、坏处分析
     很容易出错，并且错误提示很不明显，都不知道到底哪错了。
     还有dynamic scoping也容易出错。如果有个临时变量忘记放在let中，则可能造成非常诡异的问题。或者回调函数中引用了一个全局变量xyz, 并将它传给map.但map中也定义了一个xyz，则此时回调函数中的xyz会绑定到map中的这个，造成问题。 在aspk/tree-iterate中遇到过一例。

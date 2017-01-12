@@ -1,0 +1,137 @@
+
+* open, write and close a file, by nio
+#+begin_src java
+{
+    FileOutputStream fout = null;
+    try {
+        fout = new FileOutputStream(${1:file});
+        FileChannel fc = fout.getChannel();
+        ByteBuffer buffer = ByteBuffer.allocate(${2:1024});
+        // fill the buffer with contents to write to a file
+        //final byte message[] = { 83, 111, 109, 101, 32, 98, 121, 116, 101, 115, 46 };
+        // for (int i=0; i<message.length; ++i) {
+        //   buffer.put( message[i] );
+        //}
+        $0
+    
+            buffer.flip();
+        fc.write( buffer );
+    } catch (FileNotFoundException ex) {
+        System.out.println(ex);
+    } catch (IOException ex) {
+        System.out.println(ex);
+    } finally {
+        try {
+            if (fout != null) {fout.close();}
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+}
+#+end_src
+* open, read and close a file, by nio
+#+begin_src java
+{
+    FileInputStream fin = null;
+    try {
+        fin = new FileInputStream(${1:file});
+        FileChannel fc = fin.getChannel();
+        ByteBuffer buffer = ByteBuffer.allocate(${2:1024});
+        while (fc.read(buffer) != -1) {
+            buffer.flip();
+            //now file contents saved in buffer, add process codes here
+            // int i=0;
+            // while (buffer.remaining()>0) {
+            //     byte b = buffer.get();
+            //     System.out.print((char)b);
+            //     i++;
+            // }
+            $0
+            
+            buffer.clear();
+        }
+    } catch (FileNotFoundException ex) {
+        System.out.println(ex);
+    } catch (IOException ex) {
+        System.out.println(ex);
+    } finally {
+        try {
+            if (fin != null) {fin.close();}
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+}
+#+end_src
+* error handling block
+#+begin_src java
+try {
+    $0
+} catch (Exception e) {
+    System.out.println(e); 
+} finally {
+}
+
+#+end_src
+* create an unchecked exception class
+#+begin_src java
+class ${1:exception} extends RuntimeException {
+    public $1(String msg) {
+        super(msg);
+    }
+}
+
+#+end_src
+* create an instance from class name
+#+begin_src java
+Class.forName(${1:full-class-name}).getConstructor(${2:para-type}.class).newInstance(${3:para})
+#+end_src
+* create an checked exception class
+#+begin_src java
+class ${1:exception} extends Exception {
+    public $1(String msg) {
+        super(msg);
+    }
+}
+#+end_src
+* create a buffer(should not expand this)
+#+begin_src java
+
+#++ method:wrap
+${1:type}Buffer ${2:buffer} = $1Buffer.wrap(${3:array});
+
+#++ method:allocate
+${1:type}Buffer ${2:buffer} = $1Buffer.allocate(${3:size});
+
+#++ method:direct
+${1:type}Buffer ${2:buffer} = $1Buffer.directAllocate(${3:size});
+
+
+the procesor will look the header for all possiable values and prompt for the user. This idea is great!!!
+more than one commands can be choosed in a pass.
+
+则学习的过程就是写模板的过程。使用模板编程时，我就全部使用的是高级概念，而不需要关注细节。比如process buffer, 这里的子项包括创建、打开、读取、写入、关闭、刷出、与数组转换、与其它类型转换 等常用操作。而这些子项都会通过提示的方式显现出来，再也不需要记那么多东西。
+
+一个var的值也可以是一个list，则所有的可选值可在一个block中指定。同时在block中需要能够获得这个var的值，也能够做一些transformation,以此将该值转换在目标中。list的元素也可是一个cons，则值也显示将分离。
+采用这种方法，多个block可被合并为一个，简化编写工作。
+缺点是依赖于这个参数的参数将不太好做了。=》可能通过定义依赖来定义一个元素的值。
+
+块的顺序会有关系，因为可以多个块会被选中。顺序通过写时保证。
+
+## Example: for processing file
+##command: open, read, write, close, flush
+##type: file, pipe, socket
+##for: read, write, append, readwrite. only applicable for command open
+
+#++ command:open, type: file, for:read
+open a file for read
+
+#++ command:open, type: pipe, for:read
+open a pipe for read
+
+
+
+#++ command:open
+close the file
+
+#+end_src

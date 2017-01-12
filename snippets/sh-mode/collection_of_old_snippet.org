@@ -1,0 +1,5 @@
+
+* bash alias, create another name for a command
+#+begin_src java
+alias ${1:name}="${2:command}"
+#+end_src
