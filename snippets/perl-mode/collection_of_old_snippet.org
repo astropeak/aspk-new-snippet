@@ -1,0 +1,547 @@
+
+* write content to a file, by print
+#+begin_src java
+print ${1:file-handler} ${2:content};
+#+end_src
+* variable that control newline / line end
+#+begin_src java
+local $/ = "\r\n";
+while (<DATA>) { chomp $_; print STDERR "'$_'\n"; }
+#+end_src
+* string length
+#+begin_src java
+aaaa
+#+end_src
+* set system date time, Can only run under linux. Depended linux command: sudo, w3m, date. Time zone is chengdu.
+#+begin_src java
+open my $fh, "w3m http://www.timeanddate.com/worldclock/china/chengdu -dump|" || die "Can't w3m";
+local $/;
+<$fh> =~ m/Home > Time Zones >(?:.*\n){3,8}([\d:]+)(?:.*\n){2}(.*)/;
+system("sudo","date","-s",\$1." ".\$2);
+
+#+end_src
+* set/store regexp to a scalar variable
+#+begin_src java
+${1:variable} = qr/${2:regexp}/;
+$test = 'I hellothere!';
+# use
+print \$1 if $test =~ /I ($1)th/;
+
+#+end_src
+* search text, string from a file given pattern regexp
+#+begin_src java
+    open my $fh, '<', ${1:file} or die "Open file failed";
+    local $/;
+    # <$fh> =~ /^#\s*name\s*:\s*(.*)/m;
+    <$fh> =~ /${2:pattern}/m;
+    # use \$1, \$2 to get the matched data by ()
+
+#+end_src
+* read a line from a file handler
+#+begin_src java
+<${1:file-handler}>
+#+end_src
+* read a file line by line, by while
+#+begin_src java
+while (<\$${1:fh}>) {
+    chomp;
+    # $_ is the current line
+    $0
+}
+#+end_src
+* process each line from stdin, with the provided codes
+#+begin_src java
+my $cmd=$ARGV[0];
+my $func = eval "sub{while(<STDIN>){chomp;$cmd;}}";
+die "unable to compile '$cmd', aborting...\n" if not defined $func;
+$func->();
+
+
+#+end_src
+* open a shell command as file for write, by pipe
+#+begin_src java
+open my $fh, "|-", ${1:commond} || die "can't open command: $1";
+# the same thing
+# open my $fh, "|sort" || die "can't open";
+print $fh "CCC\nBBB\n111\n", "DDD";
+print $fh "111\n";
+print $fh "AAA\n";
+# EOF will be triggered by closing the file.
+close $fh;
+
+#+end_src
+* open a shell command as file for read, by pipe
+#+begin_src java
+open my $fh, "-|", ${1:command} || die "Can't open command: $1";
+while (<$fh>){
+    print;
+}
+close $fh;
+
+#+end_src
+* open a file for write
+#+begin_src java
+open my $fh, ">", ${1:file} or die "Can't open file $1"; 
+#+end_src
+* open a file for read and write
+#+begin_src java
+open my $fh, "+>", ${1:file} or die "Can't open file $1"; 
+
+
+#+end_src
+* open a file for read
+#+begin_src java
+open my $fh, "<", ${1:file} or die "Can't open file $1";
+#+end_src
+* open a file for append
+#+begin_src java
+open my $fh, ">>", ${1:file} or die "Can't open file $1"; 
+
+#+end_src
+* open, read and close a file
+#+begin_src java
+open my $fh, "<", ${1:name} or die "Can't open file: $1\n";
+while (<$fh>) {
+    chomp;
+    # $_ is the current line
+    print "$_\n";
+    $0
+}
+close $fh;
+
+#+end_src
+* loop hash key and value, while
+#+begin_src java
+while(my($k, $v) = each %${1:hashVar}) {
+    # print "key: $k, value: $v\n";
+    $0
+}
+
+#+end_src
+* iterate on an array, by foreach
+#+begin_src java
+foreach my $element (${1:array}) { 
+    print "Element: $element\n";
+}
+#+end_src
+* iterate on a hash, both key and value
+#+begin_src java
+while (my ($key, $value) = each ${1:hash}) {
+    print "$key: $value\n";
+}
+
+#+end_src
+* iterate all file names under a directory, recursively, with an optional filter function
+#+begin_src java
+# iterate all file names under directory ${1:dir} with an optional filter function, recursively
+foreach my $file (glob($1."/*")) {
+    print "File: $file\n";
+}
+
+#+end_src
+* get values form / parse a string given a template, match, by regexp
+#+begin_src java
+sub {
+    # quote all spacial chars, such as  \, *, ., (, ), {, }, [, ], |, ?, +
+    ${1:template} =~ s/([\[\]{}|?+*(.)\\\\])/\\\\\1/gm;
+    # replace #.*# with (?<\1>.*), that is named capture group
+    $1 =~ s/#([^#]*)#/(?<\1>.*)/gm;
+    # remove duplicate whitespace
+    $1 =~ s/[ \t\r\n]+/[ \t\r\n]*/g;
+    ${2:target} =~ /$1/s;
+    map {s/^\s+|\s+$//g;$_} %+;
+} -> ();
+#+end_src
+* get string from array of string/numbers, join
+#+begin_src java
+join ${1:seperator}, ${2:array-or-element}
+#+end_src
+* get directory part and base part of a full file name, return as an array. First element is directory, second is base.
+#+begin_src java
+sub {use File::Basename; (dirname($_[0]), basename($_[0]));}->(${1:file});
+
+#+end_src
+* get current working directory, cwd
+#+begin_src java
+    use Cwd;
+    my $dir=getcwd();
+    print "cwd: $dir\n";
+
+#+end_src
+* get current username
+#+begin_src java
+my $username = $ENV{LOGNAME} || $ENV{USER} || getlogin || getpwuid($<);
+print $username;
+
+#+end_src
+* get current process number
+#+begin_src java
+$$
+#+end_src
+* get current line number, function name and file name, by call
+#+begin_src java
+sub get_current_line_number {
+    my ($package, $filename, $line, $subroutine, $hasargs,
+        $wantarray, $evaltext, $is_require, $hints, $bitmask, $hinthash) = caller(0);
+    return $line;
+}
+
+sub get_current_function_name {
+    my ($package, $filename, $line, $subroutine, $hasargs,
+        $wantarray, $evaltext, $is_require, $hints, $bitmask, $hinthash) = caller(1);
+    return $subroutine;
+}
+
+sub get_current_file_name {
+    my ($package, $filename, $line, $subroutine, $hasargs,
+        $wantarray, $evaltext, $is_require, $hints, $bitmask, $hinthash) = caller(1);
+    return $filename;
+}
+
+
+
+#+end_src
+* get current date time as string, in a special format: year,month,day - hour,minute,seconds - microseconds
+#+begin_src java
+use POSIX qw(strftime);
+my $date= strftime "%Y%m%d-%H%M%S", localtime;
+
+#+end_src
+* get all values as array of a hash
+#+begin_src java
+values(${1:hash})
+
+#+end_src
+* get all keys as array of a hash
+#+begin_src java
+keys(${1:hash})
+
+#+end_src
+* get absolute path from/given relative path
+#+begin_src java
+use Cwd 'abs_path';
+my $file = abs_path(${1:relative-path});
+
+#+end_src
+* get / read whole content of a file in one pass as string
+#+begin_src java
+sub {
+    open my $fh, '<', ${1:file} or die "Can not open file";
+    local $/;
+    <$fh>;
+}->();
+
+#+end_src
+* get / create unique file name by suffix a '-1', '-2', given a file name
+#+begin_src java
+sub {my $rst = $_[0]; my $idx = 0; while (-e $rst) {$idx++; $rst = "$_[0]-$idx";} $rst;}->(${1:file});
+
+#+end_src
+* flush contents to a file, by make it hot
+#+begin_src java
+select((select(${1:file-handler}), $|=1)[0]);
+
+
+#+end_src
+* example: iterate yas snippet name field property
+#+begin_src java
+# $dir =  "/Users/astropeak/Dropbox/project/emacs.d/snippets";
+foreach my $file (glob(${1:snippet-dir}."/*/*")) {
+    # print "File: $file\n";
+    open my $fh, '<', $file or die "Open file failed";
+    local $/;
+    <$fh> =~ /^#\s*name\s*:\s*(.*)/m;
+    my $name = \$1;
+    
+    my ($dir, $base) = sub {use File::Basename; (dirname($_[0]), basename($_[0]));}->($file);
+    my (undef, $mode ) = sub {use File::Basename; (dirname($_[0]), basename($_[0]));}->($dir);
+
+    # Snippet named bind to $name here. add your process codes
+    print "mode: $mode, name: $name\n"; 
+    $0
+}
+#+end_src
+* error, exception handling. try catch block. try: eval, catch: if ($@), throw: die
+#+begin_src java
+  eval {
+   # throw an error expciltly
+   # die "Error: aaa bbb.";
+   # put processing codes here
+   $0
+  };
+  if ($@) {
+      print "Exception happended. Error string: $@\n";
+      # put error handling codes here
+  }
+  
+#+end_src
+* document, splice, add, get, or delete multiple elements at any position in an array.
+#+begin_src java
+   doc: http://www.perlmonks.org/?node=splice
+   
+   syntax:
+   splice ARRAY, OFFSET, LENGTH, LIST
+   replace (offset length) with list. If offset is negtive, then it count form end.
+   
+   Below lines are all have same effect:
+   #+begin_src perl :results output
+       push(@a,$x,$y)      splice(@a,@a,0,$x,$y)
+       pop(@a)             splice(@a,-1)
+       shift(@a)           splice(@a,0,1)
+       unshift(@a,$x,$y)   splice(@a,0,0,$x,$y)
+       $a[$x] = $y         splice(@a,$x,1,$y)
+   #+end_src
+ 
+#+end_src
+* document: quite current iterate, quite whole iterate, break and continue
+#+begin_src java
+    while (1) {
+        ++$i;
+        next if $i==3;
+        print "$i\n";
+        last if $i==5;
+    }
+
+#+end_src
+* document: new line characters, and there conversion
+#+begin_src java
+
+while (<DATA>) { s/\r[\n]*/\n/gm; # now, an \r (Mac) or \r\n (Win) becomes \n (UNIX +) chomp $_; print STDERR "'$_'\n"; }
+#+end_src
+* document: grep
+#+begin_src java
+  grep works on an array and return a new array. It works like a filter, you decide which elements in the given array should be kept in the result array.
+  
+  syntax:
+  #+begin_src perl
+  grep CODE_BLOCK ARRAY
+  #+end_src
+
+  The code block works as judging condition. If return value of the block is true, then the element will be kept, else deleted. ~$_~ is bind to current element in the code block.
+** examples
+*** delete some elements in an array
+    #+begin_src perl
+    grep {$_ ne "bb"} qw(aa bb cc);
+    #+end_src
+
+    #+RESULTS:
+    : aa
+    : cc
+
+    Will return a new array with all elements equal to "bb" deleted.
+    
+*** delete duplicate elements
+    like unique
+    #+begin_src perl
+    grep {++$count{$_} <= 1} qw(aa aa bb cc bb aa);
+    #+end_src
+
+    #+RESULTS:
+    : aa
+    : bb
+    : cc
+
+    How the code works?
+
+    For the first element 'aa', ~$count{'aa'}~ will be ~1~ before comparing(because $count{'aa'} is undef, so its initial value is 0), so code block result is ~true~, then this element will be put to result array; for the second 'aa', ~$count{'aa'}~ will be ~2~ before comparing, code block result is ~false~, then the element will not be put to result array.
+*** return elements only match a pattern
+    #+begin_src perl
+    grep {/^[ \t]*([rc][0-9]{1,10}){1,100}[ \t]*$/} qw(r1 r1c1 c1 r1.a aa bb cc aaaaa);
+    #+end_src
+
+    #+RESULTS:
+    : r1
+    : r1c1
+    : c1
+
+
+#+end_src
+* document: check file property, such as existance, modify time, permision
+#+begin_src java
+
+    -r              文件或目录对此（有效的）用户（effective user）或组是可读的
+    -w             文件或目录对此（有效的）用户或组是可写的
+    -x             文件或目录对此（有效的）用户或组是可执行的
+    -o             文件或目录由本（有效的）用户所有
+    -R             文件或目录对此用户(real user)或组是可读的
+    -W            文件或目录对此用户或组是可写的
+    -X             文件或目录对此用户或组是可执行的
+    -O             文件或目录由本用户所有
+    -e              文件或目录名存在
+    -z              文件存在，大小为0（目录恒为false）
+    -s              文件或目录存在，大小大于0（值为文件的大小，单位：字节）
+    -f               为普通文本
+    -d              为目录
+    -l               为符号链接
+    -S              为socket
+    -p              为管道(Entry is a named pipe(a“fifo”))
+    -b              为block-special 文件（如挂载磁盘）
+    -c              为character-special 文件（如I/O 设备）
+    -u              setuid 的文件或目录
+    -g              setgid 的文件或目录
+    -k              File or directory has the sticky bit set
+    -t              文件句柄为TTY(系统函数isatty()的返回结果；不能对文件名使用这个测试)
+    -T             文件有些像“文本”文件
+    -B             文件有些像“二进制”文件
+    -M             修改的时间（单位：天）
+    -A             访问的时间（单位：天）
+    -C             索引节点修改时间（单位：天）
+
+#+end_src
+* delete duplicate elements from an array, by grep, like unique
+#+begin_src java
+grep {++$count{$_} <= 1} ${1:array}
+#+end_src
+* delete and get multiple elements from array, use splice, at any position
+#+begin_src java
+splice(@${1:array}, ${2:start-pos}, ${3:count});
+#+end_src
+* delete and get a element from array, use shift, at the begining
+#+begin_src java
+shift(@${1:array})
+#+end_src
+* delete and get a element from array, use pop, at the end
+#+begin_src java
+pop(@${1:array})
+#+end_src
+* create directory if not exists, recursively
+#+begin_src java
+use File::Path;
+unless (-e ${1:dir} && -d $1) {
+    File::Path::mkpath($1);
+    print "$1 created\n";
+}
+
+
+#+end_src
+* create autoload function for undefined functions, a best usage is change shell command to native function
+#+begin_src java
+sub AUTOLOAD {
+      my $program = $AUTOLOAD;
+      print "name: $AUTOLOAD\n";
+      # delete the package name
+      $program =~ s/.*:://;
+      system($program, @_);
+  }
+  
+ 
+
+#+end_src
+* create a derived class, inheritates from a base class
+#+begin_src java
+package ${1:this-class};
+use parent ${2:base-class};
+
+sub new {
+    my ($class, $spec)= @_;
+    $spec = {} if !defined($spec);
+    my $self;
+    $self = $class->SUPER::new($spec);
+
+    # one member
+    $self->prop(${3:member}, ${4:value});
+    # add more members here
+    $0
+
+    bless $self, $class;
+    return $self;
+}
+
+1;
+#+end_src
+* create a base class, without inheritance
+#+begin_src java
+package ${1:class};
+
+sub new {
+    my ($class, $spec)= @_;
+    $spec = {} if !defined($spec);
+    my $self={};
+    bless $self, $class;
+
+    # one member
+    $self->prop(${2:member}, ${3:value});
+    # add more members here
+    $0
+    return $self;
+}
+
+# Get or set a property of the object
+sub prop {
+    my ($self, $name, $value) = @_;
+    # print "In prop. name: $name, value: $value\n";
+
+    if (defined($value)) {
+        $self->{"_$name"} = $value;
+        return $self;
+    } else {
+        return $self->{"_$name"};
+    }
+}
+
+1;
+#+end_src
+* close a file
+#+begin_src java
+close ${1:file-handler}
+#+end_src
+* check if the calling context is array/list wanted or scalar, by wantarray
+#+begin_src java
+my $context = (wantarray() ? LIST : SCALAR);
+#+end_src
+* check if a scalar variable is defined
+#+begin_src java
+defined(\$${1:variable})
+
+#+end_src
+* check if a key exists in a hash
+#+begin_src java
+exists(\$${1:hash}{${2:key}})
+#+end_src
+* check if a file is a regular file
+#+begin_src java
+if(-f ${1:file}) {
+    print "$1 is a regular file\n";
+} else {
+    print "$1 not a regular file\n";
+}
+ 
+#+end_src
+* check if a file is a directory
+#+begin_src java
+if(-d ${1:file}) {
+    print "$1 is a directory\n";
+} else {
+    print "$1 not a directory\n";
+}
+ 
+#+end_src
+* check if a file exists
+#+begin_src java
+if(-e ${1:file}) {
+    print "$1 exist\n";
+} else {
+    print "$1 not exist\n";
+}
+ 
+#+end_src
+* add multiple elements to array, use unshift, at begining
+#+begin_src java
+unshift(@${1:array}, $0)
+#+end_src
+* add multiple elements to array, use splice. Then elements can be added at any position.
+#+begin_src java
+splice(@${1:array}, ${2:start-pos}, 0,${3:element})
+#+end_src
+* add multiple elements to array, use push, at end, append
+#+begin_src java
+push(@${1:array}, $0)
+#+end_src
+* create a embedded multiple lines string
+#+begin_src java
+my ${1:str} = <<'END_OF_STRING';
+$0
+END_OF_STRING
+
+
+#+end_src

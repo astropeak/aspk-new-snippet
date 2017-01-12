@@ -1,0 +1,19 @@
+* pattern inputter
+  A module/software/package will always need some input, and producing some output. This pattern can is used to get all the input data the module needed.
+
+  pattern:
+  1. create a inputter for this module, specify from where get what, and how to get
+  2. invoke inputter.do() to get input, the return value is the input data.
+  3. if input data should be cached, then invoke inputter.do-cache() to get input.
+     The first time it will get input from some sources, can caches the data. After invocations it will return the cached data directly.
+
+     
+  Benifets:
+  1. input method can be changed easily. 
+     Such as you can get input form stdin, or from a file, or from network, or from global variable!
+  2. software engineering is good. You have a definitive boundary for this module.
+     And testing of this module can be easy.
+
+  Other comments:
+  1. its better to have a uniform represent part for the input data. Maybe the result of Inputter should saved in the represent part directly.
+  

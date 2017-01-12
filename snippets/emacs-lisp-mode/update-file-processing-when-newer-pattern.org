@@ -1,0 +1,48 @@
+* update file processing result when newer patern
+  Problem:
+  1. a file will be processed, given file name, and has a result
+  2. there are many files to be processed. 
+     But still works if only one file
+     
+  Pattern:
+  1. save results to a hash table. key is the file name, value is: (('result . result) ('update-time . time)). Time is seconds since epoc.
+  2. update result for a file if that file's modification time is newer than that result's update time.
+    
+  Related pattern:
+  1. create a unique model for input, the model is the represent part for that input in software internally
+
+  Other comments:
+  1. this pattern is a general one, can be applied to every language.
+  2. implement a class  seems a more better way.
+     eieio provides oop supprot.
+     https://www.gnu.org/software/emacs/manual/html_node/eieio/
+     
+     class:file-processing-updater
+     field: 
+     - results:hash, save the results
+     - files: list,  files to be processed
+     - [O] file-func: function(),  calculate the file list dynamically
+     - [O] file-transformer:function(file), the result wil be used as key.
+      
+     Method:
+     - update(). update the results based on file modification time.
+     
+     Constructor:
+     create a empty hash. 
+     Seem no constructor support from eieio.
+
+  #+begin_src elisp
+  (setq `hash` (make-hash-table :test 'equal))
+  (let (elem time elem2 result)
+    (setq elem (gethash `file` `hash`))
+    (setq time (time-to-seconds (nth 5 (file-attributes `file` 'string))))
+    (unless (and elem (<= time (pns-assoc 'update-time elem)))
+      (message "Updating result for file %s" `file`)
+      (setq result (`processing-function` `file`))
+      (setq elem2 (list (cons 'update-time time)
+                        (cons 'result result)
+                        ;; and other field here
+                        ))
+      (puthash `file` elem2 `hash`)))
+  #+end_src
+

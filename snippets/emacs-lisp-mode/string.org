@@ -1,0 +1,26 @@
+* get matched text in string as a list, given regexp pattern
+  the string-match and match-string have bugs. fuck!!
+  ;; (progn (string-match `regexp` `string`)
+  ;;        (match-string 1 `string`)
+  ;;        (match-string 2 `string`)
+  
+  #+begin_src elisp
+  (with-temp-buffer (insert ${1:string}) (goto-char 1)
+                    (when (re-search-forward ${2:regexp})
+                      (list (match-string 0)(match-string 1))))
+  #+end_src
+  
+  
+  Below codes not work!!! But with buffer it works
+  (progn
+  (setq s "emacs-lisp-mode")
+  (string-match "\\([a-z-]*\\)-mode" s)
+  (match-string 1  s) ;;will return nil
+  )
+* iterate on hash, both for key and value
+  #+begin_src elisp
+  (maphash ${1:hash} (lambda (key value)
+$0))
+
+  #+end_src
+  

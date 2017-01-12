@@ -1,0 +1,50 @@
+* oop by eieio
+  https://www.gnu.org/software/emacs/manual/html_node/eieio/Quick-Start.html#Quick-Start
+  #+NAME: no-name
+  #+begin_src elisp
+@(get class field1)
+  #+end_src
+
+** oop: create a class
+   #+begin_src elisp
+   (defclass `class` () ; No superclasses
+     ((`field1` :initarg :`field1`
+                  :initform ""
+                  :type string
+                  :custom string
+                  :documentation "The name of a person.")
+      ;; add more field below, the syntax is the same as common lisp's CLOS.
+      $0
+      )
+     "${2:doc}")
+   #+end_src
+** oop: create a member method for a class
+   #+NAME: no-name
+   #+begin_src elisp
+   ;; the metehod is dispatched based on the type of first parameter, which is always a type class
+   (defmethod `method` ((inst `class`) &optional other-args-here)
+     "doc"
+     ;; access a member variable by (oref object name)
+     $0
+     )
+   #+end_src
+** oop: create an object for a class
+   #+NAME: no-name
+   #+begin_src elisp
+   (`class` :`field1` `value1` $0)
+   #+end_src
+
+** oop: get member variable / field given an object
+   #+NAME: no-name
+   #+begin_src elisp
+  (oref `object` `field1`)
+   #+end_src
+
+** Naming Conventions
+
+See Tips and Conventions in GNU Emacs Lisp Reference Manual, for a description of Emacs Lisp programming conventions. These conventions help ensure that Emacs packages work nicely one another, so an EIEIO-based program should follow them. Here are some conventions that apply specifically to EIEIO-based programs:
+
+Come up with a package prefix that is relatively short. Prefix all classes, and methods with your prefix. This is a standard convention for functions and variables in Emacs.
+Do not prefix method names with the class name. All methods in EIEIO are “virtual”, and are dynamically dispatched. Anyone can override your methods at any time. Your methods should be prefixed with your package name.
+Do not prefix slots in your class. The slots are always locally scoped to your class, and need no prefixing.
+If your library inherits from other libraries of classes, you must “require” that library with the require command.
