@@ -1987,18 +1987,22 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     cretea template name table, done
     #+NAME: methods
     #+begin_src elisp
-    (defun pns-create-template-table (&optional rst)
-      "Create a name to template object table(list of cons), given template. Key is name, value is template. this table can be used as helm candidates"
+    (defun pns-create-template-table (&optional mode)
+      "Create a name to template object table(list of cons), given template. Key is name, value is template. this table can be used as helm candidates. MODE is a regexp to match the mode(if nil the for all modes)"
+      (or mode (setq mode ".*"))
       (let (rst)
         (maphash (lambda (key val)
-                   (aspk/tree-iterate (pns-assoc 'template val)
-                                      ;; (lambda (elem parent depth)
-                                      (lambda (elem-subtree parent-subtree depth)
-                                        (setq rst (append (list (cons (pns-assoc 'name (car elem-subtree))
-                                                                      (car elem-subtree)))
-                                                          rst)))))
+                   (when (and  (stringp (pns-assoc 'mode val))
+                               (string-match mode (pns-assoc 'mode val)))
+                     (aspk/tree-iterate (pns-assoc 'template val)
+                                        ;; (lambda (elem parent depth)
+                                        (lambda (elem-subtree parent-subtree depth)
+                                          (setq rst (append (list (cons (pns-assoc 'name (car elem-subtree))
+                                                                        (car elem-subtree)))
+                                                            rst))))))
                  pns-template-set)
         rst))
+
     ;; (setq a (pns-create-template-table))
 
     ;; (setq a (pns-create-template-new pns-template-file))
@@ -2015,7 +2019,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
              (save-excursion
                (helm-other-buffer
                 `(((name . "Template")
-                   (candidates . ,(pns-create-template-table))
+                   (candidates . ,(pns-create-template-table (pns-get-current-mode)))
                    (action . (lambda (tmpl) tmpl))
                    (accept-empty . t)))
                 "Template"))))
@@ -2023,6 +2027,18 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
         (message "in 2 pns-expand-template-by-name Buffer:%S" (current-buffer))
         (pns-expand-tempalte template)))
+
+    (defun pns-get-current-mode ()
+      "get current src block mode name under cursor in a org mode file buffer. If not applicatable, return nil"
+      (or 
+       (let (info lang)
+         (when (and (eq major-mode 'org-mode) (fboundp 'org-edit-src-find-region-and-lang))
+           (setq info (org-edit-src-find-region-and-lang)))
+         (when info
+           (setq lang (or (cdr (assoc (nth 2 info) org-src-lang-modes)) (nth 2 info)))
+           (setq lang (if (symbolp lang) (symbol-name lang) lang)))
+         lang)
+       (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode))))
 
     #+end_src
 
@@ -2167,7 +2183,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
     
     e.g. when create a class, the field is a this kind.
-    
+*** DONE only expand snippets belong to current mode
+    CLOSED: [2017-01-12 Thu 11:22]
+    - State "DONE"       from "STARTED"    [2017-01-12 Thu 11:22]
+    - State "STARTED"    from ""           [2017-01-12 Thu 10:53]
+    I find this is a good way, and I don't need all other modes.
+
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
    First run pns-create-modules-run to generate pns-modules. This will searching all files under pns-snippet-dir, each file should have two entries: '* snippet: xxx' and '* shortcut: yyy', or there will be an error.
