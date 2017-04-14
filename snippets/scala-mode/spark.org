@@ -1,0 +1,63 @@
+* spark
+** spark quick start
+*** example the word counter 
+    flatMap, map, and reduceByKey are all transformations. A transformation is a function to transform a RDD to another RDD, it take a function as parameter.
+    flatMap will put all elements of sequence of the transform function to the result.
+    reduceByKey only works for RDD with type [K, V], and it will reduce V for the same K.
+
+    collect is action.
+    #+BEGIN_SRC scala
+    val textFile = sc.textFile(${1:file})
+    // textFile: org.apache.spark.rdd.RDD[String] = README.md MapPartitionsRDD[1] at textFile at <console>:25
+    val wordCounts = textFile.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey((a, b) => a + b)
+    //  wordCounts: org.apache.spark.rdd.RDD[(String, Int)] = ShuffledRDD[8] at reduceByKey at <console>:28
+    wordCounts.collect()
+     // res6: Array[(String, Int)] = Array((means,1), (under,2), (this,3), (Because,1), (Python,2), (agree,1), (cluster.,1), ...)
+    #+END_SRC
+*** put the data as cache to cluster-wide shared in-memory by cache function
+   #+BEGIN_SRC scala
+linesWithSpark.cache()
+   #+END_SRC
+*** a standalone app
+    How to run:
+    #+BEGIN_SRC sh
+    # Package a jar containing your application
+    $ sbt package
+    ...
+    [info] Packaging {..}/{..}/target/scala-2.11/simple-project_2.11-1.0.jar
+
+    # Use spark-submit to run your application
+    $ YOUR_SPARK_HOME/bin/spark-submit \
+      --class "SimpleApp" \
+      --master local[4] \
+      target/scala-2.11/simple-project_2.11-1.0.jar
+    ...
+    Lines with a: 46, Lines with b: 23
+    #+END_SRC
+
+    #+BEGIN_SRC scala :tangle src/main/scala/SimpleApp.scala :mkdirp yes
+    /* SimpleApp.scala */
+    import org.apache.spark.SparkContext
+    import org.apache.spark.SparkContext._
+    import org.apache.spark.SparkConf
+
+    object SimpleApp {
+      def main(args: Array[String]) {
+        val logFile = "YOUR_SPARK_HOME/README.md" // Should be some file on your system
+        val conf = new SparkConf().setAppName("Simple Application")
+        val sc = new SparkContext(conf)
+        val logData = sc.textFile(logFile, 2).cache()
+        val numAs = logData.filter(line => line.contains("a")).count()
+        val numBs = logData.filter(line => line.contains("b")).count()
+        println(s"Lines with a: $numAs, Lines with b: $numBs")
+        sc.stop()
+      }
+    }
+    #+END_SRC
+
+    #+BEGIN_SRC text :tangle simple.sbt 
+    name := "Simple Project"
+    version := "1.0"
+    scalaVersion := "2.11.7"
+    libraryDependencies += "org.apache.spark" %% "spark-core" % "2.1.0"
+    #+END_SRC

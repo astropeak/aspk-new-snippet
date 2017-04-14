@@ -1,0 +1,26 @@
+* sentiment analysis
+  http://www.nltk.org/howto/sentiment.html
+** a class that analyze sentiment intensity score of a sentence, vader.SentimentIntensityAnalyzer
+   #+begin_src python
+   from nltk.sentiment.vader import SentimentIntensityAnalyzer
+   sia = SentimentIntensityAnalyzer()
+   sentence = "I have a dream"
+   r = sia.polarity_scores(sentence)
+   print(r)
+   #+end_src
+
+   The result will be four float numbers like this:
+   compound: 0.2263, neg: 0.0, neu: 0.84, pos: 0.16
+** 自己手动写，先制作数据，然后feature extractor，最后用classifier train
+   只不过用了一些现有的函数来制作 feature extractor.
+   unigram feature extractor的都是为：给定一组词，然后返回一个字典，对于另一组词，返回是否存在。
+   如：
+   >>> words = ['ice', 'police', 'riot']
+    >>> document = 'ice is melting due to global warming'.split()
+    >>> sorted(extract_unigram_feats(document, words).items())
+    [('contains(ice)', True), ('contains(police)', False), ('contains(riot)', False)]
+
+    这个例子中，先找出频率大于4的单词，作为 feature. 然后使用这个feature为所有词提取feature.
+
+    但这跟sentiment analyze 有什么关系？
+    

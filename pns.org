@@ -2188,16 +2188,18 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "DONE"       from "STARTED"    [2017-01-12 Thu 11:22]
     - State "STARTED"    from ""           [2017-01-12 Thu 10:53]
     I find this is a good way, and I don't need all other modes.
+*** get src blocks from all org files
+    Then I can create code snippet from everywhere.
 
+    If a src block should not be treated as a snippet, just give it a name start with 'NPCS'
+
+    Then I will have the uniform way of taking notes.
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
-   First run pns-create-modules-run to generate pns-modules. This will searching all files under pns-snippet-dir, each file should have two entries: '* snippet: xxx' and '* shortcut: yyy', or there will be an error.
-   Then run pns-main-module to select a snippet.
-   
-   The old method, also applicable.
-   First run pns-main-1 to generate pns-templates from pns-snippet-file
-   Then run pns-main to do the interactive selection and it will generates the code.
-   
+  
+   First run pns-update-template-list
+   then run pns-expand-template-by-name
+
 ** tools
 *** convert snippets in  aspk-code-snippets to aspk-new-snippets format
     given a directory, convert all snippets file under that dir to a single org file. each file is an entry, the headline is the name of that snippet, the src block is the contnet.

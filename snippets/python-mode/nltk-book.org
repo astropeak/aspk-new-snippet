@@ -1,0 +1,60 @@
+* chapter 1: Language Processing and Python
+** nltk.book module
+   包含了一些文本： text1 ~ text9.
+   这些文本可以直接使用。
+** 找出一个单词在文本中的使用位置，并打印出前后的单词context， 使用 concordance
+    #+begin_src python :results output
+from nltk.book import *
+text1.concordance("dance")
+    #+end_src
+    
+** 找出词组搭配， collocation， 使用collocations函数
+    collocation就是词组，一些固定搭配的两个词的组合。
+    and collocation 就是 frequent bi-grams.
+   
+    方法应该就是先构造出bigrams, 然后找到频率较高的组合， 并处理一些时态、单数复数等变化。
+    #+begin_src python :results output
+from nltk.book import *
+text1.collocations()
+    #+end_src
+
+** 计算word list中每个 word的频率， 通过 nltk.probability.FreqDist
+    但FreqDist好像在 nltk.book包中 也存在， 可能是一个链接吧。
+
+    #+begin_src python :results output
+fd = FreqDist(text5)
+# 显示频率最高的顺序
+fd.most_common()
+    #+end_src
+
+    这个和collections.Counter用法非常类似。
+    
+** dispersion plot
+   离差，分布
+   打印出一个单词在整个文本中的分布。 横坐标为单词的offset， 纵坐标为单词。
+   
+   图1.2将一些美国总结演讲中单词的dispersion plot打印出来，来研究单词的使用情况。duties用的越来越少了， 而feedom和democracy用的多了。
+   
+   练习题通过打印 四个主人公的dispersion， 来确定他们的关系。 可能离得近的就是夫妻。
+   
+** lexical diversity
+   定义： 不同单词数目 /  单词总数
+   #+begin_src python :results output
+   from nltk.book import *
+   print(len(set(text1)) / len(text1))
+   #+end_src
+
+   #+RESULTS:
+
+   有一个表， 显示了不同文体的值。不同的文体具有不同的值。
+   可以认为lexical diversity越大，文本越复杂。
+
+** 总结
+   1. 习题基本做完了，有一个题： 第6题，图画出来了，但看不出哪两个是couple.
+
+   2. 通过做习题来recall文本的方式，感觉更加有效，比直接再读一遍文本。
+      这样更加专注，并且习题部分应该是重点、要点。
+      习题还是非常重要的。
+
+   3. 可能需要再总结一下应用。
+      一个应用就是通过 dispersion plot， 直观单词的使用情况，在美国总统演讲中。

@@ -482,6 +482,21 @@ The codes are copied form org-babel-find-named-block "
     $1
   )
 #+end_src
+* a function get current major mode name as string, without the "-mode" suffix, handling org src block mode
+#+begin_src java
+    (defun pns-get-current-mode ()
+      "get current src block mode name under cursor in a org mode file buffer. If not applicatable, return nil"
+      (or 
+       (let (info lang)
+         (when (and (eq major-mode 'org-mode) (fboundp 'org-edit-src-find-region-and-lang))
+           (setq info (org-edit-src-find-region-and-lang)))
+         (when info
+           (setq lang (or (cdr (assoc (nth 2 info) org-src-lang-modes)) (nth 2 info)))
+           (setq lang (if (symbolp lang) (symbol-name lang) lang)))
+         lang)
+       (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode))))
+
+#+end_src
 * example: create a major mode for bnf syntax highlight
 #+begin_src java
 (define-generic-mode 'bnf-mode

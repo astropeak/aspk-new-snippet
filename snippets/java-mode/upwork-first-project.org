@@ -1,0 +1,29 @@
+* log module: create a logger, and write logs
+  gradle dependency: 
+  compile "org.slf4j:slf4j-api:1.7.21"
+
+  #+begin_src java :classname Test
+  import org.slf4j.Logger;
+  import org.slf4j.LoggerFactory;
+
+  private static final Logger LOG = LoggerFactory.getLogger(RequesterD1S9.class.getName());
+
+  LOG.debug("A debug trace {}", "data");
+  LOG.info("");
+  LOG.error("");
+  #+end_src
+  The idea is first create a Logger object, then use that object to print traces.
+
+  PB: How to specify log level?
+* write a byte array to a file
+  #+begin_src java :classname Test
+  import org.apache.commons.io.FileUtils;
+  import java.io.File;
+
+  FileUtils.writeByteArrayToFile(new File("webi prompt.pdf"), reqResult.getResult().getBody());
+  #+end_src
+
+* check if string is the same/equal, compare string
+  #+begin_src java :classname Test
+`string-a`.equals(`string-b`)
+  #+end_src

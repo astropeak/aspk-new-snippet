@@ -1,0 +1,1755 @@
+* chapter 1: Data Structures and Algorithms
+** 1.6 Mapping Keys to Multiple Values in a Dictionary, by list value and defaultdict
+   example: create a dictionary with default value, by defaultdict
+
+   dictionary's property:
+   1. you can add new key to a dictionary
+   2. but when you access a key that not exists, there will be error
+   3. defaultdict is used to fix such problem.
+
+   #+BEGIN_SRC python
+   from collections import defaultdict
+   `dict` = defaultdict(`func list`)
+   # `dict`['aaa'].append(2)
+   $0
+   #+END_SRC
+
+** 1.6 example
+   #+BEGIN_SRC python
+   from collections import defaultdict
+   frequency = defaultdict(int)
+   frequency['colorless'] = 4
+   frequency['ideas'] # will be 0
+    
+   frequency = defaultdict(list)
+   # first, frequency['colorless'] will return a empty list, then append one element to this list.
+   frequency['colorless'].append(4)
+   frequency['ideas'] # will be []
+    
+   # Or you can pass a function take no arguments 
+    
+   # the idiom:
+   my_dictionary = defaultdict(function to create default value)
+   for item in sequence:
+   my_dictionary[item_key] is updated with information about item
+   #+END_SRC
+** 1.7 Keeping Dictionaries in Order, OrderedDict
+   #+begin_src python
+   form collections import OrderedDict
+   d = OrderedDict()
+   # the insertion order will be reserved.
+   #+end_src
+
+   An typical application is when for serilization.
+
+** 1.8. Calculating with Dictionaries
+*** get max key/value in a dictionary, based on the value, by inverting the dict
+    #+begin_src python
+    max(zip(`dict`.values(), `dict`.keys()))
+    # another solution
+    # max(`dict`, key=lambda k:`dict`[k])
+    #+end_src
+    first convert the dict to list of (value, key) pairs, then max function will first compare value, then compare key.
+*** result of the max value for many  things
+    for tuple and list, it just the element.
+    but for a dict, it returns only the key. Why? Because it accept a iterable as first parameter, and for a dictionary, the iterable value is the key.
+*** understanding of multi value bind
+    --->  (b11, b12) = 1
+       TypeError: 'int' object is not iterable
+    
+     The right hand side should be an iterable, every element in the iterable will be asigned to the left hand side variable, with each variable comsume one element exzactly. If the number of elements and variables not match, then there will be an error.
+
+     The consume more than one values, use the '*varname' expresstion, then the variable 'varname' will be a list of many elements.
+
+     Back to the error prints in the example, the 'int' object is the right size '1'.
+
+     PS:
+     I find python much simpler and funny than java.
+** 1.9. Finding Commonalities in Two Dictionaries
+   a dictionary's d.keys() and d.items() support set operations
+   So to find the common part keys/items in two dictionaries, just use the set operation '|' or 'union' function.
+*** get all keys as a iterable in a dictionary, by keys()
+    #+begin_src python
+`dict`.keys()
+    #+end_src
+
+*** get all values as a iterable in a dictionary, by values()
+    #+begin_src python
+`dict`.values()
+    #+end_src
+
+*** get all key, value pairs as a iterable in a dictionary, by items()
+    #+begin_src python
+`dict`.items()
+    #+end_src
+
+*** set operations
+    '|': union
+    '&': intersection
+    '-': difference
+    's1 < s2': check if s1 is a subset of s2
+
+    Example:
+In [101]: e.keys(), d.keys()
+Out[101]: (dict_keys([1, 4, 'a', 9]), dict_keys([1, 3, 5]))
+
+In [102]: e.keys() & d.keys()
+Out[102]: {1}
+
+In [103]: e.keys() | d.keys()
+Out[103]: {1, 3, 4, 5, 'a', 9}
+
+In [104]: e.keys() - d.keys()
+Out[104]: {9, 4, 'a'}
+
+** 1.10. Removing Duplicates from a Sequence while Maintaining Order
+*** problem: what is hashable(and the link to python glossary)
+    From the python glossary: 
+    https://docs.python.org/3/glossary.html
+
+    An object is hashable if it has a hash value which never changes during its lifetime (it needs a __hash__() method), and can be compared to other objects (it needs an __eq__() or __cmp__() method). Hashable objects which compare equal must have the same hash value.
+
+    Hashability makes an object usable as a dictionary key and a set member, because these data structures use the hash value internally.
+
+    All of Python’s immutable built-in objects are hashable, while no mutable containers (such as lists or dictionaries) are. Objects which are instances of user-defined classes are hashable by default; they all compare unequal, and their hash value is their id().
+*** how yield/generator iterator is implemented
+    From the glossary, it works by suspends the function and  return the value, and save the current status. Then if it was called  next time, it will start execute from the place last time it was suspended. Great!! I understanded this.
+    
+    generator
+    A function which returns a generator iterator. It looks like a normal function except that it contains yield expressions for producing a series of values usable in a for-loop or that can be retrieved one at a time with the next() function.
+    Usually refers to a generator function, but may refer to a generator iterator in some contexts. In cases where the intended meaning isn’t clear, using the full terms avoids ambiguity.
+    
+    generator iterator
+    An object created by a generator function.
+    Each yield temporarily suspends processing, remembering the location execution state (including local variables and pending try-statements). When the generator iterator resumes, it picks-up where it left-off (in contrast to functions which start fresh on every invocation).
+
+*** file object is also an iterable, the element is a line
+    #+begin_src python
+    with open(somefile,'r') as f:
+        for line in f:
+            print(line)
+    #+end_src
+
+*** a function that delete all duplicates in a list, with order preserved
+    #+begin_src python
+    def dedupe(items, key=None):
+        seen = set()
+        for item in items:
+            val = item if key is None else key(item)
+            if val not in seen:
+                yield item
+                seen.add(val)
+    #+end_src
+    If the element is hashable, then key function is not needed. Else, provide a fucntion to convert the  element to a hashable element.
+
+    examples:
+    >>> a = [ {'x':1, 'y':2}, {'x':1, 'y':3}, {'x':1, 'y':2}, {'x':2, 'y':4}]
+>>> list(dedupe(a, key=lambda d: (d['x'],d['y'])))
+[{'x': 1, 'y': 2}, {'x': 1, 'y': 3}, {'x': 2, 'y': 4}]
+>>> list(dedupe(a, key=lambda d: d['x']))
+[{'x': 1, 'y': 2}, {'x': 2, 'y': 4}]
+>>>
+
+*** delete all duplicates in a list, don't preserve order, by set
+    #+begin_src python
+    set(`list`)
+    #+end_src
+    Then all duplicate elements in list will be removed.
+
+*** the a?b:c expression in python, if else in one line
+    #+begin_src python
+    val = b if a else c
+    #+end_src
+    looks good
+
+** 1.11. Naming a Slice
+*** the slice object
+    create a  slice
+    #+begin_src python
+   a=[1,2,3,4]
+   s = slice(1,2)
+   print(a[s])
+   print(a[1:2])
+    #+end_src
+    '1:2' is just a shortcut to 'slice(1,2)'
+    
+    slice attributes
+    #+begin_src python
+    s = slice(1,2,2)
+    print(s.start, s.stop, s.step)
+    #+end_src
+
+    #+RESULTS:
+
+
+** 1.12. Determining the Most Frequently Occurring Items in a Sequence
+   A method by me
+   #+begin_src python
+   a = [1, 2, 1, 3, 2,3,3]
+   from collections import defaultdict
+   d = defaultdict(int)
+   # b = [d[k]+=1 for k in a]  # syntax error here
+   for k in a:
+       d[k]+=1
+
+   r = max(zip(d.values(), d.keys()))
+   print(r[1])
+   #+end_src
+
+   
+*** the collections.Counter class: change a list to a list of tuple of (element, count)
+    #+begin_src python :results output
+    a = [1, 2, 1, 3, 2,3,3]
+    from collections import Counter
+    b = Counter(a)
+    c = b.most_common(1)
+    print(c[0][0])
+
+    # get the count
+    print(b[3]) # 3 is the element in a
+
+
+    # update with more words
+    b.update([4, 2, 5])
+
+    # and a Counter object support the math operations: '+' and '-'
+
+    #+end_src
+
+    #+RESULTS:
+    : 3
+    : 3
+
+    When you need to count data, use Counter class. This is a so little class, in practice, I will always write it from scratch before.
+
+** 1.13. Sorting a List of Dictionaries by a Common Key
+   
+*** the operator.itemgetter function
+    it will return a callable that can be passed to 'sorted':s key  parameter, for list  or dictionary
+    #+begin_src python
+    # return value of
+    import operator
+    operator.itemgetter("name")
+    # is the same as this one
+    lambda r:r["name"]
+    # but the former  is a little faster
+    #+end_src
+
+    仍然是非常小的功能，为什么搞得这么精细呢？
+
+** 1.14. Sorting Objects Without Native Comparison Support
+*** the operator.attrgetter function
+    it will return a callable that can be passed to 'sorted':s key  parameter, for user defined class
+    #+begin_src python
+    class User():
+        def __init__(self, name):
+            self.name = name
+
+        def __repr__(self):
+            return 'User({})'.format(self.name)
+
+    # return value of
+    operator.attrgetter("name")
+    # is the same as this one
+    lambda o:o.name
+    # but the former  is a little faster
+    #+end_src
+** 1.15. Grouping Records(a sequence of dictionaries) Together Based on a Field
+*** the itertools.groupby function: group sequencially the list as tuple (key, items)
+    #+begin_src python
+    import itertools
+    rows =  [{1:2}, {1: 4},  {1: 3}]
+    # a should be a generator
+    rows.sort(key=itemgetter(1))
+    a = itertools.groupby(rows, key=itemgetter(1))
+    #+end_src
+
+    another way is just use a default list dictionary to group, then no sort is needed.
+
+
+
+   
+   
+
+** 1.16. Filtering Sequence Elements
+   To fitering, just use list comprehension with an if condition
+*** itertools.compress function, a filtering tool
+    it takse two parameters:
+    1. an iterable which to be compressed
+    2. a Boolean sequence, with the same length of first parameter
+       if the element in this sequence  is True, then the element at the same position in the first iterable will be put to the output
+
+     An example:
+    #+begin_src python
+    addresses = [
+        '5412 N CLARK',
+        '5148 N CLARK',
+        '5800 E 58TH',
+        '2122 N CLARK'
+        '5645 N RAVENSWOOD',
+        '1060 W ADDISON',
+        '4801 N BROADWAY',
+        '1039 W GRANVILLE',
+    ]
+    counts = [ 0, 3, 10, 4, 1, 7, 6, 1]
+
+    import itertools
+    b = [e > 5 for e in counts]
+    a = itertools.compress(addresses, b)
+    # Now a will be all items where count larger than 5
+    print(a)
+    #+end_src
+
+    
+    
+** 1.17. Extracting a Subset of a Dictionary
+*** dictionary comprehension, just like list comprehension, but use '{' instead of '['
+    #+begin_src python
+    prices = {
+        'ACME': 45.23,
+        'AAPL': 612.78,
+        'IBM': 205.55,
+        'HPQ': 37.20,
+        'FB': 10.75
+    }
+    # Make a dictionary of all prices over 200
+    p1 = { key:value for key, value in prices.items() if value > 200 }
+    # Make a dictionary of tech stocks
+    tech_names = { 'AAPL', 'IBM', 'HPQ', 'MSFT' }
+    p2 = { key:value for key,value in prices.items() if key in tech_names }
+    #+end_src
+** 1.18. Mapping Names to Sequence Elements
+*** the collections.nametuple function, map an index to a name, and access to an element with that name
+    example:
+    #+begin_src python
+    from collections import namedtuple
+    People =  namedtuple('People', ['name', 'age'])
+    p = People(name='Jim', age=12)
+    print(p, p.name, p.age)
+    #+end_src
+
+    #+RESULTS:
+
+    A good application:
+    for database selection.
+
+    The ._replace method:
+    Because a tuple is immutable, so to change an element, you can use _replace to  replace a field and a new one will be returned.
+    A tipical usage is first  create a prototype element with all field value be the default one, then update some fields with the _replace function.
+    Why there is a '_' in the function name?
+    #+begin_src python
+    from collections import namedtuple
+    Stock = namedtuple('Stock', ['name', 'shares', 'price', 'date', 'time'])
+    # Create a prototype instance
+    stock_prototype = Stock('', 0, 0.0, None, None)
+    # Function to convert a dictionary to a Stock
+    def dict_to_stock(s):
+        return stock_prototype._replace(**s)
+
+    a = {'name': 'ACME', 'shares': 100, 'price': 123.45}
+    dict_to_stock(a)
+    # Stock(name='ACME', shares=100, price=123.45, date=None, time=None)
+    #+end_src
+
+** 1.19. Transforming and Reducing Data at the Same Time
+   use generator-expression argument
+
+   The reducing function means: given a list, return a value.
+** the any function, check if any of an element is True in a iterable
+*** check if  any .py files exist in a directory
+   #+begin_src python
+   # Determine if any .py files exist in a directory
+   import os
+   files = os.listdir('dirname')
+   if any(name.endswith('.py') for name in files):
+       print('There be python!')
+   else:
+       print('Sorry, no python.')
+   #+end_src
+*** get all files in a directory as a list
+    #+begin_src python
+   import os
+   files = os.listdir('dirname')
+    #+end_src
+*** change a tuple/list/iterable to a csv line
+    This is much better than the string format method
+    #+begin_src python
+    # Output a tuple as CSV
+    s = ('ACME', 50, 123.45)
+    print(','.join(str(x) for x in s))# Output a tuple as CSV
+    #+end_src
+
+** 1.20. Combining Multiple Mappings into a Single Mapping
+*** the collections.ChainMap
+    combining many maps/dictionaries, then when get an element, it will try to get from the first map, then the second, ...
+
+    And for operations that mutate the mapping always affect the first map/dictionary.
+
+    typical application:
+    scoped variable in a programming language.
+
+    Difference from the dict.update function:
+    ChainMap use a link to the original dictionary, while dict.update create a new one.
+**** check if an element exists in many dictionaries/maps, sequencially
+     #+begin_src python :results output
+     a = {'x': 1, 'z': 3 }
+     b = {'y': 2, 'z': 4 }
+     from collections import ChainMap
+     c = ChainMap(a,b)
+     print(c['x']) # Outputs 1 (from a)
+     print(c['y']) # Outputs 2 (from b)
+     print(c['z']) # Outputs 3 (from a)
+     #+end_src
+
+     #+RESULTS:
+     : 1
+     : 2
+     : 3
+* chapter 2: Strings and Text
+** 2.1. Splitting Strings on Any of Multiple Delimiters
+   By us re.split and the regexp is r'[,;\s]\s*'
+*** difference between str.split and re.split
+    str.split only accept simple seperator
+    re.split accept regulare expression.
+*** return value of re.split
+    1. if there are no capture group, then the same as str.split
+    2. if there are capture group, then all matched data will also be returned.
+       then the value will be rst[::2], the seperator will be rst[1::2]
+       #+begin_src python :results output
+       s = "I, you; a  seperater.   haha"
+       import re
+       a = re.split(r'[,;.\s]\s*', s)
+       print(a)
+
+       a = re.split(r'([,;.\s]\s*)',s)
+       print(a, a[::2], a[1::2])
+       #+end_src
+
+       #+RESULTS:
+       : ['I', 'you', 'a', 'seperater', 'haha']
+       : ['I', ', ', 'you', '; ', 'a', '  ', 'seperater', '.   ', 'haha'] ['I', 'you', 'a', 'seperater', 'haha'] [', ', '; ', '  ', '.   ']
+
+*** iterate on two lists, by first zip the two to one
+    looks nice!
+    #+begin_src python
+    # Reform the line using the same delimiters
+    ''.join(v+d for v,d in zip(values, delimiters))
+    'asdf fjdk;afed,fjek,asdf,foo'
+    #+end_src
+
+    
+*** regexp noncapture group, by r'(?:...)'
+
+** 2.2. Matching Text at the Start or End of a String, by str.startswith() or str.endswith() method
+   #+begin_src python
+   filename = "aaaa.txt"
+   filename.endswith(".txt")
+   # pass a tuple to check against multiple choices
+   filename.endswith((".c", ".h"))
+   #+end_src
+
+   #+begin_src python
+   from urllib.request import urlopen
+   def read_data(name):
+       if name.startswith(('http:', 'https:', 'ftp:')):
+           return urlopen(name).read()
+       else:
+           with open(name) as f:
+               return f.read()
+   #+end_src
+
+   The parameter is simple string.
+
+   Compared to re.match, str.startswith looks nice.
+
+** 2.3. Matching Strings Using Shell Wildcard Patterns, with fnmatch.fnmatch(), fnmatch.fnmatchcase()
+   Shell wildcard:
+   - [] : a charset
+   - * : match any length of chars
+   - ? : match only one char
+
+   #+begin_src python :results output
+   from fnmatch import fnmatch
+   print(fnmatch("data 1.txt", "*[0-9]*"))
+   #+end_src
+
+   #+RESULTS:
+   : False
+
+   1. the pattern must match the whole string
+   2. compares to startswith(), fnmatch can match at any position
+   3. compares to regexp, fnmatch looks nice
+   4. fnmatch will use the same case-sensitive rule as the OS, fnmatchcase will always respect case.
+   5. between simpe string and full power of regexp
+
+
+** 2.4. Matching and Searching for Text Patterns
+   What's  the difference between matching and searching
+
+*** the str.find() function: find the start index of a substring
+    #+begin_src python :results output
+    s = "Hello xxx bbbb"
+    print(s.find("xx"))
+    #+end_src
+
+    #+RESULTS:
+    : 6
+
+    
+*** re.compile() function: compile a regexp strinng to a regexp object, for performance
+    If you use the regexp many times, then first compile it is good. But if you only use it for one time, then don't use the compile function
+    
+*** difference between r'\d' and '\d'
+    if the string is prefixed by  a 'r', then the '\' in the string will not be intepreted by the string parser.
+    So the second regexp is actually r'd'.
+
+*** re.findall() function, find all matched data as a list
+    #+begin_src python :results output
+    text = 'Today is 11/27/2012. PyCon starts 3/13/2013.'
+    import re
+    rg = r'\d+/(?:\d+)/(?:\d+)'
+    a = re.match('Today', text)
+    print(a.group(0))
+    a = re.findall(rg, text)
+    print(a)
+    print(type(a[0]))
+    #+end_src
+
+    #+RESULTS:
+    : Today
+    : ['11/27/2012', '3/13/2013']
+    : <class 'str'>
+
+    The return value: if there are capture groups, then the return value is the captured data, and if the capture group number is one, it will be  a string, else be  a tuple of strings.
+    if  no capture groups, then the return value is all matched  data.
+
+*** re.finditer(), find all matched data as a iterater
+    Seems the return value is different from re.findall(), it will return a  matched object , the same as re.match()
+    Seems strange, and highly inconsistent.
+
+*** re.match() function, always match at the start of a string
+*** re.match() function, return value
+    rst.group(0): the matched data
+    rst.group(1): the first captured data
+    rst.groups(): all captured data as a tuple
+    
+** 2.5. Searching and Replacing Text
+*** the str.replace function, replace all occurence in a string
+    str.replcae(pattern, replacement)
+    #+begin_src python :results output
+    text = 'yeah, but no, but yeah, but no, but yeah'
+    print(text.replace('yeah', 'yep'))
+    # 'yep, but no, but yep, but no, but yep'
+    #+end_src
+
+    #+RESULTS:
+    : yep, but no, but yep, but no, but yep
+
+*** the re.sub(pattern, replacement, text) function, will also replace all occurence in a string
+    use r'\1' to refer to the first captured group
+    #+begin_src python :results output
+    text = 'Today is 11/27/2012. PyCon starts 3/13/2013.'
+    import re
+    print(re.sub(r'(\d+)/(\d+)/(\d+)', r'\3-\1-\2', text))
+    # 'Today is 2012-11-27. PyCon starts 2013-3-13.'
+    #+end_src
+
+    #+RESULTS:
+    : Today is 2012-11-27. PyCon starts 2013-3-13.
+
+*** the re.sub(pattern, callback, text) function, will also replace all occurence in a string
+    The second parameter can also be a function, the parameter to this function is a match object(the  same returned by re.match function).
+
+    The same example as the above one:
+    #+begin_src python :results output
+    text = 'Today is 11/27/2012. PyCon starts 3/13/2013.'
+    import re
+    def foo(m):
+        (m, d, y) = m.groups()
+        return '-'.join([y,m,d])
+
+    print(re.sub(r'(\d+)/(\d+)/(\d+)', foo, text))
+    #+end_src
+
+    #+RESULTS:
+    : Today is 2012-11-27. PyCon starts 2013-3-13.
+
+
+*** the re.subn(...) function, same as re.sub, but also return subsitution counts also
+** 2.6. Searching and Replacing Case-Insensitive Text
+   To do case-insensitive operations, you must use regexp with the re.IGNORECASE flags keyword parameter
+
+*** replace words in a string with original case preserved
+    a excenlent example of replacing with 原始的大小写规则. 并且是一个很好的高阶函数的例子。
+    #+begin_src python :results output
+    def matchcase(word):
+        def replace(m):
+            text = m.group()
+            if text.isupper():
+                return word.upper()
+            elif text.islower():
+                return word.lower()
+            elif text[0].isupper():
+                return word.capitalize()
+            else:
+                return word
+
+        return replace
+
+    text = 'UPPER PYTHON, lower python, Mixed Python'
+    import re
+    print(re.sub('python', matchcase('snake'), text, flags=re.IGNORECASE))
+    # 'UPPER SNAKE, lower snake, Mixed Snake'
+    #+end_src
+
+    #+RESULTS:
+    : UPPER SNAKE, lower snake, Mixed Snake
+
+** 2.7. Specifying a Regular Expression(regexp) for the Shortest Match, by using modifier '?', no-greedy match
+   By default, * will match longest data. if appended with a '?' then it will match the shortest
+
+   #+begin_src python :results output
+   import re
+   text1 = 'Computer says "no."'
+   r= re.findall(r'"(.*)"', text1)
+   print(r)
+
+   text2 = 'Computer says "no." Phone says "yes."'
+   r= re.findall(r'"(.*)"', text2)
+   print(r)
+
+   # Now add a '?' after '*', no greedy match
+   r= re.findall(r'"(.*?)"', text2)
+   print(r)
+   #+end_src
+
+   #+RESULTS:
+   : ['no.']
+   : ['no." Phone says "yes.']
+   : ['no.', 'yes.']
+
+** 2.8. Writing a Regular Expression for Multiline Patterns
+   By default, '.' will not match a new line character. 
+   there are two choices to let '.' match a new line character:
+   1. by alternative.
+      change r'.*' to r'(?:.|\n)*'
+   2. by use the re.DOTALL flag
+      #+begin_src python :results output
+      s = '''/* aaaa
+      bbbb
+      cccc */'''
+      import re
+      r = re.findall(r'/\*.*\*/', s, flags=re.DOTALL)
+      r = re.findall(r'/\*(?:.|\n)*\*/', s, flags=re.DOTALL)
+      print(r)
+      #+end_src
+
+      #+RESULTS:
+      : ['/* aaaa\nbbbb\ncccc */']
+
+*** the re.DOTALL flag: let '.' match a newline character
+** 2.9. Normalizing Unicode Text to a Standard Representation, by unicodedata.normalize('NFC', str)
+   unicode may have more than one representation, see example in the book
+*** normalizing means make sth. has the uniform format/type
+** 2.11. Stripping Unwanted Characters from Strings
+*** str.strip() function. lstrip(), rstrip(), delete whitespaces characters at begining or ending
+    #+begin_src python :results output
+    s = "    a b c \n ";
+    print(s.strip())
+    print(s.lstrip())
+    print(s.rstrip())
+    #+end_src
+
+    #+RESULTS:
+    : a b c
+    : a b c 
+    :  
+    :     a b c
+*** delete characters in middle of string, by str.replace(), or re.sub()
+    #+begin_src python :results output
+    s = "   hello     word    ";
+    print(s.replace(" ", ""))
+    import re
+    print(re.sub("\s+", " ", s))
+    #+end_src
+
+    #+RESULTS:
+    : helloword
+    :  hello word 
+*** create a generator object  by an expression, by '(' instead of '[', like lazy evaluation on other languages
+    #+begin_src python :results output
+    s = '''
+    import os.path
+    rst = ""
+    if os.path.isfile(""):
+        with open("", "r") as f:
+            rst = f.read()
+    '''
+    ss = s.split("\n")
+
+    s1 = (s.strip() for s in ss)
+    print(s1)
+    for s in s1:
+        print(s)
+    #+end_src
+
+    #+RESULTS:
+    : <generator object <genexpr> at 0x00000048B4AAF0F8>
+    : 
+    : import os.path
+    : rst = ""
+    : if os.path.isfile(""):
+    : with open("", "r") as f:
+    : rst = f.read()
+    : 
+
+** 2.12. Sanitizing and Cleaning Up Text
+*** str.translate() function, change characters given a table/dictionary, the book given much unicode examples
+
+** 2.13. Aligning Text Strings
+   
+*** the str.ljust(), str.rjust(), str.center() functions
+    accept a number, and an optionall character
+    #+begin_src python :results output
+print("aaa".ljust(20, "b"))
+print("aaa".rjust(20, "-"))
+print("aaa".center(20, "="))
+print("aaa".center(20))
+    #+end_src
+
+    #+RESULTS:
+    : aaabbbbbbbbbbbbbbbbb
+    : -----------------aaa
+    : ========aaa=========
+    :         aaa         
+
+*** the format function and the str.format methods
+    #+begin_src python :results output
+print(format("aaa", ">20")) # same as rjust
+print(format("aaa", "=<20")) # same as ljust
+print(format("aaa", "^20")) # same as center
+    #+end_src
+
+    #+RESULTS:
+    :                  aaa
+    : aaa=================
+    :         aaa         
+
+    #+begin_src python :results output
+print("{} {:=^10}".format("abc", 123))
+    #+end_src
+
+    #+RESULTS:
+    : abc ===123====
+
+    
+    
+
+
+    "%s %s" % (a, b) is old way, now should use the new way.
+
+    
+** 2.14. Combining and Concatenating Strings
+   
+*** by str.join
+
+*** by + operator
+    
+*** by print function's 'sep' parameter
+
+*** by format function
+** 2.15. Interpolating Variables in Strings, by str.format() or str.format_map() method
+   Note: format_map doesn't exist in python 2.7
+   #+begin_src python :results output
+   print("{name} is {age} years old".format(name="Tom", age=16))
+
+   name = "Jim"
+   age = 18
+   # print("{name} is {age} years old".format_map(vars()))
+   #+end_src
+
+   #+RESULTS:
+   : Tom is 16 years old
+
+
+   format_map accept a dictionay, while format accept keywords parameters
+*** the vars() function, the same as locals() if no parameter
+    if pass one parameter, then it is the same as obj.__dict__
+    #+begin_src python :results output
+    s = 'abc'
+    d = 123
+    print(vars())
+    print(locals())
+    # print(vars(s))
+    #+end_src
+
+    #+RESULTS:
+*** the dict.__missing__(self, key) method will be called when a key not exists, then KeyError will not be raised.
+    If this method is defined, then when a key not exists, it will be called and return the value. Else a KeyError will be raised.
+    #+begin_src python :results output
+    class safedict(dict):
+        def __missing__(self, key):
+            return '{'+key+'}'
+
+    d = safedict();
+    print(d['name'])
+    d1 = dict();
+    # print(d1['name'])
+    #+end_src
+
+    #+RESULTS:
+    : {name}
+*** a function that will do variable interpolating from env, just like $var in perl, by str.format_map
+    #+begin_src python :results output
+    class safedict(dict):
+        def __missing__(self, key):
+            return '{'+key+'}'
+
+
+    import sys
+    def sub(text):
+        return text.format_map(safedict(sys._getframe(1).f_locals))
+
+    name="Jim"
+    age=18
+    print(sub("{name} is {age} years old"))
+    #+end_src
+
+    #+RESULTS:
+    : Jim is 18 years old
+
+
+    #+begin_src python :results output
+    people = {
+       'name': ['John', 'Peter'],
+       'age': [56, 64]
+    }
+
+    for i in range(2):
+        print('My name is {{name[{0}]}}, I am {{age[{0}]}} years old.'.format(i).format_map(people))
+    #+end_src
+
+    #+RESULTS:
+    : My name is John, I am 56 years old.
+    : My name is Peter, I am 64 years old.
+*** sys._getframe([depth]): like calls in perl, get the stack frame
+    depth default to 0, means current stack frame. 
+    f_locals attribute is used to get all local variabls.
+    f_lineno attribute is the line number.
+    #+begin_src python :results output
+    import sys
+    print(sys._getframe().f_locals)
+    print(sys._getframe().f_globals)
+    print(dir(sys._getframe().f_code))
+    print(sys._getframe().f_code.co_filename)
+    print(sys._getframe().f_lineno)
+    #+end_src
+
+    #+RESULTS:
+    : {'__name__': '__main__', '__doc__': None, '__package__': None, '__loader__': <class '_frozen_importlib.BuiltinImporter'>, '__spec__': None, '__annotations__': {}, '__builtins__': <module 'builtins' (built-in)>, '__file__': '<stdin>', '__cached__': None, 'sys': <module 'sys' (built-in)>}
+    : {'__name__': '__main__', '__doc__': None, '__package__': None, '__loader__': <class '_frozen_importlib.BuiltinImporter'>, '__spec__': None, '__annotations__': {}, '__builtins__': <module 'builtins' (built-in)>, '__file__': '<stdin>', '__cached__': None, 'sys': <module 'sys' (built-in)>}
+    : ['__class__', '__delattr__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'co_argcount', 'co_cellvars', 'co_code', 'co_consts', 'co_filename', 'co_firstlineno', 'co_flags', 'co_freevars', 'co_kwonlyargcount', 'co_lnotab', 'co_name', 'co_names', 'co_nlocals', 'co_stacksize', 'co_varnames']
+    : <stdin>
+    : 6
+
+    
+** 2.16. Reformatting Text to a Fixed Number of Columns, by textwrap.fill(astr, columns, initial_indent='', subsquent_indent='')
+   #+begin_src python :results output
+   import textwrap
+   s = "Look into my eyes, look into my eyes, the eyes, the eyes, \
+   the eyes, not around the eyes, don't look around the eyes, \
+   look into my eyes, you're under."
+
+   print(s)
+   print(textwrap.fill(s, 60))
+   #+end_src
+
+   #+RESULTS:
+   : Look into my eyes, look into my eyes, the eyes, the eyes, the eyes, not around the eyes, don't look around the eyes, look into my eyes, you're under.
+   : Look into my eyes, look into my eyes, the eyes, the eyes,
+   : the eyes, not around the eyes, don't look around the eyes,
+   : look into my eyes, you're under.
+
+*** get terminal column size, by os.get_terminal_size().columns
+    #+begin_src python :results output
+    import os
+    print(os.get_terminal_size().columns)
+    #+end_src
+
+    #+RESULTS:
+
+
+** 2.17. Handling HTML and XML Entities in Text
+*** the html.escape(astr, quote=True) function: 
+    escape means convert special characters to 
+    #+begin_src python :results output
+    s = '<a>this is </a>'
+    import html
+    print(html.escape(s))
+    #+end_src
+
+    #+RESULTS:
+    : &lt;a&gt;this is = &lt;/a&gt;
+*** the str.encode('ascii', errors='xmlcharrefreplace') function: encode a string to ascii
+    #+begin_src python :results output
+    s = 'Spicy Jalapeño'
+    print(s.encode('ascii', errors='xmlcharrefreplace'))
+    #+end_src
+
+    #+RESULTS:
+    : b'Spicy Jalape&#241;o'
+
+    
+* chapter 4: Iterators and Generators
+** 4.1. Manually Consuming an Iterator, by next(iterator[, default]) function
+   #+begin_src python :results output
+   with open('python-cookbook-3rd.org') as f:
+       print(next(f))
+   #+end_src
+
+   #+RESULTS:
+   : * chapter 1: Data Structures and Algorithms
+   : 
+
+*** open(filename, ...) function will return a iterator of lines in that file
+*** a list object is not an iterator
+*** use the iter(iterable) function to create an iterator given an iterable
+*** the for x in X syntax works both for iterator and list object
+** iterator and iterable
+   An object is said to be iterable if it has the __iter__ method defined.
+   The __iter__() will reutrn the iterator object.
+   
+   An object is said to be a iterator if it has following method defined:
+   1. __iter__: which return itself
+      Can be tested the it.__iter__() == it is true
+   2. __next__: return the next value every time it is invoked. 
+   
+
+   So an iterator is an iterable,  call iter(iterable) to get an iterator.
+
+   
+   The iter(iterable) function: 
+   it will return 'iterable.__iter__()'
+
+
+   So if obja is an iterable, then iter(obja) equal obja.__iter() 
+   #+begin_src python :results output
+   obja = [1, 2, 3]
+   ia = obja.__iter__()
+   ib = iter(obja)
+   ic = iter(ib)
+   print(ia)
+   print(ib)
+   print(ib is ic)
+   print(next(ia), next(ib))
+   #+end_src
+
+   #+RESULTS:
+   : <list_iterator object at 0x0000001303C5CF98>
+   : <list_iterator object at 0x0000001303C5CF28>
+   : True
+   : 1 1
+
+   if obja is iterator, then iter(obja) and obja is the same object.
+
+
+   A good ref: http://www.shutupandship.com/2012/01/understanding-python-iterables-and.html
+*** a example of create a iterable class
+    #+begin_src python :results output
+    class MyList(list):
+        def __iter__(self):
+            return MyListIter(self)
+        
+    class MyListIter(object):
+        """ A sample implementation of a list iterator. NOTE: This is just a 
+        demonstration of concept!!! YOU SHOULD NEVER IMPLEMENT SOMETHING LIKE THIS!
+        Even if you have to (for any reason), there are many better ways to 
+        implement this."""
+        def __init__(self, lst):
+            self.lst = lst
+            self.i = -1
+        def __iter__(self):
+            return self
+        def __next__(self):
+            if self.i<len(self.lst)-1:
+                self.i += 1         
+                return self.lst[self.i]
+            else:
+                raise StopIteration
+
+    if __name__ == '__main__':
+        a = MyList([1, 2, 3, 4])
+        ia = iter(a)
+        print('type(a): %r, type(ia): %r' %(type(a), type(ia)))
+        for i in a: 
+            print (i)
+    #+end_src
+
+    #+RESULTS:
+    : type(a): <class '__main__.MyList'>, type(ia): <class '__main__.MyListIter'>
+    : 1
+    : 2
+    : 3
+    : 4
+
+** how does the for in loop works
+   1. it first get the iterable's iterator object, by calling its __iter__() method
+   2. get the element by invoke the iterator's __next__() method, and bind the value to the variable.
+   3. stop when an 'StopIteration' exception happens.
+** the next(iterator) function
+   it just return iterator.__next__()
+** the iter(iterable) function
+   it just return iterable.__iter__()
+** the len(obj) function
+   it just return obj.__len__()
+** 4.2. Delegating Iteration
+   When create a class the with a underline container, just define an __iter__() method that forward the request to the underlineing container object.
+
+** 4.3. Creating New Iteration Patterns with Generators
+** what is a generator?
+   a generator is a function that contains at lease one 'yeild' statement.
+
+   Unlike normal function, it's boyd will not be executed when it is be called, instead, it will return a generator object.
+** 4.4. Implementing the Iterator Protocol
+   use the generator instead of the __next__ method, which will be much simple.
+
+   使用yeild 创建一个Tree Node,比使用__next__函数简单多了。
+
+   yeild from syntax.
+** 4.5. Iterating in Reverse, by the reversed(obj) function
+   reversed only  works if the obj
+   - the obj defined a __reversed__() method. or
+   - the obj's size can be determined.
+     
+
+   It returns an iterator.
+
+   For example, a file handler returned by the 'open()' function can't be used with the reversed function. to use it, first convert it to a list, then pass it to the reversed() function.
+   #+begin_src python :results output
+   with open("1.txt") as f:
+       a = reversed(list(f))
+       print(next(a), next(a))
+   #+end_src
+
+   #+RESULTS:
+   : cccc 
+   : 
+** defined a customized  reversed iterator, by define the __reversed__() method
+   #+begin_src python :results output
+   class CountDown():
+       def __init__(self, start):
+           self._start = start
+
+       def __iter__(self):
+           return self
+
+       def __next__(self):
+           if self._start >=0:
+               n = self._start
+               self._start -= 1
+               return n
+           else:
+               raise StopIteration
+
+       def __reversed__(self):
+           return ReversedCountDown(self)
+
+   class ReversedCountDown():
+       def __init__(self, orig):
+           self._orig = orig
+           self._n = -1
+       def  __iter__(self):
+           return self
+       def __next__(self):
+           if self._n <= self._orig._start:
+               self._n += 1
+               return self._n
+           else:
+               raise StopIteration
+
+   # if __name__ == '__main__':
+   cd = CountDown(2)
+   # for a in cd:
+   #     print(a)
+
+   print("reversed")
+   for a in reversed(cd):
+       print(a)
+   #+end_src
+
+   #+RESULTS:
+   : reversed
+   : 0
+   : 1
+   : 2
+   : 3
+
+
+   Implemet the iterator protocal by __next__ method is a little complex compared  to by  use the yield statement. The differenc is that then the object is ... 
+
+   #+begin_src python :results output
+   class CountDown():
+       def __init__(self, start):
+           self._start = start
+
+       def __iter__(self):
+           n = self._start
+           while n >=0:
+               yield n
+               n -=1
+
+       def __reversed__(self):
+           n = 0
+           while n <=self._start:
+               yield n
+               n+=1
+
+   cd = CountDown(3)
+   for a in cd:
+       print(a)
+
+   print ("reversed")
+   for a in reversed(cd):
+       print(a)
+   #+end_src
+
+   #+RESULTS:
+   : 3
+   : 2
+   : 1
+   : 0
+   : reversed
+   : 0
+   : 1
+   : 2
+   : 3
+
+
+** 4.6. Defining Generator Functions with Extra State
+*** print the surrounding previous lines if pattern matched, by use a generator, implemented by a class
+    Here previous lines are states.
+    #+begin_src python :results output
+    from collections import deque
+    class HistoryLines():
+        def __init__(self, lines, histlen=3):
+            self.lines = lines
+            self.history = deque(maxlen=histlen)
+
+        def __iter__(self):
+            for line in self.lines:
+                self.history.append(line)
+                yield line
+
+    with open('1.txt') as f:
+        hist_lines = HistoryLines(f)
+        for line in hist_lines:
+            if  'wrap' in line:
+                for hl in hist_lines.history:
+                    print('%s' % hl)
+    #+end_src
+
+    #+RESULTS:
+    : bbbb
+    : 
+    : EEEXXX
+    : 
+    : a wrap  bbb
+    : 
+
+    Good practice: if you need save some states, then don't use a function to create a generator, use a class.
+
+** 4.7. Taking a Slice of an Iterator
+*** by use of the itertools.islice(start, end, step) functon
+    Because we don't know the size of a iterator or a generator, so we can't slice it directly.
+    #+begin_src python :results output
+    from  itertools import islice as slice_iter
+    a = range(8)
+    for b  in slice_iter(iter(a), 2, 5, 1):
+        print(b)
+
+    with open('1.txt') as f:
+        for line in slice_iter(f, 2, 5, 2):
+            print(line.strip())
+    #+end_src
+
+    #+RESULTS:
+    : 2
+    : 3
+    : 4
+    : dd
+    : bbbb
+
+    The result is the  same as my impllemented one.
+
+***   a try by me,  works
+    #+begin_src python :results output
+    def slice_iter(aiter, start, end, step):
+        n = 0
+        idx = range(end)[start:end:step]
+        for i in range(end):
+            v = next(aiter)
+            if i in idx:
+                yield v
+
+    a = range(8)
+    for b  in slice_iter(iter(a), 2, 5, 1):
+        print(b)
+
+    with open('1.txt') as f:
+        for line in slice_iter(f, 2, 5, 2):
+            print(line.strip())
+    #+end_src
+
+    #+RESULTS:
+    : 2
+    : 3
+    : 4
+    : dd
+    : bbbb
+
+** 4.8. Skipping the First Part of an Iterable, by itertools.dropwhile(test_func, iterable)
+   #+begin_src python :results output
+   import itertools
+   with open('1.txt') as f:
+       for line in itertools.dropwhile(lambda x: x.startswith('#'), f):
+           print(line, end='')
+   #+end_src
+
+   #+RESULTS:
+   : aaaa
+   : # bbbb
+   : EEEXXX
+   : a wrap  bbb
+   : dddd
+
+   This is different from filtering
+
+   if the position is known, then we can use itertools.islice(iterable, start, None) to drop the first 'start' items.
+   
+
+** 4.9. Iterating Over All Possible Combinations or Permutations
+   An important aspect  of itertools module: for complex iteration tasks, it is very likely there is an exist solution.
+
+*** create permutations from a iterable collection of items, by itertools.permutations(iterable[, len])
+    The return value is an iterator
+    #+begin_src python :results output
+    from itertools import permutations
+    a = ['a', 'b', 'c']
+    for b in permutations(a, 2):
+        print(b)
+    #+end_src
+
+    #+RESULTS:
+    : ('a', 'b')
+    : ('a', 'c')
+    : ('b', 'a')
+    : ('b', 'c')
+    : ('c', 'a')
+    : ('c', 'b')
+
+*** create combinations from a iterable collection of items, by itertools.combinations(iterable, len)
+    The order of items does not matter
+    #+begin_src python :results output
+    from itertools import combinations
+    a = ['a', 'b', 'c']
+    for b in combinations(a, 2):
+        print(b)
+    #+end_src
+
+    #+RESULTS:
+    : ('a', 'b')
+    : ('a', 'c')
+    : ('b', 'c')
+
+*** create combinations from a iterable collection of items, by itertools.combinations_with_replacement(iterable, len), same item can exist more than one times.
+    The order of items does not matter
+    #+begin_src python :results output
+    from itertools import combinations_with_replacement
+    a = ['a', 'b', 'c']
+    for b in combinations_with_replacement(a, 4):
+        print(b)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    ('a', 'a', 'a', 'a')
+    ('a', 'a', 'a', 'b')
+    ('a', 'a', 'a', 'c')
+    ('a', 'a', 'b', 'b')
+    ('a', 'a', 'b', 'c')
+    ('a', 'a', 'c', 'c')
+    ('a', 'b', 'b', 'b')
+    ('a', 'b', 'b', 'c')
+    ('a', 'b', 'c', 'c')
+    ('a', 'c', 'c', 'c')
+    ('b', 'b', 'b', 'b')
+    ('b', 'b', 'b', 'c')
+    ('b', 'b', 'c', 'c')
+    ('b', 'c', 'c', 'c')
+    ('c', 'c', 'c', 'c')
+#+end_example
+
+** 4.10. Iterating Over the Index-Value Pairs of a Sequence, by enumerate(iterable[, start_index])
+   #+begin_src python :results output
+   a = ['a', 'b', 'c']
+   for i, v in enumerate(a, 1):
+       print(i, v)
+   #+end_src
+
+   #+RESULTS:
+   : 1 a
+   : 2 b
+   : 3 c
+
+** 4.11. Iterating Over Multiple Sequences Simultaneously, by zip(iterable1, iterable2, ...), shortest
+   The zip function will create an iterator that return tuples: first element from iterable1, second element from iterable2, ...
+   Should the size of all iterables be the same? => No, it can be different. the returned size is the same as the shortest size of all iterables.
+   #+begin_src python :results output
+   a =  [1,  2, 3]
+   b = ['a', 'b', 'c', 'd']
+   for v in zip(a, b):
+       print(v)
+   #+end_src
+
+   #+RESULTS:
+   : (1, 'a')
+   : (2, 'b')
+   : (3, 'c')
+
+   
+
+** Iterating Over Multiple Sequences Simultaneously, by itertools.zip_longest(iterable1, iterable2, ...), longest
+   If you want the returned iterator take the longest size, then use zip_longest. The element value will be None if that  iterable is exzasted.
+
+   From the two functions: zip and zip_longest, there is a lesson: it better to create different function name, than add a more  parameter.
+   #+begin_src python :results output
+   from itertools import zip_longest
+   a =  [1,  2, 3]
+   b = ['a', 'b', 'c', 'd']
+   for v in zip_longest(a, b):
+       print(v)
+   #+end_src
+
+   #+RESULTS:
+   : (1, 'a')
+   : (2, 'b')
+   : (3, 'c')
+   : (None, 'd')
+
+** 4.12. Iterating on Items in Separate Containers, by itertools.chain(iterable1, iterable2, ...), concat iterables
+   #+begin_src python :results output
+   from itertools import chain
+   a =  [1,  2, 3]
+   b = ['a', 'b', 'c', 'd']
+   for v in chain(a, b):
+       print(v)
+   #+end_src
+
+   #+RESULTS:
+   : 1
+   : 2
+   : 3
+   : a
+   : b
+   : c
+   : d
+
+   
+   
+** 4.13. Creating Data Processing Pipelines
+   This section is about divide  a task to many small pipelines(steps), by use of generator
+   Generator is a  producer, for loop is a comsumer.
+
+
+*** example: iterate all matched lines from all files in a directory, recursively
+
+    相当于把多重QIAN TAO循环给扁平化了。但执行的顺序完全相同。generator确实比较好用。
+    #+begin_src python :results output
+    import os
+    def gen_filenames(top):
+        for dirpath, dirs, files in os.walk(top):
+            for f in files:
+                yield os.path.join(dirpath, f)
+
+    def gen_open(filenames):
+        for f in filenames:
+            # print('file names: %s' % f)
+            fh = open(f, encoding='utf-8')
+            yield fh
+            fh.close()
+
+    def gen_lines(files):
+        for f in files:
+            yield from f
+
+    def gen_match(lines, pattern):
+        for v in  lines:
+            if pattern in v:
+                yield v
+
+    filenames = gen_filenames('..')
+    files = gen_open(filenames)
+    lines = gen_lines(files)
+    matched_lines = gen_match(lines, 'slice')
+
+    for v in matched_lines:
+        print(v, end='')
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    *** the slice object
+        create a  slice
+       s = slice(1,2)
+        '1:2' is just a shortcut to 'slice(1,2)'
+        slice attributes
+        s = slice(1,2,2)
+    *** by use of the itertools.islice(start, end, step) functon
+        Because we don't know the size of a iterator or a generator, so we can't slice it directly.
+        from  itertools import islice as slice_iter
+        for b  in slice_iter(iter(a), 2, 5, 1):
+            for line in slice_iter(f, 2, 5, 2):
+        def slice_iter(aiter, start, end, step):
+        for b  in slice_iter(iter(a), 2, 5, 1):
+            for line in slice_iter(f, 2, 5, 2):
+       if the position is known, then we can use itertools.islice(iterable, start, None) to drop the first 'start' items.
+        matched_lines = gen_match(lines, 'slice')
+#+end_example
+
+*** [not work]change two embeded for loop to two seperate one by generator
+    #+begin_src python :results output
+    a = [1, 2, 3]
+    b = ['a', 'b']
+
+    for i in a:
+        for j in b:
+            print(i, j)
+
+    def gen_a(aiter):
+        for v in aiter:
+            yield v
+
+    def gen_b(aiter, biter):
+        for v in aiter:
+    #+end_src
+
+    #+RESULTS:
+
+** 4.14. Flattening a Nested Sequence, by generator, recursively
+   Why this function is not included in itertools module?
+   #+begin_src python :results output
+   from collections import Iterable
+   def  flatten(items, ignored_types=(str, bytes)):
+       for v in items:
+           if isinstance(v, Iterable) and not isinstance(v, ignored_types):
+               yield from flatten(v, ignored_types)
+           else:
+               yield v
+
+   a = [1, 2, [3, 4, [5, 6], 7],  8, 'abc']
+   for v in a:
+       print(v)
+
+   print("the flattened version")
+   for v in flatten(a):
+       print(v)
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   1
+   2
+   [3, 4, [5, 6], 7]
+   8
+   abc
+   the flattened version
+   1
+   2
+   3
+   4
+   5
+   6
+   7
+   8
+   abc
+#+end_example
+
+   
+** yield from just like a for loop
+   #+begin_src python :results output
+   def gen_a():
+       for v in range(3):
+           yield v
+
+   def gen_b(gena):
+       yield from gena
+
+   def for_b(gena):
+       for v  in gena:
+           yield v
+
+   # the gen_b and for_b works exactly the same, but the yield from is better
+   for v in gen_b(gen_a()):
+       print(v)
+
+   print('the for version')
+   for v in for_b(gen_a()):
+       print(v)
+   #+end_src
+
+   #+RESULTS:
+   : 0
+   : 1
+   : 2
+   : the for version
+   : 0
+   : 1
+   : 2
+
+** 4.15. Iterating in Sorted Order Over Merged Sorted Iterables, by heapq.merge(iterable1, iterable2, ...)
+   the input iterables should in sorted order. then it will create an new iterable of sorted items from all input.
+   #+begin_src python :results output
+   a = [1, 4, 8]
+   b = [2, 3,  7, 9]
+
+   import heapq
+   for v in heapq.merge(a, b):
+       print(v)
+   #+end_src
+
+   The function will only get the needed items into memory. So it better to merge two sorted files.
+
+   Similar  to ~sorted(itertools.chain(*iterables))~, but will not read all content to memory.
+** 4.16. Replacing Infinite conditional while Loops with an Iterator, by iter(callable, sentinel) function
+   invoke the callable UNTIL it returns the sentinel
+
+   Means: repeated invoke the callable, and return its return value, until the return value equal to the sentinel.
+   #+begin_src python :results output
+   a = [1, 2, 3, 4, 5]
+   idx = -1
+   def foo():
+       global idx
+       idx+=1
+       return a[idx]
+
+   for v in iter(foo, 3):
+       print(v)
+   #+end_src
+
+   #+RESULTS:
+   : 1
+   : 2
+
+
+* chapter 8: Classes and Objects
+** 8.1. Changing the String Representation of Instances
+   It's good practice to define both __repr__() and __str__()
+
+*** the __repr__() method of a class: the literal representation of a object
+    eval(repr(x)) = x
+    It it not possiable to create an object from the repr(x) results, then the repr(x) result should be enclosed in '<>' 
+
+*** the __str__() method of a class: the toString method  of a object
+    The method will be called  when the object is passed to print() function
+    If __str__() is not provided, then __repr__() will be used.
+
+*** the format function: positional field, by {N}, N means the nth parameter
+    ValueError: cannot switch from manual field specification to automatic field numbering
+    If you put a numbers to a field, then you should put numbers to all field.
+    #+begin_src python :results output
+    a = '{0}, {1},  {1}'.format(1, 2)
+    print(a)
+    #+end_src
+
+    #+RESULTS:
+    : 1, 2,  2
+
+    Get an object's attribute by {N.attt_name} syntax
+    #+begin_src python :results output
+    import itertools
+    a = '{0}, {0.chain}, {0.permutations}'.format(itertools)
+    print(a)
+    #+end_src
+
+    #+RESULTS:
+    : <module 'itertools' (built-in)>, <class 'itertools.chain'>, <class 'itertools.permutations'>
+
+    for {0!r} or {0!s}, '!r' means use __repr__(), '!s' means use __str__(). '!s' is the default value.
+    
+** 8.2. Customizing String Formatting 
+
+*** the format(aobj[, format_spec]) builtin function 
+    The function is equal to: aobj.__format__(format_spec)
+    而一般的aobj.__format__(spec) 的实现是调用 str.format(...) 函数来实现。
+
+    str.format(...) method 还支持关键字参数来指定field name.(问题：当关键字参数与普通参数混合时会发生什么？)
+    {:spec} 中的 spec 会传给 aobj.__format__(format_spec) 作为参数。 spec 可以为任意字符串，它可以作为参数传递给aobj.__format__() method.
+
+    str.format(aobj)时， 到底是哪个method会被调用呢？
+    From below codes, it can be see that if __format__ method is defined, then __format__ will be called. else __str__ will be called, when the object is formated by the str.format(...) method.
+    For str(aobj), aobj.__str__ will always be called.
+    #+begin_src python :results output
+    class Point:
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+
+        def __repr__(self):
+            print("__repr__ called")
+            return 'Point({0.x}, {0.y})'.format(self)
+
+        def __str__(self):
+            print("__str__ called")
+            return '({0.x}, {0.y})'.format(self)
+
+        def __format__(self, spec):
+            print("__format__ called. spec: %s." % spec)
+            return '({0.x}, {0.y})'.format(self)
+
+    p = Point(2, 3)
+    a = '{}'.format(p)
+    print(a)
+    print(p)
+
+
+    #+end_src
+
+    #+RESULTS:
+    : __format__ called. spec: .
+    : (2, 3)
+    : __str__ called
+    : (2, 3)
+
+** [NOT FINISHED]8.3. Making Objects Support the Context-Management Protocol, that is, the with statement
+   To provide with statement support, just define two methods:
+   1. __enter__(self)
+   2. __exit__(self, exc_ty, exc_val, tb)
+   
+   #+begin_src python :results output
+   class SaveVar:
+       def __init__(self, avar):
+           self.avar = avar
+       def __enter__(self):
+           print("__enter__ called")
+   #+end_src
+
+   
+   
+** 8.5. Encapsulating Names in a Class
+*** one underscore _ means private variable, just convention, you can still access that  variable outside  of a class
+    #+begin_src python :results output
+    class Person:
+        def __init__(self, name, age):
+            self._name = name
+            self._age = age
+        def __str__(self):
+            return '(name: {}, age: {})'.format(self._name, self._age)
+
+    p = Person('Jim', 23)
+    print(p)
+    print(p._name, p._age)
+    #+end_src
+
+    #+RESULTS:
+    : (name: Jim, age: 23)
+    : Jim 23
+
+*** two underscore __ means name mangling, when used for inheritance
+    the variable will be renamed to _C__name. Then it will not override the super class's variable.
+    Because it is also has one leading underscore, so the rules for one underscore also applies.
+
+    __age is renamed to _Person__age:
+    #+begin_src python :results output
+    class Person:
+        def __init__(self, name, age):
+            self._name = name
+            self.__age = age
+        def __str__(self):
+            return '(name: {}, age: {})'.format(self._name, self.__age)
+
+    p = Person('Jim', 23)
+    print(p)
+    print(dir(p))
+    print(p._name, p._Person__age)
+    #+end_src
+
+    #+RESULTS:
+    : (name: Jim, age: 23)
+    : ['_Person__age', '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_name']
+    : Jim 23
+
+** 8.6. Creating Managed Attributes, with @property decorator/annotation, add a setter, getter, deleter to a field
+   Steps:
+   1. first create a property object by @property decorator, on a getter method. The name of the getter should be the same with the attribute field.
+   2. create the setter object: by @attribute_name.setter, on a setter method. The name of the getter should be the same with the attribute field.
+   3. the getter, setter function are a way to define what will be called when the attribute with the same name is get,  set. 
+      e.g. the attribute name is 'foo', then the 'foo' attribute will be a object that has methods: 'getter', 'setter', 'deleter'. You can choose any name to store the real value for this  attribute, but the most common value will be add a underscore, that is '_foo'.
+      Type of 'foo' is <class 'property'>
+   
+    #+begin_src python :results output
+    class Person:
+        def __init__(self, name, age):
+            # here the name attribute is depend on the def name(self) getter function. Not the reverse.
+            self.name = name
+            self.age = age
+        def __str__(self):
+            return '(name: {}, age: {})'.format(self.name, self.age)
+
+        @property
+        def name(self):
+            print("getting name")
+            return self.nameL
+
+        @name.setter
+        def name(self, name):
+            print("setting name")
+            if not isinstance(name, str):
+                raise TypeError
+
+            self.nameL = name
+
+    p = Person('Jim', 23)
+    p.name = "Tom"
+    print(p)
+    print(dir(p))
+    print(type(Person.name), dir(Person.name))
+    #+end_src
+
+    #+RESULTS:
+    : setting name
+    : setting name
+    : getting name
+    : (name: Tom, age: 23)
+    : ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'age', 'name', 'nameL']
+    : <class 'property'> ['__class__', '__delattr__', '__delete__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__get__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__isabstractmethod__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__set__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'deleter', 'fdel', 'fget', 'fset', 'getter', 'setter']
+
+** create caculate attribute by @property, getter, setter, then the attribute works like a attribute,  not a method
+   Seems a good application of @property.
+
+    #+begin_src python :results output
+    class Circle:
+        def __init__(self, radis):
+            self.radis = radis
+
+        @property
+        def area(self):
+            print("getting area")
+            return self.radis*self.radis*3.14
+
+    p = Circle(4)
+    print(p.radis)
+    print(p.area)
+    #+end_src
+
+    #+RESULTS:
+    : 4
+    : getting area
+    : 50.24
+
+** 8.7. Calling a Method on a Parent Class, by super() function
+   There are many format
+   #+begin_src python :results output
+   super() # unbound
+   super(type, obj) # isinstance(obj, type)
+   super(type, type2) # issubclass(type2, type). issubclass(object, object) is True
+   #+end_src
