@@ -1,19 +1,19 @@
 * chapter 1: Data Structures and Algorithms
 ** 1.6 Mapping Keys to Multiple Values in a Dictionary, by list value and defaultdict
    example: create a dictionary with default value, by defaultdict
-
+   
    dictionary's property:
    1. you can add new key to a dictionary
    2. but when you access a key that not exists, there will be error
    3. defaultdict is used to fix such problem.
-
+      
    #+BEGIN_SRC python
    from collections import defaultdict
    `dict` = defaultdict(`func list`)
    # `dict`['aaa'].append(2)
    $0
    #+END_SRC
-
+   
 ** 1.6 example
    #+BEGIN_SRC python
    from collections import defaultdict
@@ -39,9 +39,9 @@
    d = OrderedDict()
    # the insertion order will be reserved.
    #+end_src
-
+   
    An typical application is when for serilization.
-
+   
 ** 1.8. Calculating with Dictionaries
 *** get max key/value in a dictionary, based on the value, by inverting the dict
     #+begin_src python
@@ -55,16 +55,16 @@
     but for a dict, it returns only the key. Why? Because it accept a iterable as first parameter, and for a dictionary, the iterable value is the key.
 *** understanding of multi value bind
     --->  (b11, b12) = 1
-       TypeError: 'int' object is not iterable
+    TypeError: 'int' object is not iterable
     
-     The right hand side should be an iterable, every element in the iterable will be asigned to the left hand side variable, with each variable comsume one element exzactly. If the number of elements and variables not match, then there will be an error.
-
-     The consume more than one values, use the '*varname' expresstion, then the variable 'varname' will be a list of many elements.
-
-     Back to the error prints in the example, the 'int' object is the right size '1'.
-
-     PS:
-     I find python much simpler and funny than java.
+    The right hand side should be an iterable, every element in the iterable will be asigned to the left hand side variable, with each variable comsume one element exzactly. If the number of elements and variables not match, then there will be an error.
+    
+    The consume more than one values, use the '*varname' expresstion, then the variable 'varname' will be a list of many elements.
+    
+    Back to the error prints in the example, the 'int' object is the right size '1'.
+    
+    PS:
+    I find python much simpler and funny than java.
 ** 1.9. Finding Commonalities in Two Dictionaries
    a dictionary's d.keys() and d.items() support set operations
    So to find the common part keys/items in two dictionaries, just use the set operation '|' or 'union' function.
@@ -72,45 +72,45 @@
     #+begin_src python
 `dict`.keys()
     #+end_src
-
+    
 *** get all values as a iterable in a dictionary, by values()
     #+begin_src python
 `dict`.values()
     #+end_src
-
+    
 *** get all key, value pairs as a iterable in a dictionary, by items()
     #+begin_src python
 `dict`.items()
     #+end_src
-
+    
 *** set operations
     '|': union
     '&': intersection
     '-': difference
     's1 < s2': check if s1 is a subset of s2
-
+    
     Example:
-In [101]: e.keys(), d.keys()
-Out[101]: (dict_keys([1, 4, 'a', 9]), dict_keys([1, 3, 5]))
-
-In [102]: e.keys() & d.keys()
-Out[102]: {1}
-
-In [103]: e.keys() | d.keys()
-Out[103]: {1, 3, 4, 5, 'a', 9}
-
-In [104]: e.keys() - d.keys()
-Out[104]: {9, 4, 'a'}
-
+    In [101]: e.keys(), d.keys()
+    Out[101]: (dict_keys([1, 4, 'a', 9]), dict_keys([1, 3, 5]))
+    
+    In [102]: e.keys() & d.keys()
+    Out[102]: {1}
+    
+    In [103]: e.keys() | d.keys()
+    Out[103]: {1, 3, 4, 5, 'a', 9}
+    
+    In [104]: e.keys() - d.keys()
+    Out[104]: {9, 4, 'a'}
+    
 ** 1.10. Removing Duplicates from a Sequence while Maintaining Order
 *** problem: what is hashable(and the link to python glossary)
     From the python glossary: 
     https://docs.python.org/3/glossary.html
-
+    
     An object is hashable if it has a hash value which never changes during its lifetime (it needs a __hash__() method), and can be compared to other objects (it needs an __eq__() or __cmp__() method). Hashable objects which compare equal must have the same hash value.
-
+    
     Hashability makes an object usable as a dictionary key and a set member, because these data structures use the hash value internally.
-
+    
     All of Python’s immutable built-in objects are hashable, while no mutable containers (such as lists or dictionaries) are. Objects which are instances of user-defined classes are hashable by default; they all compare unequal, and their hash value is their id().
 *** how yield/generator iterator is implemented
     From the glossary, it works by suspends the function and  return the value, and save the current status. Then if it was called  next time, it will start execute from the place last time it was suspended. Great!! I understanded this.
@@ -122,14 +122,14 @@ Out[104]: {9, 4, 'a'}
     generator iterator
     An object created by a generator function.
     Each yield temporarily suspends processing, remembering the location execution state (including local variables and pending try-statements). When the generator iterator resumes, it picks-up where it left-off (in contrast to functions which start fresh on every invocation).
-
+    
 *** file object is also an iterable, the element is a line
     #+begin_src python
     with open(somefile,'r') as f:
         for line in f:
             print(line)
     #+end_src
-
+    
 *** a function that delete all duplicates in a list, with order preserved
     #+begin_src python
     def dedupe(items, key=None):
@@ -141,27 +141,27 @@ Out[104]: {9, 4, 'a'}
                 seen.add(val)
     #+end_src
     If the element is hashable, then key function is not needed. Else, provide a fucntion to convert the  element to a hashable element.
-
+    
     examples:
     >>> a = [ {'x':1, 'y':2}, {'x':1, 'y':3}, {'x':1, 'y':2}, {'x':2, 'y':4}]
->>> list(dedupe(a, key=lambda d: (d['x'],d['y'])))
-[{'x': 1, 'y': 2}, {'x': 1, 'y': 3}, {'x': 2, 'y': 4}]
->>> list(dedupe(a, key=lambda d: d['x']))
-[{'x': 1, 'y': 2}, {'x': 2, 'y': 4}]
->>>
-
+    >>> list(dedupe(a, key=lambda d: (d['x'],d['y'])))
+    [{'x': 1, 'y': 2}, {'x': 1, 'y': 3}, {'x': 2, 'y': 4}]
+    >>> list(dedupe(a, key=lambda d: d['x']))
+    [{'x': 1, 'y': 2}, {'x': 2, 'y': 4}]
+    >>>
+    
 *** delete all duplicates in a list, don't preserve order, by set
     #+begin_src python
     set(`list`)
     #+end_src
     Then all duplicate elements in list will be removed.
-
+    
 *** the a?b:c expression in python, if else in one line
     #+begin_src python
     val = b if a else c
     #+end_src
     looks good
-
+    
 ** 1.11. Naming a Slice
 *** the slice object
     create a  slice
@@ -178,10 +178,10 @@ Out[104]: {9, 4, 'a'}
     s = slice(1,2,2)
     print(s.start, s.stop, s.step)
     #+end_src
-
+    
     #+RESULTS:
-
-
+    
+    
 ** 1.12. Determining the Most Frequently Occurring Items in a Sequence
    A method by me
    #+begin_src python
@@ -195,7 +195,7 @@ Out[104]: {9, 4, 'a'}
    r = max(zip(d.values(), d.keys()))
    print(r[1])
    #+end_src
-
+   
    
 *** the collections.Counter class: change a list to a list of tuple of (element, count)
     #+begin_src python :results output
@@ -215,13 +215,13 @@ Out[104]: {9, 4, 'a'}
     # and a Counter object support the math operations: '+' and '-'
 
     #+end_src
-
+    
     #+RESULTS:
     : 3
     : 3
-
+    
     When you need to count data, use Counter class. This is a so little class, in practice, I will always write it from scratch before.
-
+    
 ** 1.13. Sorting a List of Dictionaries by a Common Key
    
 *** the operator.itemgetter function
@@ -234,9 +234,9 @@ Out[104]: {9, 4, 'a'}
     lambda r:r["name"]
     # but the former  is a little faster
     #+end_src
-
+    
     仍然是非常小的功能，为什么搞得这么精细呢？
-
+    
 ** 1.14. Sorting Objects Without Native Comparison Support
 *** the operator.attrgetter function
     it will return a callable that can be passed to 'sorted':s key  parameter, for user defined class
@@ -263,14 +263,14 @@ Out[104]: {9, 4, 'a'}
     rows.sort(key=itemgetter(1))
     a = itertools.groupby(rows, key=itemgetter(1))
     #+end_src
-
+    
     another way is just use a default list dictionary to group, then no sort is needed.
-
-
-
-   
-   
-
+    
+    
+    
+    
+    
+    
 ** 1.16. Filtering Sequence Elements
    To fitering, just use list comprehension with an if condition
 *** itertools.compress function, a filtering tool
@@ -278,8 +278,8 @@ Out[104]: {9, 4, 'a'}
     1. an iterable which to be compressed
     2. a Boolean sequence, with the same length of first parameter
        if the element in this sequence  is True, then the element at the same position in the first iterable will be put to the output
-
-     An example:
+       
+       An example:
     #+begin_src python
     addresses = [
         '5412 N CLARK',
@@ -299,7 +299,7 @@ Out[104]: {9, 4, 'a'}
     # Now a will be all items where count larger than 5
     print(a)
     #+end_src
-
+    
     
     
 ** 1.17. Extracting a Subset of a Dictionary
@@ -327,12 +327,12 @@ Out[104]: {9, 4, 'a'}
     p = People(name='Jim', age=12)
     print(p, p.name, p.age)
     #+end_src
-
+    
     #+RESULTS:
-
+    
     A good application:
     for database selection.
-
+    
     The ._replace method:
     Because a tuple is immutable, so to change an element, you can use _replace to  replace a field and a new one will be returned.
     A tipical usage is first  create a prototype element with all field value be the default one, then update some fields with the _replace function.
@@ -350,14 +350,14 @@ Out[104]: {9, 4, 'a'}
     dict_to_stock(a)
     # Stock(name='ACME', shares=100, price=123.45, date=None, time=None)
     #+end_src
-
+    
 ** 1.19. Transforming and Reducing Data at the Same Time
    use generator-expression argument
-
+   
    The reducing function means: given a list, return a value.
 ** the any function, check if any of an element is True in a iterable
 *** check if  any .py files exist in a directory
-   #+begin_src python
+    #+begin_src python
    # Determine if any .py files exist in a directory
    import os
    files = os.listdir('dirname')
@@ -365,7 +365,7 @@ Out[104]: {9, 4, 'a'}
        print('There be python!')
    else:
        print('Sorry, no python.')
-   #+end_src
+    #+end_src
 *** get all files in a directory as a list
     #+begin_src python
    import os
@@ -378,16 +378,16 @@ Out[104]: {9, 4, 'a'}
     s = ('ACME', 50, 123.45)
     print(','.join(str(x) for x in s))# Output a tuple as CSV
     #+end_src
-
+    
 ** 1.20. Combining Multiple Mappings into a Single Mapping
 *** the collections.ChainMap
     combining many maps/dictionaries, then when get an element, it will try to get from the first map, then the second, ...
-
+    
     And for operations that mutate the mapping always affect the first map/dictionary.
-
+    
     typical application:
     scoped variable in a programming language.
-
+    
     Difference from the dict.update function:
     ChainMap use a link to the original dictionary, while dict.update create a new one.
 **** check if an element exists in many dictionaries/maps, sequencially
@@ -400,7 +400,7 @@ Out[104]: {9, 4, 'a'}
      print(c['y']) # Outputs 2 (from b)
      print(c['z']) # Outputs 3 (from a)
      #+end_src
-
+     
      #+RESULTS:
      : 1
      : 2
@@ -424,11 +424,11 @@ Out[104]: {9, 4, 'a'}
        a = re.split(r'([,;.\s]\s*)',s)
        print(a, a[::2], a[1::2])
        #+end_src
-
+       
        #+RESULTS:
        : ['I', 'you', 'a', 'seperater', 'haha']
        : ['I', ', ', 'you', '; ', 'a', '  ', 'seperater', '.   ', 'haha'] ['I', 'you', 'a', 'seperater', 'haha'] [', ', '; ', '  ', '.   ']
-
+       
 *** iterate on two lists, by first zip the two to one
     looks nice!
     #+begin_src python
@@ -436,10 +436,10 @@ Out[104]: {9, 4, 'a'}
     ''.join(v+d for v,d in zip(values, delimiters))
     'asdf fjdk;afed,fjek,asdf,foo'
     #+end_src
-
+    
     
 *** regexp noncapture group, by r'(?:...)'
-
+    
 ** 2.2. Matching Text at the Start or End of a String, by str.startswith() or str.endswith() method
    #+begin_src python
    filename = "aaaa.txt"
@@ -447,7 +447,7 @@ Out[104]: {9, 4, 'a'}
    # pass a tuple to check against multiple choices
    filename.endswith((".c", ".h"))
    #+end_src
-
+   
    #+begin_src python
    from urllib.request import urlopen
    def read_data(name):
@@ -457,44 +457,44 @@ Out[104]: {9, 4, 'a'}
            with open(name) as f:
                return f.read()
    #+end_src
-
+   
    The parameter is simple string.
-
+   
    Compared to re.match, str.startswith looks nice.
-
+   
 ** 2.3. Matching Strings Using Shell Wildcard Patterns, with fnmatch.fnmatch(), fnmatch.fnmatchcase()
    Shell wildcard:
    - [] : a charset
    - * : match any length of chars
    - ? : match only one char
-
+     
    #+begin_src python :results output
    from fnmatch import fnmatch
    print(fnmatch("data 1.txt", "*[0-9]*"))
    #+end_src
-
+   
    #+RESULTS:
    : False
-
+   
    1. the pattern must match the whole string
    2. compares to startswith(), fnmatch can match at any position
    3. compares to regexp, fnmatch looks nice
    4. fnmatch will use the same case-sensitive rule as the OS, fnmatchcase will always respect case.
    5. between simpe string and full power of regexp
-
-
+      
+      
 ** 2.4. Matching and Searching for Text Patterns
    What's  the difference between matching and searching
-
+   
 *** the str.find() function: find the start index of a substring
     #+begin_src python :results output
     s = "Hello xxx bbbb"
     print(s.find("xx"))
     #+end_src
-
+    
     #+RESULTS:
     : 6
-
+    
     
 *** re.compile() function: compile a regexp strinng to a regexp object, for performance
     If you use the regexp many times, then first compile it is good. But if you only use it for one time, then don't use the compile function
@@ -502,7 +502,7 @@ Out[104]: {9, 4, 'a'}
 *** difference between r'\d' and '\d'
     if the string is prefixed by  a 'r', then the '\' in the string will not be intepreted by the string parser.
     So the second regexp is actually r'd'.
-
+    
 *** re.findall() function, find all matched data as a list
     #+begin_src python :results output
     text = 'Today is 11/27/2012. PyCon starts 3/13/2013.'
@@ -514,19 +514,19 @@ Out[104]: {9, 4, 'a'}
     print(a)
     print(type(a[0]))
     #+end_src
-
+    
     #+RESULTS:
     : Today
     : ['11/27/2012', '3/13/2013']
     : <class 'str'>
-
+    
     The return value: if there are capture groups, then the return value is the captured data, and if the capture group number is one, it will be  a string, else be  a tuple of strings.
     if  no capture groups, then the return value is all matched  data.
-
+    
 *** re.finditer(), find all matched data as a iterater
     Seems the return value is different from re.findall(), it will return a  matched object , the same as re.match()
     Seems strange, and highly inconsistent.
-
+    
 *** re.match() function, always match at the start of a string
 *** re.match() function, return value
     rst.group(0): the matched data
@@ -541,10 +541,10 @@ Out[104]: {9, 4, 'a'}
     print(text.replace('yeah', 'yep'))
     # 'yep, but no, but yep, but no, but yep'
     #+end_src
-
+    
     #+RESULTS:
     : yep, but no, but yep, but no, but yep
-
+    
 *** the re.sub(pattern, replacement, text) function, will also replace all occurence in a string
     use r'\1' to refer to the first captured group
     #+begin_src python :results output
@@ -553,13 +553,13 @@ Out[104]: {9, 4, 'a'}
     print(re.sub(r'(\d+)/(\d+)/(\d+)', r'\3-\1-\2', text))
     # 'Today is 2012-11-27. PyCon starts 2013-3-13.'
     #+end_src
-
+    
     #+RESULTS:
     : Today is 2012-11-27. PyCon starts 2013-3-13.
-
+    
 *** the re.sub(pattern, callback, text) function, will also replace all occurence in a string
     The second parameter can also be a function, the parameter to this function is a match object(the  same returned by re.match function).
-
+    
     The same example as the above one:
     #+begin_src python :results output
     text = 'Today is 11/27/2012. PyCon starts 3/13/2013.'
@@ -570,15 +570,15 @@ Out[104]: {9, 4, 'a'}
 
     print(re.sub(r'(\d+)/(\d+)/(\d+)', foo, text))
     #+end_src
-
+    
     #+RESULTS:
     : Today is 2012-11-27. PyCon starts 2013-3-13.
-
-
+    
+    
 *** the re.subn(...) function, same as re.sub, but also return subsitution counts also
 ** 2.6. Searching and Replacing Case-Insensitive Text
    To do case-insensitive operations, you must use regexp with the re.IGNORECASE flags keyword parameter
-
+   
 *** replace words in a string with original case preserved
     a excenlent example of replacing with 原始的大小写规则. 并且是一个很好的高阶函数的例子。
     #+begin_src python :results output
@@ -601,13 +601,13 @@ Out[104]: {9, 4, 'a'}
     print(re.sub('python', matchcase('snake'), text, flags=re.IGNORECASE))
     # 'UPPER SNAKE, lower snake, Mixed Snake'
     #+end_src
-
+    
     #+RESULTS:
     : UPPER SNAKE, lower snake, Mixed Snake
-
+    
 ** 2.7. Specifying a Regular Expression(regexp) for the Shortest Match, by using modifier '?', no-greedy match
    By default, * will match longest data. if appended with a '?' then it will match the shortest
-
+   
    #+begin_src python :results output
    import re
    text1 = 'Computer says "no."'
@@ -622,12 +622,12 @@ Out[104]: {9, 4, 'a'}
    r= re.findall(r'"(.*?)"', text2)
    print(r)
    #+end_src
-
+   
    #+RESULTS:
    : ['no.']
    : ['no." Phone says "yes.']
    : ['no.', 'yes.']
-
+   
 ** 2.8. Writing a Regular Expression for Multiline Patterns
    By default, '.' will not match a new line character. 
    there are two choices to let '.' match a new line character:
@@ -643,10 +643,10 @@ Out[104]: {9, 4, 'a'}
       r = re.findall(r'/\*(?:.|\n)*\*/', s, flags=re.DOTALL)
       print(r)
       #+end_src
-
+      
       #+RESULTS:
       : ['/* aaaa\nbbbb\ncccc */']
-
+      
 *** the re.DOTALL flag: let '.' match a newline character
 ** 2.9. Normalizing Unicode Text to a Standard Representation, by unicodedata.normalize('NFC', str)
    unicode may have more than one representation, see example in the book
@@ -659,7 +659,7 @@ Out[104]: {9, 4, 'a'}
     print(s.lstrip())
     print(s.rstrip())
     #+end_src
-
+    
     #+RESULTS:
     : a b c
     : a b c 
@@ -672,7 +672,7 @@ Out[104]: {9, 4, 'a'}
     import re
     print(re.sub("\s+", " ", s))
     #+end_src
-
+    
     #+RESULTS:
     : helloword
     :  hello word 
@@ -692,20 +692,20 @@ Out[104]: {9, 4, 'a'}
     for s in s1:
         print(s)
     #+end_src
-
+    
     #+RESULTS:
     : <generator object <genexpr> at 0x00000048B4AAF0F8>
     : 
     : import os.path
     : rst = ""
-    : if os.path.isfile(""):
-    : with open("", "r") as f:
+    : if os.path.isfile(""): 
+    : with open("", "r") as f: 
     : rst = f.read()
     : 
-
+    
 ** 2.12. Sanitizing and Cleaning Up Text
 *** str.translate() function, change characters given a table/dictionary, the book given much unicode examples
-
+    
 ** 2.13. Aligning Text Strings
    
 *** the str.ljust(), str.rjust(), str.center() functions
@@ -716,47 +716,47 @@ print("aaa".rjust(20, "-"))
 print("aaa".center(20, "="))
 print("aaa".center(20))
     #+end_src
-
+    
     #+RESULTS:
     : aaabbbbbbbbbbbbbbbbb
     : -----------------aaa
     : ========aaa=========
     :         aaa         
-
+    
 *** the format function and the str.format methods
     #+begin_src python :results output
 print(format("aaa", ">20")) # same as rjust
 print(format("aaa", "=<20")) # same as ljust
 print(format("aaa", "^20")) # same as center
     #+end_src
-
+    
     #+RESULTS:
     :                  aaa
     : aaa=================
     :         aaa         
-
+    
     #+begin_src python :results output
 print("{} {:=^10}".format("abc", 123))
     #+end_src
-
+    
     #+RESULTS:
     : abc ===123====
-
     
     
-
-
+    
+    
+    
     "%s %s" % (a, b) is old way, now should use the new way.
-
+    
     
 ** 2.14. Combining and Concatenating Strings
    
 *** by str.join
-
+    
 *** by + operator
     
 *** by print function's 'sep' parameter
-
+    
 *** by format function
 ** 2.15. Interpolating Variables in Strings, by str.format() or str.format_map() method
    Note: format_map doesn't exist in python 2.7
@@ -767,7 +767,7 @@ print("{} {:=^10}".format("abc", 123))
    age = 18
    # print("{name} is {age} years old".format_map(vars()))
    #+end_src
-
+   
    #+RESULTS:
    : Tom is 16 years old
 
@@ -1753,3 +1753,231 @@ print("{} {:=^10}".format("abc", 123))
    super(type, obj) # isinstance(obj, type)
    super(type, type2) # issubclass(type2, type). issubclass(object, object) is True
    #+end_src
+** 8.9. Creating a New Kind of Class or Instance Attribute, by creating a descriptor class for the type
+   如果一个类定义了三个函数： __get__, __set__, __delete__, 则它是一个descriptor, 可能通过它来为一个instance的attribute添加一些get, set时的函数。
+
+   @property 只是descriptor的一种表象， descriptor是最底层，最灵活的实现，在库中大量使用。 TODO： 可以再研究下基于descriptor， @property的实现。
+
+   调用顺序：如果descriptor对应的class attribute 存在, 则总会优先调用这个descriptor的函数，来获取或设置attribute的值。
+   但当descriptor只定义了__get__方法时，则如果同名的变量在instance.__dict__中存在，则会优先从instance.__dict__中获取。
+   
+   #+begin_src python :results output
+   class Integer:
+       def __init__(self, name):
+           self.name = name
+
+       def __get__(self, instance, cls):
+           print("__get__ method called, name: %s" % self.name)
+           # If instance is None, then it is the class attribute
+           if instance:
+               return instance.__dict__[self.name]
+           else:
+               return instance
+
+       def __set__(self, instance, value):
+           print("__set__ method called, name %s, value: %s" % (self.name, value))
+           instance.__dict__[self.name] = value
+
+   class Point:
+       # 关键的是量的值，输入参数的值只是用于内部实现的。并且Integer的实现中使用instance.__dict__保存数据也只是一种实现方式。
+       # Point.x决定了atribute的名称为x
+       x = Integer('z')
+       def __init__(self, x, y):
+           self.x = x
+           self.y = y
+
+       def __str__(self):
+           return '({0.x}, {0.y})'.format(self)
+
+
+   p = Point(3, 2)
+   print("p.x")
+   print(p.x)
+   print(p.__dict__)
+   # setattr(p, 'x', 5)
+   p.__dict__['x'] = 5
+   print(p.x)
+   print(p.__dict__)
+   #+end_src
+
+   #+RESULTS:
+   : __set__ method called, name z, value: 3
+   : p.x
+   : __get__ method called, name: z
+   : 3
+   : {'z': 3, 'y': 2}
+   : __get__ method called, name: z
+   : 3
+   : {'z': 3, 'y': 2, 'x': 5}
+
+** 8.10. Using Lazily Computed Properties, an application of descriptor
+** 8.11. Simplifying the Initialization of Data Structures, by define a common base class
+   #+begin_src python :results output
+   # python  is very flexiable
+   class Structure:
+       _fields = []
+       def __init__(self, *args):
+           if len(self._fields) != len(args):
+               raise TypeError('Expected {} arguments'.format(len(self._fields)))
+           for k, v in zip(self._fields, args):
+               setattr(self, k, v)
+       def __str__(self):
+           return '({})'.format(', '.join('{}: {}'.format(f, getattr(self, f)) for f in self._fields))
+
+   class Point(Structure):
+       _fields = ['x', 'y']
+       # def __str__(self):
+       #     return '(x: {0.x}, y: {0.y})'.format(self)
+
+   class Circle(Structure):
+       _fields = ['radius']
+       # def __str__(self):
+       #     return '(radius: {0.radius})'.format(self)
+
+   p = Point(1, 2)
+   print(p)
+   p = Circle(3)
+   print(p)
+   #+end_src
+
+   #+RESULTS:
+   : (x: 1, y: 2)
+   : (radius: 3)
+
+** class attributes can also be accessed by instance object, such as self, but only when the same instance attribute not exists
+   #+begin_src python :results output
+   class Foo:
+       class_attr = "ABC"
+       def __init__(self, a):
+           self.a = a
+
+   f = Foo('BB')
+   print(f.class_attr, f.a)
+   print(f.class_attr is Foo.class_attr)
+
+   class Bar:
+       class_attr = "ABC"
+       def __init__(self, a):
+           self.class_attr = a
+           self.a = a
+
+   b = Bar('BB')
+   print(b.class_attr, b.a)
+   print(b.class_attr is Bar.class_attr)
+   #+end_src
+
+   #+RESULTS:
+   : ABC BB
+   : True
+   : BB BB
+   : False
+
+** 8.12. Defining an Interface or Abstract Base Class
+*** create an abstract base class, or interface, by abc.ABCMeta, abc.abstractmethod
+    A abstract class can't be initialized.
+    #+begin_src python :results output
+    from abc import ABCMeta, abstractmethod
+    class IStream(metaclass=ABCMeta):
+        @abstractmethod
+        def read(self, maxbytes=-1):
+            pass
+        @abstractmethod
+        def write(self, data):
+            pass
+
+    # typical usage:
+    def  foo(obj):
+        if isinstance(obj, IStream):
+            # processing an IStream here
+            pass
+
+    a = IStream()
+    #+end_src
+
+    #+RESULTS:
+
+*** register another class to a 'sub class ' of a abstract base class, by abc.register(cls) function
+    Then isinstance(obj, AbstractBaseClass) will be  True. This let another class which is not a subclass of a base class, but can still pass the isinstance() test, which means implementing a interface.
+
+    #+begin_src python :results output
+    import io
+    # Register the built-in I/O classes as supporting our interface
+    IStream.register(io.IOBase)
+    # Open a normal file and type check
+    f = open('foo.txt')
+    isinstance(f, IStream) # Returns True
+    #+end_src
+
+    #+RESULTS:
+
+** 8.13. Implementing a Data Model or Type System, by descriptor
+   感觉根之前小节讲到的descriptor相同，只不过用了继承的方式写了很多细小的descriptor。
+** what is a descriptor? and its usage
+   A descriptor is  a class attribute object, which has __get__, __set__, or __delete__ method, is used to define how a instance attribute is get, set, and delete. When an  instance attribute is get, the descriptor's __get__ method will be called. The same thing applys to __set__ and __delete__
+
+   In descriptor's __get__, __set__ methods, we must use instance.__dict__[xxx] to get a attribute. If we use getattr(instance, xxx) to get that attribute, then there will be a recursion error as below, because the getattr() function will trigger a new call of __get__ method.
+   RecursionError: maximum recursion depth exceeded while calling a Python object
+
+   The relationship between the descriptor object and an instance attribute:
+   1. if the descriptor object is assigned to a class attribute with name 'attribute_a', then it will control the instance attribute with the same name.
+   2. but there is  one exception: if only the __get__ method of a descriptor is defined, then the instance attribute with the same name will be not be controled by the  descriptor, it will be get directly from the __dict__.
+   
+   a test:
+   #+begin_src python :results output
+   class TraceDescriptor:
+       def __init__(self, name):
+           self.name = name
+
+       def __get__(self, instance, cls):
+           if instance:
+               print('Getting attribute {}, value is {}'.format(self.name, instance.__dict__[self.name]))
+               return instance.__dict__[self.name]
+               # return getattr(instance, self.name)
+           else:
+               return instance
+
+
+       def __set__(self, instance, value):
+           print('Setting attribute {} to {}'.format(self.name, value))
+           instance.__dict__[self.name] = value
+
+   class Circle:
+       radius = TraceDescriptor('radius')
+       def __init__(self,  radius):
+           self.radius = radius
+
+   c =  Circle(4)
+
+   print(c.radius)
+   #+end_src
+
+   #+RESULTS:
+
+** 8.16. Defining More Than One Constructor in a Class, use a class method
+   GP: Always only assign values in the default  constructor(__init__), and do other things by other constructors
+   #+begin_src python :results output
+   import time
+
+   class Date:
+       def __init__(self, y, m,  d):
+           self.year = y
+           self.month = m
+           self.day =  d
+
+       @classmethod
+       def today(cls):
+           t = time.localtime()
+           return cls(t.tm_year, t.tm_mon, t.tm_mday)
+
+       def __str__(self):
+           return '({0.year}, {0.month}, {0.day})'.format(self)
+
+   d1 = Date(2017, 1, 2)
+   d2 = Date.today()
+   print(d1, d2)
+
+   #+end_src
+
+   #+RESULTS:
+   : (2017, 1, 2) (2017, 4, 17)
+

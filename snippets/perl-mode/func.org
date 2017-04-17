@@ -1,0 +1,110 @@
+* functions: permutation, permutation with replacement, combination, from list, array
+  #+begin_src perl :results output
+  sub permutate {
+      my ($list, $n) = @_;
+      die "Insufficient list members" if $n > @$list;
+
+      return map [$_], @$list if $n <= 1;
+
+      my @comb;
+
+      for my $i (0 .. $#$list) {
+          my @rest = @$list;
+          my $val  = splice @rest, $i, 1;
+          push @comb, [$val, @$_] for permutate(\@rest, $n-1);
+      }
+
+      return @comb;
+  }
+
+  sub permutate_with_replacement {
+      my ($list, $n) = @_;
+      # die "Insufficient list members" if $n > @$list;
+
+      return map [$_], @$list if $n <= 1;
+
+      my @comb;
+
+      for my $i (0 .. $#$list) {
+          my @rest = @$list;
+          # my $val  = splice @rest, $i, 1;
+          my $val  = $rest[$i];
+          push @comb, [$val, @$_] for permutate_with_replacement(\@rest, $n-1);
+      }
+
+      return @comb;
+  }
+
+
+  @a =  ('S', 'M');
+  @b = permutate_with_replacement(\@a, 4);
+  for my $i(@b) {
+      print("@$i\n");
+  }
+
+  sub  getModePermutations{
+      my @rst = ();
+      # push @rst, ['Mixed', 'Single', 'Single', 'Single'];
+      # push @rst, ['Single', 'Single','Mixed', 'Single'];
+      # push @rst, ['Mixed', 'Single', 'Single', 'Mixed'];
+
+      my @a = ('Single', 'Mixed');
+      @rst = permutate_with_replacement(\@a, 4);
+
+      @rst = grep {count($_, 'Mixed') >= 1} @rst;
+
+      return @rst;
+  }
+
+  sub count {
+      my ($list, $elem) = @_;
+      my $rst = 0;
+      for my $i (@$list){
+          if ($i eq $elem) {
+              $rst += 1;
+          }
+      }
+
+      return $rst;
+  }
+  for my $i(getModePermutations()) {
+      print("@$i\n");
+  }
+
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  S S S S
+  S S S M
+  S S M S
+  S S M M
+  S M S S
+  S M S M
+  S M M S
+  S M M M
+  M S S S
+  M S S M
+  M S M S
+  M S M M
+  M M S S
+  M M S M
+  M M M S
+  M M M M
+  Single Single Single Mixed
+  Single Single Mixed Single
+  Single Single Mixed Mixed
+  Single Mixed Single Single
+  Single Mixed Single Mixed
+  Single Mixed Mixed Single
+  Single Mixed Mixed Mixed
+  Mixed Single Single Single
+  Mixed Single Single Mixed
+  Mixed Single Mixed Single
+  Mixed Single Mixed Mixed
+  Mixed Mixed Single Single
+  Mixed Mixed Single Mixed
+  Mixed Mixed Mixed Single
+  Mixed Mixed Mixed Mixed
+#+end_example
+
