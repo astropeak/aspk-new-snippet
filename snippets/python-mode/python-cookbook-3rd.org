@@ -1981,3 +1981,159 @@ print("{} {:=^10}".format("abc", 123))
    #+RESULTS:
    : (2017, 1, 2) (2017, 4, 17)
 
+** 8.17. Creating an Instance Without Invoking init
+*** the object.__new__(*args, **kwargs) method: create a bare object
+    Every object has a __new__method, which is inheritantanted from type.__new__.
+
+    The parameter should be a type object.
+
+    When you want to create an object from a json, this method can be used.
+   
+    #+begin_src python :results output
+    import aspk_common as AC
+    class Foo(AC.Structure):
+        _fields = ['x']
+
+    f = Foo(2)
+    g = Foo.__new__(Foo)
+    print(f)
+    print(f.__dict__)
+    print(g.__dict__)
+    print(dir(f))
+    print(dir(g))
+    #+end_src
+
+    #+RESULTS:
+    : (x: 2)
+    : {'x': 2}
+    : {}
+    : ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_fields', 'x']
+    : ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_fields']
+*** Problem: how an object is constructed?
+    I guess first create a bare object by  calling the __new__ method, then call the object's __init__ method.
+
+** 8.18. Extending Classes with Mixins
+*** mixin classes, used to extend function of a class, class customization, by multiple inheritance
+    SOLVED, see another comment. How below codes works? For 'super().__getitem__(key)', why dict.__getitem__ method will be called?
+
+    After figuring out MRO, then I know how a mixin class works:
+    Mixin class is used to customize an existing class.
+    It make use of  MRO of multiple inheritance. Suppose 'Base' is the class to be customized, 'Mixin' is the mixin class, 'Foo' is the result  class, then the typical syntax is:
+    #+begin_src python :results output
+    class Foo(Mixin, Base):
+        pass
+    #+end_src
+    That is, put the mixin class as the first parent class, and the Base class as the second class. Then e.g. you want change a method of Base's behavier, such as 'foo', then you can just define a method named 'foo' in Mixin, and doing some work, then call 'super().foo(...)' to call Base's foo method.
+
+    Works like a decorator pattern.
+
+    But  what's difference between this method and by directly define the 'foo' method in Foo?
+    => maybe the main benifet is that  by putting the codes to a Mixin class, the codes can be easily reused.
+
+    
+    #+begin_src python :results output
+    import aspk_common as AC
+    class Logging:
+        __slots__ = ()
+        def __getitem__(self, key):
+            print('Getting {}'.format(key))
+            print('self: {}\nsuper: {}'.format(self, super()))
+            return super().__getitem__(key)
+
+    class LoggingDict(Logging, dict):
+        pass
+
+    d = LoggingDict()
+    d['x'] = 2
+    print(d['x'])
+
+    #+end_src
+
+    #+RESULTS:
+    : Getting x
+    : self: {'x': 2}
+    : super: <super: <class 'Logging'>, <LoggingDict object>>
+    : 2
+
+
+** mutiple inheritance: how method/attribue are resolved if they exists in more than one  super classes
+   A method/attribute is resolved in the order of all parent class given.
+   e.g: 
+   class Foo(A, B)
+   if a method 'aaa' is defined in  both A and B, then A.aaa will be used.
+
+** python multiple inheritance, super and MRO(method resolution order)
+   Guoid's words:
+   http://python-history.blogspot.fi/2010/06/method-resolution-order.html
+   depth first, from left to right, then delete all same classes expect the last one. Then diamond problem is solved.
+
+   For below code snippets:
+   From the printout, super() will return the next class in MRO(method resolve order) list, given a current class. The next class can be a real parent class for current class, or if the real parent class not exists,  then the next class will be the next parent class of the  current instance. For both two conditions, they are always the same class in MRO.
+
+   For below codes: the MRO is [C, A, B].
+   - So super() in class C's result is A
+   - super() in  class A is B
+   - super() in class B is object(I guess)
+   #+begin_src python :results output
+   class A:
+       def foo(self):
+           print("A")
+           print(super())
+           super().foo()
+   class B:
+       def foo(self):
+           print("B")
+           print(super())
+
+   class C(A, B):
+       def foo(self):
+           print("C")
+           print(super())
+           super().foo()
+
+   o = C()
+   o.foo()
+   #+end_src
+
+   #+RESULTS:
+   : C
+   : <super: <class 'C'>, <C object>>
+   : A
+   : <super: <class 'A'>, <C object>>
+   : B
+   : <super: <class 'B'>, <C object>>
+
+** 8.19. Implementing Stateful Objects or State Machines
+   Implementing the state pattern, by creating class for each state. In a class for one state, only define the method  use to handle the current state, all other methods should raise a 'NotImplementedError'.
+   Will see this latter
+
+** 8.20. Calling a Method on an Object Given the Name As a String, by getattr
+   A method is just an attribute of an object, so first get the method by 'getattr' given string name
+   #+begin_src python :results output
+   class Foo:
+       def foo(self):
+           print("foo")
+
+   f = Foo()
+   getattr(f, 'foo')()
+   #+end_src
+
+   #+RESULTS:
+   : foo
+
+
+** 8.20. Calling a Method on an Object Given the Name As a String, by operator.methodcaller(name, *args)
+   The benifit of methodcaller is that it will fix all parameters of the method. So if the method will be  called given same parameters for many differenntt object, this method might be better
+   #+begin_src python :results output
+   class Foo:
+       def foo(self, x, y):
+           print("foo: {}, {}".format(x, y))
+
+   f = Foo()
+   import operator
+   operator.methodcaller('foo', 3, 4)(f)
+   #+end_src
+
+   #+RESULTS:
+   : foo: 3, 4
+
