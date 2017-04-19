@@ -2137,3 +2137,136 @@ print("{} {:=^10}".format("abc", 123))
    #+RESULTS:
    : foo: 3, 4
 
+** 8.21. Implementing the Visitor Pattern
+   感觉这里所说的vistor pattern主要是对用于处理包含不同类型对象的list. 用于通用处理。
+   基于类型系统的visitor pattern, 是通过在不同的基础类中的accept函数来实现 dispatch table的。相当于把dispatch table也耦合在基础类定义中了。
+   但最本质的目的是对于不同类型的对象，客户代码使用相同的代码进行处理。
+
+   将dispatch table 做在哪里，只影响一点点写法，对最终达到的效果没影响。
+
+   
+   例子：
+   #+begin_src python :results output
+   class Visitor:
+       def visit(self, node):
+           methname = 'visit_' + type(node).__name__
+           meth = getattr(self, methname, None)
+           if meth is None:
+               meth = self.generic_visit
+           return meth(node)
+
+       def generic_visit(self, node):
+           raise RuntimeError('No {} method'.format('visit_' + type(node).__name__))
+
+   class File:
+       def __init__(self, name):
+           self.name = name
+
+   class RegularFile(File):
+       def read_content(self):
+           return "This is the content for file {}".format(self.name)
+
+   class Directory(File):
+       def children(self):
+           '''Return all children names as a list'''
+           return [RegularFile('a.txt'), RegularFile('b.exe')]
+
+   class Symbolic(File):
+       def real(self):
+           '''Return real file this symbolic point to'''
+           return RegularFile('dd.txt')
+
+   class CatVisitor(Visitor):
+       '''Implement cat command for a File object.'''
+       def  visit_RegularFile(self, node):
+           print('content for regular file {}'.format(node.name))
+           print(node.read_content())
+       def visit_Directory(self, node):
+           print('content for directory {}'.format(node.name))
+           for f in node.children():
+               self.visit(f)
+       def visit_Symbolic(self, node):
+           print('content for symbolic file {}'.format(node.name))
+           self.visit(node.real())
+
+   files = [RegularFile('foo.txt'), Directory('bar'), RegularFile('a.txt'), Symbolic('aa.c')]
+   visitor = CatVisitor()
+   for file in files:
+       visitor.visit(file)
+       print()
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   content for regular file foo.txt
+   This is the content for file foo.txt
+
+   content for directory bar
+   content for regular file a.txt
+   This is the content for file a.txt
+   content for regular file b.exe
+   This is the content for file b.exe
+
+   content for regular file a.txt
+   This is the content for file a.txt
+
+   content for symbolic file aa.c
+   content for regular file dd.txt
+   This is the content for file dd.txt
+
+#+end_example
+
+** dispatch table in python, decided by object type
+   将所有处理函数写在一个类中， 提供一个根据待处理对象类型分发的函数。 这个作为dispatch 基类。然后再定义针对每种类型的visit函数就行了。
+   这里类有两个目的：
+   1. 定义dispatch table
+   2. 对一组函数的名字空间吧。
+   3. 以下例子中实现的 Dispatcher class 是通用的，可以共用。
+
+
+   #+begin_src python :results output
+   class Dispatcher:
+       def visit(self, node):
+           methname = 'visit_' + type(node).__name__
+           meth = getattr(self, methname, None)
+           if meth is None:
+               meth = self.generic_visit
+           return meth(node)
+
+       def generic_visit(self, node):
+           raise RuntimeError('No {} method'.format('visit_' + type(node).__name__))
+
+   class FooDispatcher(Dispatcher):
+       def visit_RegularFile(self, node):
+           pass
+       def visit_Directory(self, node):
+           pass
+   #+end_src
+** 8.23. Managing Memory in Cyclic Data Structures, by weakref.ref(aobject)
+   When cyclic reference exists, the some  object will never be deleted, because its reference coutns is  large than 0.
+   A weakref is just a reference that don't increase the reference count. To dereference, just call it like a function. If the referenced object still exists, the object will be returne, otherwise None will be returned.
+
+   For a tree structure, the book give an example of reference the parent node by  weakref.
+
+   Note: you can't weakref to 'int', 'str', ...
+   #+begin_src python :results output
+   import weakref
+   class Node:
+       pass
+   a = Node()
+   b = weakref.ref(a)
+   # c = a     # if this line exists, then a will not be deleted after 'del a', then the second call to b() will still return a
+
+   print(b())
+   del a
+   print(b())
+   #+end_src
+
+   #+RESULTS:
+   : <__main__.Node object at 0x0000004C8D3DC940>
+   : None
+
+   
+** 8.24. Making Classes Support Comparison Operations, by define many comparision builtin method: __eq__, __lt__, __le__, __gt__, __ge__, __ne__
+** 8.25. Creating Cached Instances, by  create a factory method(a class method)
+   If the parameter are the same, then return an existing object.
