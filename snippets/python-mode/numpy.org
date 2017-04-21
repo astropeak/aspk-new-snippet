@@ -1,0 +1,211 @@
+* numpy
+** quich start
+   https://docs.scipy.org/doc/numpy-dev/user/quickstart.html
+   主要是矩阵操作，将会非常方便。
+   
+
+*** create a array
+    #+begin_src python :results output
+    import numpy as np
+    a = np.array([1, 2,3,4])
+    print(a)
+
+    b = np.arange(12).reshape(3, 4)
+    print(b)
+    c = np.zeros([4, 3, 2], dtype=int)
+    print(c)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    [1 2 3 4]
+    [[ 0  1  2  3]
+     [ 4  5  6  7]
+     [ 8  9 10 11]]
+    [[[0 0]
+      [0 0]
+      [0 0]]
+
+     [[0 0]
+      [0 0]
+      [0 0]]
+
+     [[0 0]
+      [0 0]
+      [0 0]]
+
+     [[0 0]
+      [0 0]
+      [0 0]]]
+#+end_example
+
+*** arithmath operations
+    所有的数学操作都是基于每个元素分别做。
+    #+begin_src python :results output
+    import numpy as np
+    a = np.arange(9)
+    # a = a+3
+    b = np.random.random(9)
+    c = a+b
+    print(a, b, c)
+    #+end_src
+
+    #+RESULTS:
+    : [0 1 2 3 4 5 6 7 8] [ 0.69279861  0.46035583  0.39290198  0.51346811  0.94481681  0.06939369
+    :   0.56881249  0.333116    0.34125298] [ 0.69279861  1.46035583  2.39290198  3.51346811  4.94481681  5.06939369
+    :   6.56881249  7.333116    8.34125298]
+
+*** slicing
+    分别按照每一维来进行，用逗号隔开。
+    一些简写：
+    1. 最后的几维如果不写，则表示 ':'
+    2. 可以用 '...' 表示任意数目的 ', :'，只要满足总维数是对的就行了。
+    #+begin_src python :results output
+    import numpy as np
+    a = np.arange(15).reshape(3, 5)
+    b = a[1:,3:]
+    c = a[..., 3:]
+    print(a)
+    print(b)
+    print(c)
+    #+end_src
+
+    #+RESULTS:
+    : [[ 0  1  2  3  4]
+    :  [ 5  6  7  8  9]
+    :  [10 11 12 13 14]]
+    : [[ 8  9]
+    :  [13 14]]
+    : [[ 3  4]
+    :  [ 8  9]
+    :  [13 14]]
+
+*** product of matrix, by the numpy.dot(a, b) method
+    the '*' will do elementwise product. the dot method  will do the normal operation.
+
+    #+begin_src python :results output
+    import numpy as np
+    a = np.arange(6).reshape(2, 3)
+    b = np.array([[0, 1], [2, 0], [2, 2]])
+    # c = a*b
+    d = a.dot(b)
+    print(a)
+    print(b)
+    # print(c)
+    print(d)
+    #+end_src
+
+    #+RESULTS:
+    : [[0 1 2]
+    :  [3 4 5]]
+    : [[0 1]
+    :  [2 0]
+    :  [2 2]]
+    : [[ 6  4]
+    :  [18 13]]
+
+    
+*** iterate
+    the 'for v in a' will iterate on first dimention.
+    the 'for v in a.flat' will iterate on every single element.
+    How to iterate on 
+    
+    
+    #+begin_src python :results output
+    import numpy as np
+
+    a = np.arange(6).reshape(2,3)
+    for v in a:
+        print(v)
+
+    for v in a.flat:
+        print(v)
+    #+end_src
+
+    #+RESULTS:
+    : [0 1 2]
+    : [3 4 5]
+    : 0
+    : 1
+    : 2
+    : 3
+    : 4
+    : 5
+
+
+** shape manipulation, transposed, by a.T
+*** numpy.reshape(m, n) method, create a new array with shape of m, n 
+    if one dimension is -1, then it will be automatically calculated.
+   #+begin_src python :results output
+   import numpy as np
+   a =  np.ones([3, 4], dtype=int)
+   b = a.reshape(2, 6)
+   print(a)
+   print(b)
+   #+end_src
+
+   #+RESULTS:
+   : [[1 1 1 1]
+   :  [1 1 1 1]
+   :  [1 1 1 1]]
+   : [[1 1 1 1 1 1]
+   :  [1 1 1 1 1 1]]
+   : [[1 1 1]
+   :  [1 1 1]
+   :  [1 1 1]
+   :  [1 1 1]]
+
+*** numpy.resize(m, n) method, change the array to shape of m, n 
+   #+begin_src python :results output
+   import numpy as np
+   a =  np.ones([3, 4], dtype=int)
+   print(a)
+   b = a.resize(2, 6)
+   print(a)
+   print(b)
+   #+end_src
+
+   #+RESULTS:
+   : [[1 1 1 1]
+   :  [1 1 1 1]
+   :  [1 1 1 1]]
+   : [[1 1 1 1 1 1]
+   :  [1 1 1 1 1 1]]
+   : None
+
+*** numpy.T field, create a new array of transposed array
+   #+begin_src python :results output
+   import numpy as np
+   a =  np.ones([3, 4], dtype=int)
+   b = a.T
+   print(a)
+   print(b)
+   #+end_src
+
+   #+RESULTS:
+   : [[1 1 1 1]
+   :  [1 1 1 1]
+   :  [1 1 1 1]]
+   : [[1 1 1]
+   :  [1 1 1]
+   :  [1 1 1]
+   :  [1 1 1]]
+
+*** numpy.ravel() method, create a new array of shape of 1, n
+   #+begin_src python :results output
+   import numpy as np
+   a =  np.ones([3, 4], dtype=int)
+   b = a.ravel()
+   print(a)
+   print(b)
+   #+end_src
+
+   #+RESULTS:
+   : [[1 1 1 1]
+   :  [1 1 1 1]
+   :  [1 1 1 1]]
+   : [1 1 1 1 1 1 1 1 1 1 1 1]
+
+** Stacking together different arrays, stack means append
+*** numpy.vstack(a, b) 
+    Will read this latter.

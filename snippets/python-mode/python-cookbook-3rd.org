@@ -899,7 +899,6 @@ print("{} {:=^10}".format("abc", 123))
     #+RESULTS:
     : b'Spicy Jalape&#241;o'
 
-    
 * chapter 4: Iterators and Generators
 ** 4.1. Manually Consuming an Iterator, by next(iterator[, default]) function
    #+begin_src python :results output
@@ -1540,7 +1539,6 @@ print("{} {:=^10}".format("abc", 123))
    : 1
    : 2
 
-
 * chapter 8: Classes and Objects
 ** 8.1. Changing the String Representation of Instances
    It's good practice to define both __repr__() and __str__()
@@ -1633,8 +1631,6 @@ print("{} {:=^10}".format("abc", 123))
            print("__enter__ called")
    #+end_src
 
-   
-   
 ** 8.5. Encapsulating Names in a Class
 *** one underscore _ means private variable, just convention, you can still access that  variable outside  of a class
     #+begin_src python :results output
@@ -2055,7 +2051,6 @@ print("{} {:=^10}".format("abc", 123))
     : super: <super: <class 'Logging'>, <LoggingDict object>>
     : 2
 
-
 ** mutiple inheritance: how method/attribue are resolved if they exists in more than one  super classes
    A method/attribute is resolved in the order of all parent class given.
    e.g: 
@@ -2120,7 +2115,6 @@ print("{} {:=^10}".format("abc", 123))
 
    #+RESULTS:
    : foo
-
 
 ** 8.20. Calling a Method on an Object Given the Name As a String, by operator.methodcaller(name, *args)
    The benifit of methodcaller is that it will fix all parameters of the method. So if the method will be  called given same parameters for many differenntt object, this method might be better
@@ -2266,7 +2260,8 @@ print("{} {:=^10}".format("abc", 123))
    : <__main__.Node object at 0x0000004C8D3DC940>
    : None
 
-   
 ** 8.24. Making Classes Support Comparison Operations, by define many comparision builtin method: __eq__, __lt__, __le__, __gt__, __ge__, __ne__
 ** 8.25. Creating Cached Instances, by  create a factory method(a class method)
    If the parameter are the same, then return an existing object.
+
+* chapter 5: Files and I/O
