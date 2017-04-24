@@ -2265,3 +2265,251 @@ print("{} {:=^10}".format("abc", 123))
    If the parameter are the same, then return an existing object.
 
 * chapter 5: Files and I/O
+** 5.1. Reading and Writing Text Data
+*** open a file 
+    the 't' in mode means text.
+    #+begin_src python :results output
+    f = open('1.txt', 'rt') #read
+    # f = open('1.txt', 'wt') #write
+    # f = open('1.txt', 'at') #append
+
+    # specify codec
+    f = open('1.txt', 'rt', encoding='latin-1') #read
+    f = open('1.txt', 'wt', encoding='latin-1') #write
+
+    #disable newline translation, by use the open(newline='') option
+    f = open('1.txt', 'rt', newline='') #read
+
+    # specify what to do when encountering decoding/encoding errors, by use open(errors='...') option
+    f = open('1.txt', 'rt', errors='replace') #replace the char that can't be decoded to a unicode char U+fffd(which is the unicode replacemenet char)
+    f = open('1.txt', 'rt', errors='ignore') #just ignore the char that can't be decoded
+    #+end_src
+
+
+*** read whole content of a file as a string
+    #+begin_src python :results output
+    with open('1.txt', 'rt') as f:
+        s = f.read()
+        print(s)
+    #+end_src
+
+    #+RESULTS:
+    : # aaaa
+    : # ccc
+    : # dd
+    : aaaa
+    : # bbbb
+    : EEEXXX
+    : a wrap  bbb
+    : dddd
+
+*** read/iterate each line of a file, by just treat the file object as a generator
+    #+begin_src python :results output
+    with open('1.txt', 'rt') as f:
+        for line in f:
+            print(line, end='')
+    #+end_src
+
+    #+RESULTS:
+    : # aaaa
+    : # ccc
+    : # dd
+    : aaaa
+    : # bbbb
+    : EEEXXX
+    : a wrap  bbb
+    : dddd
+
+*** write str to a file, by file.write(text) method
+    #+begin_src python :results output
+    with open('2.txt', 'wt') as f:
+        f.write('abced')
+    #+end_src
+
+    #+RESULTS:
+
+** get system's default encoding
+   #+begin_src python :results output
+   import sys
+   print(sys.getdefaultencoding())
+   #+end_src
+
+   #+RESULTS:
+   : utf-8
+
+** 5.2. Printing to a File, redirect stdout to a file, by use print(file=...) option
+   #+begin_src python :results output
+   with open('2.txt', 'wt') as f:
+       print("aaaaa", file=f)
+   #+end_src
+
+   #+RESULTS:
+
+** Question: how to redirect stdout to a file system widely.
+
+** 5.3. Printing with a Different Separator or Line Ending, by use print(sep=..., end=...) options
+   #+begin_src python :results output
+   print(1, 'abc')
+   print(1, 'abc', sep=', ', end='##')
+   print()
+   row = (45, 'Hello', 'List', 4)
+   print(row)
+   print(*row)
+   print(row, sep=', ')
+   print(*row, sep=', ')
+   #+end_src
+
+   #+RESULTS:
+   : 1 abc
+   : 1, abc##
+   : (45, 'Hello', 'List', 4)
+   : 45 Hello List 4
+   : (45, 'Hello', 'List', 4)
+   : 45, Hello, List, 4
+
+** pass a sequence/list object to a function as N parameters instead of one, by using *list_name
+   #+begin_src python :results output
+   row = (45, 'Hello', 'List', 4)
+   print(row)
+   print(*row)
+   print(row, sep=', ')
+   print(*row, sep=', ')
+   #+end_src
+
+   #+RESULTS:
+   : (45, 'Hello', 'List', 4)
+   : 45 Hello List 4
+   : (45, 'Hello', 'List', 4)
+   : 45, Hello, List, 4
+
+** 5.4. Reading and Writing Binary Data(such as image, sound files)
+   By saying binary data, it means that there will no encoding/decoding works during writing/reading process.
+   Use mode such as 'rb', 'wb', 'ab'.
+
+   当作为binary data读取时， 与作为text data相比，没有自动的decode, encode过程。
+
+   #+begin_src python :results output
+   with open('2.txt', 'wb') as f:
+       # f.write('aaabbb'.encode('latin-1'))
+       f.write(b'aaabbb')
+   #+end_src
+
+   #+RESULTS:
+
+
+** what is text string and byte string in python
+   Each element in a text string is also a text string, 
+   Each element in a byte string is a int
+   #+begin_src python :results output
+   s = 'Hello'
+   print(type(s), s, sep=', ')
+   for c in s:
+       print(type(c), c, sep=', ')
+
+   s = b'Hello'
+   print(type(s), s, sep=', ')
+   for c in s:
+       print(type(c), c, sep=', ')
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   <class 'str'>, Hello
+   <class 'str'>, H
+   <class 'str'>, e
+   <class 'str'>, l
+   <class 'str'>, l
+   <class 'str'>, o
+   <class 'bytes'>, b'Hello'
+   <class 'int'>, 72
+   <class 'int'>, 101
+   <class 'int'>, 108
+   <class 'int'>, 108
+   <class 'int'>, 111
+#+end_example
+
+** 5.5. Writing to a File That Doesn't Already Exist, by set mode of open(...) function to 'x' 
+   If the file already exists, then don't write, and will raise a FileExistsError exception
+   #+begin_src python :results output
+   with open('2.txt', 'xt') as f:
+       f.write('aaa bbb')
+   #+end_src
+
+   #+RESULTS:
+
+   感觉这个根python的哲学有点类似，不事先做判断，而是用exception的方式。
+   具体的用法可能需要将它放在一个try catch里。
+
+** 5.6. Performing I/O Operations on a String, by io.StringIO() or io.BytesIO()
+   a typecal application can be simulate a file when do unit testing.
+
+** 5.7. Reading and Writing Compressed Datafiles, by use gzip.open(...), or bz2.open(...)
+   After open the file, other operations are just the same as normal file.
+
+** 5.8. Iterating Over Fixed-Sized Records, by iter(callable, sentinel)
+   #+begin_src python :results output
+   import functools
+   RECORD_SIZE = 2
+   with open('1.txt', 'rt') as f:
+       for r in iter(functools.partial(f.read, RECORD_SIZE), ''):
+           print(r, end='; ')
+   #+end_src
+
+   #+RESULTS:
+   : # ; aa; aa; 
+   : #;  c; cc; 
+   : #;  d; d
+   : ; aa; aa; 
+   : #;  b; bb; b
+   : ; EE; EX; XX; 
+   : a;  w; ra; p ;  b; bb; 
+   : d; dd; d; 
+
+   
+   
+** the functools.partial(func, *args, **kwargs) function: create a new callable from a given callable with some(partial) arguments fixed. Currying
+   #+begin_src python :results output
+   from functools import partial
+
+   def max(a, b):
+       if a>b: return a
+       else: return b
+
+   mm = partial(max, 3)
+   print(mm(4))
+   print(mm(2))
+   print(mm())
+   #+end_src
+
+   #+RESULTS:
+
+   写一个能够接收很多参数的函数，然后利用partial 来生成简易的使用接口。需要注意参数的顺序。
+  
+** 5.9. Reading Binary Data into a Mutable Buffer
+
+** 5.10. Memory Mapping Binary Files, map a binary file to memory(byte array), my mmap.mmap(...) method
+   This is a general method to map file to memory, then you can random access the content of the file, such as by using slicing
+
+   After mapped, by change the value of the array will change the file's content. This is also a way for multiple intepreter comunication.
+   Below is a general function that map a file to a byte array.
+   #+begin_src python :results output
+   import os
+   import mmap
+
+   def memory_map(filename, access=mmap.ACCESS_WRITE):
+       size = os.path.getsize(filename)
+       fd = os.open(filename, os.O_RDWR)
+       return mmap.mmap(fd, size, access=access)
+
+   # below is application of the function
+   f = memory_map('1.txt')
+   print(f[2:8])
+   f[0:3] = b'EEF'
+   #+end_src
+
+   #+RESULTS:
+   : b'Faaa\r\n'
+
+   
+   
+   
