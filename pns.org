@@ -456,11 +456,11 @@
             }
 
     ## how to express: this header is dependent on create-channel, type out? I think don't try to do this, this should be ensured by the user
-    ,** ((command extract-buffer) (buffer-type . ,buffer-types) (content-type . (byte byte[] String)))
+    ,** ((command extract-buffer) (buffer-type . ,buffer-types) (content-type . (byte byte[] String))) (ref:crec code reading: TMA, ret voltage)
                 //now file contents saved in buffer, add process codes here
                 buffer.flip();
                  int i=0;
-                 while (buffer.remaining()>0) {
+                 while (buffer.remaining()>0) {                           (ref:aaa) (ref:aaa bbb)
                      byte b = buffer.get();
                      System.out.print((char)b);
                      i++;
@@ -1489,7 +1489,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      This idea is great 
      
      On implementation:
-     1. we should get all variable names in the snippet contents. So that we can prompt the user for value it it not exists in env(and parent env).
+     1. we should get all variable names in the snippet contents. So that we can prompt the user for value if it not exists in env(and parent env).
         Maybe we can use a new syntax for this. such as %var-name, and %(var-name default-value), and %(var-name value1 value2 ), and %(var-name (value1-display value1-real) (value2-diaply value2-real)), that is,  the same format as the original header. And here support variable reference will be easy, just compile %(var1 $ref) to `ref` instead of `var1`.
         
         In fact just embbed the original header in the contents. 
@@ -1680,7 +1680,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
             (list "Error: Fail to get snippet name. Error info below" *error-info*)))
 
          (goto-char (point-min))
-         (while (re-search-forward "^\s*[^\\]?@\\(.*\\)$" (point-max) t)
+         (while (re-search-forward "^\s*[^\\]?@\\((.*)\\)$" (point-max) t)
            (match-string 1)
            ;; here (match-string 1) is the matched text by first (), add processing codes here
            ;; (message "Matched string %S" (match-string 1))
