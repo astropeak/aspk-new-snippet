@@ -59,9 +59,9 @@
     
     The right hand side should be an iterable, every element in the iterable will be asigned to the left hand side variable, with each variable comsume one element exzactly. If the number of elements and variables not match, then there will be an error.
     
-    The consume more than one values, use the '*varname' expresstion, then the variable 'varname' will be a list of many elements.
+    To consume more than one values, use the '*varname' expresstion, then the variable 'varname' will be a list of many elements.
     
-    Back to the error prints in the example, the 'int' object is the right size '1'.
+    Back to the error prints in the example, the 'int' object refers to the right side '1'.
     
     PS:
     I find python much simpler and funny than java.
@@ -1677,7 +1677,7 @@ print("{} {:=^10}".format("abc", 123))
 ** 8.6. Creating Managed Attributes, with @property decorator/annotation, add a setter, getter, deleter to a field
    Steps:
    1. first create a property object by @property decorator, on a getter method. The name of the getter should be the same with the attribute field.
-   2. create the setter object: by @attribute_name.setter, on a setter method. The name of the getter should be the same with the attribute field.
+   2. create the setter object: by @attribute_name.setter, on a setter method. The name of the setter should be the same with the attribute field.
    3. the getter, setter function are a way to define what will be called when the attribute with the same name is get,  set. 
       e.g. the attribute name is 'foo', then the 'foo' attribute will be a object that has methods: 'getter', 'setter', 'deleter'. You can choose any name to store the real value for this  attribute, but the most common value will be add a underscore, that is '_foo'.
       Type of 'foo' is <class 'property'>
@@ -1718,6 +1718,19 @@ print("{} {:=^10}".format("abc", 123))
     : (name: Tom, age: 23)
     : ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'age', 'name', 'nameL']
     : <class 'property'> ['__class__', '__delattr__', '__delete__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__get__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__isabstractmethod__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__set__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'deleter', 'fdel', 'fget', 'fset', 'getter', 'setter']
+
+      How the above code works:
+      1. after @property, the 'name' field will be a property object, whose '__get__' method is the same as the original 'name' method. '__set__' and '__delete__' should be a function that raise an 'Attribute' error when called.
+
+      2. after @name.setter, the 'name' field will still be the original property object, but with '__set__' method assigned the value of the below 'name' method.
+         so the implemnetation of 'name.setter' should look like:
+         #+begin_src python :results output
+         # self is the original name property
+         def name_setter(self, setter):
+             self.__set__ = setter
+             return self
+         #+end_src
+
 
 ** create caculate attribute by @property, getter, setter, then the attribute works like a attribute,  not a method
    Seems a good application of @property.
@@ -2088,6 +2101,8 @@ print("{} {:=^10}".format("abc", 123))
 
    o = C()
    o.foo()
+   print("MRO of C: ", C.__class__.__mro__)
+   print("MRO() of C: ", C.__class__.mro(C))
    #+end_src
 
    #+RESULTS:
@@ -2097,6 +2112,8 @@ print("{} {:=^10}".format("abc", 123))
    : <super: <class 'A'>, <C object>>
    : B
    : <super: <class 'B'>, <C object>>
+   : MRO of C:  (<class 'type'>, <class 'object'>)
+   : MRO() of C:  [<class '__main__.C'>, <class '__main__.A'>, <class '__main__.B'>, <class 'object'>]
 
 ** 8.19. Implementing Stateful Objects or State Machines
    Implementing the state pattern, by creating class for each state. In a class for one state, only define the method  use to handle the current state, all other methods should raise a 'NotImplementedError'.
@@ -2263,6 +2280,7 @@ print("{} {:=^10}".format("abc", 123))
 ** 8.24. Making Classes Support Comparison Operations, by define many comparision builtin method: __eq__, __lt__, __le__, __gt__, __ge__, __ne__
 ** 8.25. Creating Cached Instances, by  create a factory method(a class method)
    If the parameter are the same, then return an existing object.
+
 
 * chapter 5: Files and I/O
 ** 5.1. Reading and Writing Text Data

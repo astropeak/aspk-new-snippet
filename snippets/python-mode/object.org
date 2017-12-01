@@ -1,0 +1,130 @@
+* __getattribute__, __getattr__, __get__
+  #+begin_src python :results output
+  class C(object):
+      a = 'abc'
+      def __getattribute__(self, *args, **kwargs):
+          print("__getattribute__() is called")
+          return object.__getattribute__(self, *args, **kwargs)
+      # return "haha"
+      def __getattr__(self, name):
+          print("__getattr__() is called ")
+          return name + " from getattr"
+      
+      def __get__(self, instance, owner):
+          print("__get__() is called", instance, owner)
+          return self
+      
+      def foo(self, x):
+          print(x)
+          
+  class C2(object):
+      d = C()
+  
+  if __name__ == '__main__':
+      c = C()
+      c2 = C2()
+      print(c.a)
+      print(c.zzzzzzzz)
+      c2.d
+      print(c2.d.a) 
+      c2.d = 8
+      print(c2.d)
+      print(C2.d)
+
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  __getattribute__() is called
+  abc
+  __getattribute__() is called
+  __getattr__() is called 
+  zzzzzzzz from getattr
+  __get__() is called <__main__.C2 object at 0x10da10da0> <class '__main__.C2'>
+  __get__() is called <__main__.C2 object at 0x10da10da0> <class '__main__.C2'>
+  __getattribute__() is called
+  abc
+  8
+  __get__() is called None <class '__main__.C2'>
+  <__main__.C object at 0x10da10d68>
+#+end_example
+
+
+* how descriptor invocation are implemented:  object.__getattribute__()
+  object.__getattribute__() will transform b.x into type(b).__dict__['x'].__get__(b, type(b)), b is an instance
+
+* implementation of type.__getattribute__()
+
+* funtions are descriptors
+  A function is a descriptor, means it has a '__get__' method.
+  From below codes, seems the func.__get__(arg1) method only accept one parameter(all extro parameters are just ignored). The func.__get__(arg1) will return a new function, this new function is the same as the original funciton, but with the first parameter of the original function set to 'arg1'.
+  max's type is 'function', while max2's type is 'method'. 
+  Implemnnetation of function's __get__ method is:
+  所有一个函数的__get__函数会返回一个新的函数，固定第一个参数。
+  #+begin_src python :results output
+  def __get__(self, instance, cls):
+    # self here is the original function
+    if instance:
+        return functools.partial(self, instance) # return a new function: the self but its first parameter is set to instance.
+    else:
+        return instance
+
+  a.foo()
+  查找 foo的过程
+  A.foo.__get__(A.foo, a, A)
+
+
+  #+end_src
+
+  #+RESULTS:
+
+
+  #+begin_src python :results output
+  def max(a, b):
+      if a>b:return a
+      else: return b
+
+  max2 = max.__get__(2)
+  # this don't work, because __get__ only accept one parameter
+  # max2_4 = max.__get__(2, 4)
+
+  max2_4 = max2.__get__(4)
+
+  print(max2(3))
+  print(max2_4(1))
+  print(type(max))
+  print(type(max2))
+  print(type(max2_4))
+  #+end_src
+
+  #+RESULTS:
+  : 3
+  : 2
+  : <class 'function'>
+  : <class 'method'>
+  : <class 'method'>
+
+  
+  
+* dict.setdefault(key, value=None), get value  given a key, if the key not exist, then return the default value, and set the key's  value to the default value
+  #+begin_src python :results output
+  d = {'a':1, 'b':'ccc'}
+  # d['a'] = None
+  print('a' in d)
+  print('c' in d)
+  t1 = d.setdefault('a', 100)
+  t = d.setdefault('c')
+  print('c' in d)
+  t = d['c']
+
+  print(t1, t, d, sep=', ')
+
+  #+end_src
+
+  #+RESULTS:
+  : True
+  : False
+  : True
+  : 1, None, {'a': 1, 'b': 'ccc', 'c': None}
+
+  
