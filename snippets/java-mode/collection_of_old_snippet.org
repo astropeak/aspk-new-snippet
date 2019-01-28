@@ -29,6 +29,7 @@
     }
 }
 #+end_src
+
 * open, read and close a file, by nio
 #+begin_src java
 {
@@ -63,6 +64,7 @@
     }
 }
 #+end_src
+
 * error handling block
 #+begin_src java
 try {
@@ -73,6 +75,7 @@ try {
 }
 
 #+end_src
+
 * create an unchecked exception class
 #+begin_src java
 class ${1:exception} extends RuntimeException {
@@ -82,10 +85,12 @@ class ${1:exception} extends RuntimeException {
 }
 
 #+end_src
+
 * create an instance from class name
 #+begin_src java
 Class.forName(${1:full-class-name}).getConstructor(${2:para-type}.class).newInstance(${3:para})
 #+end_src
+
 * create an checked exception class
 #+begin_src java
 class ${1:exception} extends Exception {
@@ -94,6 +99,7 @@ class ${1:exception} extends Exception {
     }
 }
 #+end_src
+
 * create a buffer(should not expand this)
 #+begin_src java
 
@@ -133,5 +139,344 @@ open a pipe for read
 
 #++ command:open
 close the file
+
+#+end_src
+
+* use socks 5 proxy in htmlclient
+#+begin_src java
+// http://stackoverflow.com/questions/22937983/how-to-use-socks-5-proxy-with-apache-http-client-4
+static class MyConnectionSocketFactory extends SSLConnectionSocketFactory {
+
+    public MyConnectionSocketFactory(final SSLContext sslContext) {
+        super(sslContext);
+    }
+
+    @Override
+    public Socket createSocket(final HttpContext context) throws IOException {
+        InetSocketAddress socksaddr = (InetSocketAddress) context.getAttribute("socks.address");
+        Proxy proxy = new Proxy(Proxy.Type.SOCKS, socksaddr);
+        return new Socket(proxy);
+    }
+
+}
+
+Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+        .register("http", PlainConnectionSocketFactory.INSTANCE)
+        .register("https", new MyConnectionSocketFactory(SSLContexts.createSystemDefault()))
+        .build();
+PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
+CloseableHttpClient httpclient = HttpClients.custom()
+        .setConnectionManager(cm)
+        .build();
+try {
+    InetSocketAddress socksaddr = new InetSocketAddress("mysockshost", 1234);
+    HttpClientContext context = HttpClientContext.create();
+    context.setAttribute("socks.address", socksaddr);
+
+    HttpHost target = new HttpHost("localhost", 80, "http");
+    HttpGet request = new HttpGet("/");
+
+    System.out.println("Executing request " + request + " to " + target + " via SOCKS proxy " + socksaddr);
+    CloseableHttpResponse response = httpclient.execute(target, request, context);
+    try {
+        System.out.println("----------------------------------------");
+        System.out.println(response.getStatusLine());
+        EntityUtils.consume(response.getEntity());
+    } finally {
+        response.close();
+    }
+} finally {
+    httpclient.close();
+}
+
+#+end_src
+
+* example: array of function/method pointer, table, by anoynymous class object
+#+begin_src java
+// http://stackoverflow.com/questions/2752192/array-of-function-pointers-in-java
+public interface Worker {
+  void work();
+}
+
+class A {
+  void foo() { System.out.println("A"); }
+}
+
+class B {
+  void bar() { System.out.println("B"); }
+}
+
+A a = new A();
+B b = new B();
+
+Worker[] workers = new Worker[] {
+  new Worker() { public void work() { a.foo(); } },
+  new Worker() { public void work() { b.bar(); } }
+};
+
+for (Worker worker : workers) {
+  worker.work();
+}
+
+#+end_src
+
+* java proxy setup in codes
+#+begin_src java
+     System.setProperty("http.proxyHost", "swg.tieto.com");
+     System.setProperty("http.proxyPort", "8080");
+     System.setProperty("https.proxyHost", "swg.tieto.com");
+     System.setProperty("https.proxyPort", "8080");
+
+#+end_src
+
+* create object from a xml file/string, use JAXB
+#+begin_src java
+ import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+
+       try {
+            File file = new File(xml);
+            JAXBContext jaxbContext = JAXBContext.newInstance(${1:class}.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            $1 rq = ($1)jaxbUnmarshaller.unmarshal(file);
+        } catch (JAXBException e) {
+            throw new RuntimeException("Can't parse xml "+ e);
+        }
+
+#+end_src
+
+* iterate on a hash/map, on key
+#+begin_src java
+        Iterator<String> iterator = ${1:hash}.keySet().iterator();
+        for (int i = 0; iterator.hasNext(); i++) {
+            String key = iterator.next();
+            // refer to the hash value by $1.get(key)
+        }
+
+
+#+end_src
+
+* create object from json string, parse, use google gson
+#+begin_src java
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
+
+// map and list are support.
+String json2 = gson.toJson(rpt);
+LOG.debug("Json2 data: {}", json2);
+
+
+#+end_src
+
+* create object from json string, parse, use google gson
+#+begin_src java
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
+
+        String json = content.substring(jsonIndex, content.indexOf("\n", jsonIndex));
+        LOG.debug("json: {}", json);
+
+        JsonArray jsonArray = new JsonParser().parse(json).getAsJsonArray();
+        LOG.debug("json array {}", jsonArray);
+
+        Gson gson = new Gson();
+        Iterator it=jsonArray.iterator();
+        List<Object> prompts = new ArrayList();
+        while(it.hasNext()){
+            JsonElement jsonElement=(JsonElement) it.next();
+            String json1 =jsonElement.toString();
+            System.out.println("json element: "+json1);
+
+            // create a hash map from json string
+            Map<String, Object> map = gson.fromJson(json1, new TypeToken<Map<String, Object>>(){}.getType());
+            prompts.add(map);
+        }
+
+
+#+end_src
+
+* get values from / parse a string given a template, match by regexp
+#+begin_src java
+        String content = new String(body);
+        String pattern = "DS.*\"strEntry\":\"([a-zA-Z0-9]+)\"";
+        Pattern r = Pattern.compile(pattern);
+
+        Matcher m = r.matcher(content);
+        if (m.find()) {
+            LOG.info("Found value: " + m.group(1));
+        } else {
+            LOG.info("NO MATCH");
+        }
+
+#+end_src
+
+* create object from a xml file/string, use dom4j
+#+begin_src java
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.DocumentException;
+import org.dom4j.io.SAXReader;
+
+
+    public RequestData(String xmlFile) {
+        // build data from the xml file
+        try {
+            SAXReader reader = new SAXReader();
+            File file = new File(xmlFile);
+            Document document = reader.read(file);
+            // return document;
+
+            Element root = document.getRootElement();
+
+            url = root.elementText("url");
+            type = root.elementText("type");
+
+            // iterate through child elements of root
+            headers = new HashMap<String, String>();
+            Element h = (Element)root.elements("headers").get(0);
+            // LOG.debug("headers element {}", h);
+            for ( Iterator i = h.elementIterator(); i.hasNext(); ) {
+                Element element = (Element) i.next();
+                // LOG.debug("header element {}", element);
+                // do something
+                headers.put(element.elementText("key"), element.elementText("value"));
+            }
+
+            getParameters = new HashMap<String, String>();
+            h = (Element)root.elements("getParameters").get(0);
+            for ( Iterator i = h.elementIterator(); i.hasNext(); ) {
+                Element element = (Element) i.next();
+                // do something
+                getParameters.put(element.elementText("key"), element.elementText("value"));
+            }
+
+            parameters = new HashMap<String, String>();
+            h = (Element)root.elements("parameters").get(0);
+            for ( Iterator i = h.elementIterator(); i.hasNext(); ) {
+                Element element = (Element) i.next();
+                // LOG.debug("log parameter {}", element);
+                // do something
+                parameters.put(element.elementText("key"), element.elementText("value"));
+            }
+        } catch (Exception ex){
+            LOG.error("parse xml error {}", ex);
+        }
+    }
+
+
+#+end_src
+
+* a toString example
+#+begin_src java
+    public String toString(){
+        return
+            "  url: "+url+ "\n" +
+            "  type: "+type+ "\n" +
+            "  id: "+id+ "\n" +
+            "  headers: "+headers.toString()+ "\n" +
+            "  parameters: "+parameters.toString()+ "\n" +
+            "  getParameters: "+getParameters.toString()+ "\n";
+    }
+
+#+end_src
+
+* create byte array from string
+#+begin_src java
+s.getBytes();
+#+end_src
+
+* create a url object
+#+begin_src java
+
+import java.net.URL;
+new URL(reqData.getUrl() + "?" + hash2EncodedUrl(reqData.getGetParameters()));
+
+#+end_src
+
+* create encoded string given hash, used for html url encoded data, get method parameter
+#+begin_src java
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+
+    String hash2EncodedUrl(Map<String, String> data) {
+        StringBuilder builder = new StringBuilder();
+        // Map<String, String> data = reqData.getGetParameters();
+        Iterator<String> iterator = data.keySet().iterator();
+        for (int i = 0; iterator.hasNext(); i++) {
+            String key = iterator.next();
+            if (i != 0) {
+                builder.append('&');
+            }
+            // builder.append(key).append('=').append(URLEncoder.encode(data.get(key), "UTF-8"));
+            builder.append(key).append('=').append(data.get(key));
+        }
+
+        return builder.toString();
+    }
+
+
+#+end_src
+
+* put a key value pair to a hash table
+#+begin_src java
+parameters.put("bttoken", "MDAwRE41UEJPQEIzQjtJOkFUZlNARU42TTNrRD01PzAEQ");
+#+end_src
+
+* check if a key exists in a hash
+#+begin_src java
+if (parameters.get("bttoken") != null) {
+    $0
+}
+#+end_src
+
+* get a value from a hash table given key
+#+begin_src java
+\`hash\`.get(\`key\`)
+#+end_src
+
+* get / read whole content of a file in one pass as string
+#+begin_src java
+new String(Files.readAllBytes(Paths.get(${1:file})))
+#+end_src
+
+* set proxy
+#+begin_src java
+        System.setProperty("http.proxyHost", "swg.tieto.com");
+        System.setProperty("http.proxyPort", "8080");
+        System.setProperty("https.proxyHost", "swg.tieto.com");
+        System.setProperty("https.proxyPort", "8080");
+
+
+#+end_src
+
+* get base64 byte array given file name
+#+begin_src java
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            final byte[] buffer = new byte[1024];
+            InputStream mediaTemp = new FileInputStream(\`file\`);
+            int len = mediaTemp.read(buffer);
+            while (len != -1) {
+                out.write(buffer, 0, len);
+                len = mediaTemp.read(buffer);
+            }
+            out.toByteArray();
+
 
 #+end_src

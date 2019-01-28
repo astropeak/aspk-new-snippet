@@ -1,6 +1,6 @@
 
 * create random string, a function
-#+begin_src java
+#+begin_src c
 char* genRandomString(int length)  
 {  
   int flag, i;  

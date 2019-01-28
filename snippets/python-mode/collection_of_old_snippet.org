@@ -1,0 +1,843 @@
+
+* datetime convert timestamp to datetime
+#+begin_src python
+import datetime
+datetime.datetime.utcfromtimestamp(${1:timestamp})
+
+#+end_src
+
+* django serve static files
+#+begin_src python
+from django.views.static import serve
+urlpatterns += [url(r'^(?P<path>.*)$', serve, {'document_root': '/path/to/root/', 'show_indexes':'True'})]
+
+#+end_src
+
+* vcjobs 
+#+begin_src python
+# TODO: delete below line
+srcDir = os.path.expanduser('~/source/vocvoc_dev_amo_fuqiang_luo')
+
+#+end_src
+
+* unittest
+#+begin_src python
+import unittest
+
+class ${1:Name}Test(unittest.TestCase):
+  def test__$0(self):
+    self.assertTrue(1)
+
+# The main
+if __name__ == '__main__':
+  suite = unittest.TestLoader().loadTestsFromTestCase($1Test)
+  unittest.TextTestRunner(verbosity=2).run(suite)
+
+#+end_src
+
+* replace method of a object in python, by types.MethodType
+#+begin_src python
+import types
+class Foo:
+  def foo(self, name):
+    print('Foo foo', name)
+
+def foo(self, name):
+  print('function foo', name)
+
+if __name__ == '__main__':
+  f = Foo()
+  print(f.foo)
+  f.foo = types.MethodType(foo, f, Foo)
+  print(f.foo)
+  f.foo('aaa')
+  f1 = Foo()
+  f1.foo('bbb')
+#+end_src
+
+* execute/run another python script in a python script, load a module from command line when run a python script
+#+begin_src python
+# THis can be usfull to run a python file with a module loaded from commandline. Such as:
+# python -m a b.py
+import sys
+if __name__ == '__main__':
+    print("args", sys.argv)
+    # this is the file to be executed
+    f = sys.argv[1]
+    variables={'__name__':'__main__' }
+    execfile(f , variables)
+    # exec(open(f).read() , variables)
+
+#+end_src
+
+* execute shell command, by subprocess.Popen
+#+begin_src python
+from subprocess import Popen, PIPE
+
+process = Popen(['swfdump', '/tmp/filename.swf', '-d'], stdout=PIPE, stderr=PIPE)
+stdout, stderr = process.communicate()
+
+#+end_src
+
+* load variable object from a file, by use pickle module
+#+begin_src python
+def load_year_qtr():
+    try:
+        with open('data/year_qtr', "rb") as f:
+            return pickle.load(f)
+    except:
+        logging.info("year_qtr not exist, return (1993, 1)")
+        return (1993, 1)
+
+
+#+end_src
+
+* save/dump variable object to a file, by use pickle module
+#+begin_src python
+import pickle
+def save_year_qtr(year, qtr):
+    with open('data/year_qtr', "wb") as f:
+        pickle.dump((year, qtr), f)
+
+
+#+end_src
+
+* get home directory, by expanduser
+#+begin_src python
+from os.path import expanduser
+home = expanduser("~")
+
+#+end_src
+
+* ensure/create directory given a file path name
+#+begin_src python
+import os
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+#+end_src
+
+* get all file names in a directory given a pattern
+#+begin_src python
+from glob import glob
+# this function is not recursive
+glob('*')
+glob('../*')
+
+#+end_src
+
+* delete directory tree, recursivly, by shutil.rmtree
+#+begin_src python
+import shutil
+shutil.rmtree(path, ignore_errors=False, onerror=None)
+#+end_src
+
+* invoke interactive python shell/interpreter by codes
+#+begin_src python
+# install IPython by 'pip3 install IPython'
+import IPython
+IPython.embed()
+
+#+end_src
+
+* mysql sql example: add a column to a table after an existing column
+#+begin_src python
+# state will be added after city in table 'temp_jobs'
+ALTER TABLE temp_jobs ADD state VARCHAR( 20 ) after city;
+
+
+#+end_src
+
+* a priority queue implementation, use heapq
+#+begin_src python
+import heapq
+class PriorityQueue:
+    def __init__(self):
+        self._queue = []
+        self._index = 0
+
+    def push(self, item, priority):
+        heapq.heappush(self._queue, (-priority, self._index, item))
+        self._index += 1
+
+    def pop(self):
+        return heapq.heappop(self._queue)[-1]
+
+#+end_src
+
+* example: get the largest/smallest N items from a  list, by  heapq.nlargest/nsmallest
+#+begin_src python
+import heapq
+nums = [1, 8, 2, 23, 7, -4, 18, 23, 42, 37, 2]
+print(heapq.nlargest(3, nums)) # Prints [42, 37, 23]
+print(heapq.nsmallest(3, nums)) # Prints [-4, 1, 2]
+
+portfolio = [
+{'name': 'IBM', 'shares': 100, 'price': 91.1},
+{'name': 'AAPL', 'shares': 50, 'price': 543.22},
+{'name': 'FB', 'shares': 200, 'price': 21.09},
+{'name': 'HPQ', 'shares': 35, 'price': 31.75},
+{'name': 'YHOO', 'shares': 45, 'price': 16.35},
+{'name': 'ACME', 'shares': 75, 'price': 115.65}
+]
+cheap = heapq.nsmallest(3, portfolio, key=lambda s: s['price'])
+expensive = heapq.nlargest(3, portfolio, key=lambda s: s['price'])
+#+end_src
+
+* example: collections.deque
+#+begin_src python
+# seems deque is not FIFO
+from collections import deque
+q = deque(maxlen=10)
+q.append(1)
+q.append(2)
+q.appendleft(3)
+
+q.pop()
+q.popleft()
+
+#+end_src
+
+* iterate all matched text in all a file and all previous matched lines, given pattern, use collections.deque
+#+begin_src python
+from collections import deque
+def search(lines, pattern, history=5):
+    previous_lines = deque(maxlen=history)
+    for line in lines:
+        if pattern in line:
+            yield line, previous_lines
+
+        previous_lines.append(line)
+
+        # Example use on a file
+if __name__ == '__main__':
+    with open('somefile.txt') as f:
+        for line, prevlines in search(f, 'python', 5):
+            for pline in prevlines:
+                print(pline, end='')
+
+            print(line, end='')
+            print('-'*20)
+
+#+end_src
+
+* example: create a dictionary with default value, by defaultdict
+#+begin_src python
+from collections import defaultdict
+frequency = defaultdict(int)
+frequency['colorless'] = 4
+frequency['ideas'] # will be 0
+
+frequency = defaultdict(list)
+# first, frequency['colorless'] will return a empty list, then append one element to this list.
+frequency['colorless'].append(4)
+frequency['ideas'] # will be []
+
+# Or you can pass a function take no arguments 
+
+# the idiom:
+my_dictionary = defaultdict(function to create default value)
+for item in sequence:
+    my_dictionary[item_key] is updated with information about item
+
+
+#+end_src
+
+* sort a dictionary/hash by its value(default is by its key)
+#+begin_src python
+from operator import itemgetter
+sorted(${1:dict}.items(), key=itemgetter(1), reverse=True)
+
+#+end_src
+
+* sort a list of string by string length
+#+begin_src python
+>>> words = 'I turned off the spectroroute'.split() [1]
+>>> wordlens = [(len(word), word) for word in words] [2]
+>>> wordlens.sort() [3]
+>>> ' '.join(w for (_, w) in wordlens) [4]
+'I off the turned spectroroute'
+
+#+end_src
+
+* nlp:nltk:example: corpus and words
+#+begin_src python
+# show occurrence of word 'word' and the context
+nltk.Text.concordance('word')
+# the corpus
+nltk.corpus.gutenburg
+nltk.corpus.webtext
+nltk.corpus.state_union
+
+# some lexical
+nltk.corpus.wordnet
+nltk.corpus.
+
+
+# 获取近义词
+nltk.corpus.wordnet.synsets('tree')
+nltk.corpus.wordnet.synset('tree.n.1')
+
+# 整体和部分的关系
+nltk.corpus.wordnet.synset('tree.n.1').part_meronyms()
+nltk.corpus.wordnet.synset('tree.n.1').substance_meronyms()
+nltk.corpus.wordnet.synset('tree.n.1').member_meronyms()
+
+nltk.corpus.wordnet.synset('tree.n.1').part_holonyms()
+nltk.corpus.wordnet.synset('tree.n.1').substance_holonyms()
+nltk.corpus.wordnet.synset('tree.n.1').member_holonyms()
+
+# 还有上层和下层的关系，但没看
+
+# 语言间翻译：
+nltk.corpus.swadesh
+nltk.corpus.swadesh.fileids()
+nltk.corpus.swadesh.entries(['en', 'fr'])
+
+#+end_src
+
+* example: function table dispater, by star expression
+#+begin_src python
+records = [
+    ('foo', 1, 2),
+    ('bar', 'hello'),
+    ('foo', 3, 4),
+]
+def do_foo(x, y):
+    print('foo', x, y)
+def do_bar(s):
+    print('bar', s)
+for tag, *args in records:
+    if tag == 'foo':
+        do_foo(*args)
+    elif tag == 'bar':
+        do_bar(*args)
+
+#+end_src
+
+* example: unpacking a Sequence into Separate Variables
+#+begin_src python
+# Unpacking actually works with any object that happens to be iterable, not just tuples or lists. This includes strings, files, iterators, and generators.
+a, _, (c, d) = [1, 2, (3, 4)]
+a, b, c = "123"
+
+# the number must be matched, so 
+
+
+#+end_src
+
+* create a number list given start and end number, by range
+#+begin_src python
+# end is not included. Start default to 0. step is optional
+range(${1:start}, ${2:end}, ${3:step})
+
+#+end_src
+
+* get a string representaion of an object
+#+begin_src python
+# eval(repr(obj)) == obj
+repr(${1:obj})
+#+end_src
+
+* get char given unicode code or ascii number
+#+begin_src python
+chr(${1:code})
+
+#+end_src
+
+* get unicode code or ascii number from char
+#+begin_src python
+ord(${char})
+#+end_src
+
+* logical operation on set: union, by |
+#+begin_src python
+set1 | set2
+
+#+end_src
+
+* logical operation on set: intersection
+#+begin_src python
+set1 & set2
+#+end_src
+
+* create a set given/from string
+#+begin_src python
+sets.Set(${1:str})
+
+#+end_src
+
+* change a string to a list of chars
+#+begin_src python
+list(${1:str})
+
+#+end_src
+
+* doc: list comprehension for two list
+#+begin_src python
+[(a, b) for a in iterable_a for b in iterable_b]
+
+# is equivalent to
+result = []
+for a in iterable_a:
+    for b in iterable_b:
+        result.append((a, b))
+#+end_src
+
+* map function usage
+#+begin_src python
+map(f, iterable)
+is equivalent to
+[f(x) for x in iterable]
+
+but map will always return a list whose size is the same as the original one
+
+
+#+end_src
+
+* iterate every character on a string
+#+begin_src python
+# a char is a string with length 1
+for c in ${1:str}:
+    $0
+
+
+#+end_src
+
+* error, exception handling. try catch block. try: xxx, except: xxx, else: xxx
+#+begin_src python
+try:
+    $0
+except:
+    pass
+else:
+    pass
+
+#+end_src
+
+* check if a string endwith/suffix is another string
+#+begin_src python
+${1:str}.endswith(${2:suffix})
+#+end_src
+
+* import module given string name
+#+begin_src python
+import importlib
+try:
+    amodule = importlib.import_module(${1:module})
+    # amodule = __import__($1)  # this will do the same work
+    # amodule.print_name("Jim")
+except:
+    print("module not exists")
+else:
+    pass
+
+#+end_src
+
+* get symbol / function from/given its name string from global package/module
+#+begin_src python
+globals()[${1:name}]
+#+end_src
+
+* get symbol / function from/given its name string from current package/module
+#+begin_src python
+# locals() returns the symbol table in current module
+locals()[${1:name}]
+#+end_src
+
+* get a function given string name from a module/package
+#+begin_src python
+getattr(${1:module}, ${2:function})
+#+end_src
+
+* check if a function exists in a module/package
+#+begin_src python
+hasattr(${1:module}, ${2:function})
+#+end_src
+
+* check if a key exists in a hash/dictionary
+#+begin_src python
+${1:key} in ${2:dict}
+#+end_src
+
+* hex number literal notation
+#+begin_src python
+0x1F
+#+end_src
+
+* change decimal number to hex
+#+begin_src python
+hex($(num))
+#+end_src
+
+* get all items/elements from a mysql database table as a list/array 
+#+begin_src python
+def getAllEntry(table):
+    sql = "select * from %s" % table
+    cursor.execute(sql)
+
+    results= cursor.fetchall()
+    return results
+
+
+#+end_src
+
+* mysql sql example: update some fields of a item with condition, by where
+#+begin_src python
+'update %s set removedTime="%s" where id="%s"' %(${1:table}, getCurrentDatetime(), aid)
+#+end_src
+
+* mysql sql example: select/get element/items with condition, by where
+#+begin_src python
+'select * from ${1:table} where id="%s"'
+#+end_src
+
+* function: get current date time as string, in a special format: year-month-day hour:minute:seconds.microseconds
+#+begin_src python
+def getCurrentDatetime():
+    import datetime
+    now = datetime.datetime.now()
+    return str(now)
+
+
+#+end_src
+
+* mysql sql example: commit changes
+#+begin_src python
+'commit'
+#+end_src
+
+* use a global variable
+#+begin_src python
+#by default, all names will be in current scope
+global ${1:var}
+#+end_src
+
+* mysql sql example: create a database if not exists
+#+begin_src python
+'create database if not exists ${1:database}'
+#+end_src
+
+* mysql sql example: get all items/elements from a table
+#+begin_src python
+'select * from ${1:table}'
+#+end_src
+
+* mysql sql example: insert/add element to a table
+#+begin_src python
+'insert into ${1:table} (id, city)\
+ values\
+ ("aaaa", "bbbbb")'
+
+#+end_src
+
+* mysql sql example: create a database
+#+begin_src python
+'create database ${1:name}'
+#+end_src
+
+* mysql sql example: delete a database if exists
+#+begin_src python
+'drop database if exists ${1:database}'
+#+end_src
+
+* mysql sql example: select current database, by use
+#+begin_src python
+'use jobs'
+#+end_src
+
+* mysql sql example: create a table
+#+begin_src python
+    'create table perm_jobs\
+    (\
+    id varchar(100),\
+    position varchar(300),\
+    city varchar(200),\
+    zip varchar(100),\
+    officeType varchar(100),\
+    jobType varchar(100),\
+    addedTime varchar(100),\
+    removedTime varchar(100),\
+    primary key (id)\
+    )'
+
+
+
+#+end_src
+
+* mysql MySQLdb usage: connect to server, create cursor, execute sql statement
+#+begin_src python
+import MySQLdb
+
+con = MySQLdb.connect(user="root")
+cursor = con.cursor()
+# select datebase to jobs. The parameter to cursor.execute is sql statement
+cursor.execute('use jobs')
+# get all items from table 'temp_jobs'. The return value is the count of items
+cursor.execute('select * from temp_jobs')
+# get all fetched items as a list
+items = cursor.fetchall()
+
+# and finally close the connection
+con.close()
+
+
+
+#+end_src
+
+* replace all in string with regexp, return a new string
+#+begin_src python
+import re
+re.sub(${1:regexp}, ${2:replacement}, ${3:str})
+#+end_src
+
+* throw/raise an exception
+#+begin_src python
+raise Exception(${1:infoStr})
+#+end_src
+
+* create an array/list by splitting a string and strip/trim each element
+#+begin_src python
+alist = [s.strip() for s in ${1:str}.split(${2:seperator})]
+#+end_src
+
+* the null/None/undefined value
+#+begin_src python
+None
+#+end_src
+
+* get length/size of a list/array
+#+begin_src python
+al = len(${1:list})
+#+end_src
+
+* regexp example: ignore matched pair, by (?:...)
+#+begin_src python
+(?:${1:regexp})
+#+end_src
+
+* get string from list/array of string/numbers, join
+#+begin_src python
+'${1:seperator}'.join(${2:list})
+#+end_src
+
+* loop hash key and value, while
+#+begin_src python
+while True:
+    $0
+
+#+end_src
+
+* if main
+#+begin_src python
+if __name__ == '__main__':
+   $0
+
+#+end_src
+
+* get current date time as datetime object, 
+#+begin_src python
+import datetime
+dt = datetime.datetime.now()
+#the datetime object dt have many field, such as hour, year, month, day, minute, second, microsecond
+#+end_src
+
+* add element to a list/array at then end, append
+#+begin_src python
+${1:array}.append(${2:elem})
+#+end_src
+
+* json
+#+begin_src python
+json.loads(jobsStr
+#+end_src
+
+* delete spaces/blanks at the beginning and ending from a string, trim, strip
+#+begin_src python
+${1:str}.strip()
+#+end_src
+
+* get matched sub strings given regexp
+#+begin_src python
+# the regexp will match from the first character in the str
+a = re.match(${1:regexp}, ${2:str})
+# the first match
+b = a.group(1)
+# the second match
+b = a.group(2)
+#+end_src
+
+* split a string to array
+#+begin_src python
+${1:str}.split(${2:' '})
+#+end_src
+
+* example: function: merge two dictionary
+#+begin_src python
+d2 will be merged to d1, and d2 will changed.
+def mergeToDict(d1, d2):
+    for k, v in d2.items():
+        d1[k] = v
+
+
+#+end_src
+
+* example: function: print a dictionay/hash pretty
+#+begin_src python
+def pretty(d, indent=0):
+    for key, value in d.items():
+        print('\t' * indent + str(key))
+        if isinstance(value, dict):
+            pretty(value, indent+1)
+        else:
+            print('\t' * (indent+1) + str(value))
+
+
+#+end_src
+
+* get html page given url, by requests
+#+begin_src python
+import requests
+
+headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0'}
+resp = requests.get(${1:url}, verify=False, cookies=${2:cookies}, headers=${3:headers})
+assert(resp.status_code == 200)
+# here resp.text is the html content
+# rst = parseTheContent(resp.text)
+
+
+#+end_src
+
+* get / read whole content of a file in one pass as string, and check if file exist first
+#+begin_src python
+import os.path
+
+rst = ""
+if os.path.isfile(${1:file}):
+    with open($1, "r") as f:
+        rst = f.read()
+else:
+    print "%s not exists" % $1
+#+end_src
+
+* compare two datetime object
+#+begin_src python
+def isTimeNewer(time1, time2):
+    "return true if time1 is newer than time2"
+    t1 = datetime.strptime(time1, JOB_TIME_FORMAT)
+    t2 = datetime.strptime(time2, JOB_TIME_FORMAT)
+    return t1>t2
+
+
+#+end_src
+
+* get content string from a html / xml string, using beautifulsoup, all tags removed
+#+begin_src python
+from bs4 import BeautifulSoup
+# or use html.parser as second parameter
+BeautifulSoup(${1:htmlStr}, 'lxml').text
+#+end_src
+
+* datetime object to string
+#+begin_src python
+from datetime import datetime
+
+${1:datetimeObj}.strftime("%y%m%d-%H%M%S")
+#+end_src
+
+* modify a datetime object, such add several hours
+#+begin_src python
+from datetime import datetime, timedelta
+
+# add 8 hours
+${1:datetimeObj} + timedelta(hours=8)
+
+
+#+end_src
+
+* create a datetime object from a string
+#+begin_src python
+# time = "2017-02-14T10:00:00+00:00"
+from datetime import datetime, timedelta
+
+JOB_TIME_FORMAT =  "%Y-%m-%dT%H:%M:%S+00:00"
+datetime.strptime(${1:time}, JOB_TIME_FORMAT)
+#+end_src
+
+* encode a string to utf8
+#+begin_src python
+${1:str}.encode('utf8', 'replace')
+#+end_src
+
+* open, write string to, and close a file, by with statement
+#+begin_src python
+with open(${1:file}, "w") as f:
+    print "Write to file %s" % $1
+    f.write(${2:str}.encode('utf8', 'replace'))
+
+
+#+end_src
+
+* create object from json string, use json module
+#+begin_src python
+import json
+json.loads(${1:str})
+#+end_src
+
+* replace all in string with regexp, return a new string
+#+begin_src python
+import re
+re.sub(${1:'[^a-zA-Z0-9 ]'}, ${2:'_'}, ${3:str})
+#+end_src
+
+* check if variable is string
+#+begin_src python
+if type(${1:var}) in [str, unicode]:
+   $0 
+         
+#+end_src
+
+* iterate on a dictionary/hash, both key and value
+#+begin_src python
+for k, v in ${1:dict}.items():
+	print(k,v)
+#+end_src
+
+* iterate on a hash/map/dictionary, on key
+#+begin_src python
+for k in ${1:dict}:
+	# print(k)
+#+end_src
+
+* scrapy login
+#+begin_src python
+class LoginSpider(BaseSpider):
+    name = 'example.com'
+    start_urls = ['http://www.example.com/users/login.php']
+
+    def parse(self, response):
+        return [FormRequest.from_response(response,
+                    formdata={'username': 'john', 'password': 'secret'},
+                    callback=self.after_login)]
+
+    def after_login(self, response):
+        # check login succeed before going on
+        if "authentication failed" in response.body:
+            self.log("Login failed", level=log.ERROR)
+            return
+
+        # continue scraping with authenticated session...
+
+#+end_src
+
+* scrapy create project and create a new spider class, by startproject, and genspider
+#+begin_src python
+scrapy startproject mytest
+cd mytest
+scrapy genspider example example.com
+
+
+#+end_src

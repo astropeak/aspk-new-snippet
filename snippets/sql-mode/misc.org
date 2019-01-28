@@ -1,0 +1,64 @@
+* variables
+** show all variables
+** show a single global variable
+   #+BEGIN_SRC sql
+   select @@global.tmp_table_size;
+   select @@global.max_heap_table_size;
+   #+END_SRC
+
++-------------------------+
+| @@global.tmp_table_size |
++-------------------------+
+|                16777216 |
++-------------------------+
+** set a global variable
+   #+BEGIN_SRC sql
+   set global tmp_table_size=16*1024*1024;
+   set global max_heap_table_size=16*1024*1024;
+   #+END_SRC
+* summary table
+  https://stackoverflow.com/questions/3221751/mysql-create-summary-table
+
+  #+BEGIN_SRC sql
+  table questionAnswers:
+      user VARCHAR
+      question VARCHAR
+      answerValue VARCHAR
+
+  table users
+      user VARCHAR
+      questionsAnswered INT
+
+  UPDATE users AS u 
+  SET questionsAnswered = (
+      SELECT COUNT(DISTINCT question) 
+      FROM questionAnswers AS q 
+      WHERE q.user=u.user)
+  #+END_SRC
+* find where database stored in file systems
+  #+BEGIN_SRC sql
+  show variables where Variable_name ='datadir';
+  #+END_SRC
+
+  The result on my mac is
+  +---------------+-----------------------+
+  | Variable_name | Value                 |
+  +---------------+-----------------------+
+  | datadir       | /usr/local/var/mysql/ |
+  +---------------+-----------------------+
+* table management
+** rename table
+   RENAME TABLE tb1 TO tb2, tb3 TO tb4;
+** create a table like another table
+   CREATE TABLE New_Users  LIKE Old_Users;
+
+   The manual
+   Use LIKE to create an empty table based on the definition of another table, including any column attributes and indexes defined in the original table.
+
+   ref: https://stackoverflow.com/questions/10147565/create-table-like-a1-as-a2
+
+** copy a table
+   1. First create an empty table like another
+      CREATE TABLE New_Users  LIKE Old_Users;
+   2. Then insert all data to it
+      INSERT INTO New_Users SELECT * FROM Old_Users GROUP BY ID;

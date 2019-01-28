@@ -1,27 +1,32 @@
 
 * add element to a list without change the list's address, destructively
-#+begin_src java
+#+begin_src emacs-lisp
 (setcdr ${1:list} (append  (cdr 1) (list ${2:element})))
 #+end_src
+
 * write current buffer content to a file
-#+begin_src java
+#+begin_src emacs-lisp
 (write-file ${1:file})
 #+end_src
+
 * set register contents given name, which is a character, such as ?Y, and contents
-#+begin_src java
+#+begin_src emacs-lisp
 (set-register ?${1:name-char} ${2:contents})
 #+end_src
+
 * set multiple variables from list element, multiple-value-setq, cl
-#+begin_src java
+#+begin_src emacs-lisp
 (multiple-value-setq
                (${1:var1} ${2:var2}) ${3:list})
 #+end_src
+
 * set a buffer to current buffer given name for editing, without selected
-#+begin_src java
+#+begin_src emacs-lisp
 (set-buffer (get-buffer-create ${1:buffer-or-name}))
 #+end_src
+
 * restore to / set current mode to org-mode without automatically collapsed
-#+begin_src java
+#+begin_src emacs-lisp
 (let (old-flag)
           (message "Change to org-mode")
           (setq old-flag org-inhibit-startup-visibility-stuff)
@@ -32,17 +37,20 @@
 
 
 #+end_src
+
 * replace in string with regexp
-#+begin_src java
+#+begin_src emacs-lisp
 ;; (replace-regexp-in-string "^\s*\\\\(.*\\\\)\s*$" "\\\\1" content)
 (replace-regexp-in-string ${1:regexp} ${2:replacement} content)
 #+end_src
+
 * read a file content and insert to a buffer
-#+begin_src java
+#+begin_src emacs-lisp
 (insert-file-contents ${1:file} nil nil nil t)
 #+end_src
+
 * method definition: get all source src blocks info in a org mode file, in current buffer, given src block's name pattern
-#+begin_src java
+#+begin_src emacs-lisp
 (defun aspk-get-src-block-info (name-pattern)
   "Return a accoc list of block info, searching form current position, current buffer. If no src blocks, return nil, and position will not be moved.
 The codes are copied form org-babel-find-named-block "
@@ -83,8 +91,9 @@ The codes are copied form org-babel-find-named-block "
 
 
 #+end_src
+
 * method definition: get all source src blocks info given a org mode file, an entry pattern, a src block's name pattern
-#+begin_src java
+#+begin_src emacs-lisp
 (defun aspk-get-all-src-blocks (file &optional name-pattern entry-pattern)
   "Get all src blocks of the given file name, return as a list. All src blocks should be in a entry, or there will be error. If the entry-pattern is provided, then only get that entry's src blocks. entry-pattern is regexp to match a headline "
   (let (tmp rst)
@@ -115,8 +124,9 @@ The codes are copied form org-babel-find-named-block "
 
 
 #+end_src
+
 * method definition: convert a list to a tree based on a level value in the list element
-#+begin_src java
+#+begin_src emacs-lisp
 ;; the input is a list of element, which is a list of cons, one of cons is ('level . N).
 ;; if an element's level is large than the previous element's level, then it is a child of that element.
 ;; After processing, two conses will be added to all element: ('parent . element) and ('children .  list-of-elemment). Note: the first element in childrean is a string, should be removed.
@@ -175,7 +185,7 @@ The codes are copied form org-babel-find-named-block "
       ;; (message "level: %s, parent: %s" level parent)
       ;; add 'parent' and 'children' property to this elem, add saved it to (parents level)
       ;; (message "before elem: %s" elem)
-      ;; (setq elem (append elem `((children . (a)) ,(cons 'parent (list parent)))))
+      ;; (setq elem (append elem \`((children . (a)) ,(cons 'parent (list parent)))))
       (setq elem (append elem (list (list 'children (format "%s-%s" (incf idx) level))
                                     (list 'parent parent)
                                     )))
@@ -199,12 +209,14 @@ The codes are copied form org-babel-find-named-block "
 
 
 #+end_src
+
 * kill a buffer it exists
-#+begin_src java
+#+begin_src emacs-lisp
 (and (get-buffer ${1:buffer-or-name}) (kill-buffer $1))
 #+end_src
+
 * iterate on a list
-#+begin_src java
+#+begin_src emacs-lisp
 (mapcar (lambda (elem)
           (message "Process elem %S" elem)
           $0
@@ -214,8 +226,9 @@ The codes are copied form org-babel-find-named-block "
 
 
 #+end_src
+
 * iterate all matched text in all files under a directory, given pattern regexp
-#+begin_src java
+#+begin_src emacs-lisp
 (mapc (lambda (file)
         ;; (message "file=%s" file)
         (condition-case *error-info*
@@ -240,8 +253,9 @@ The codes are copied form org-babel-find-named-block "
         (kill-buffer " myTemp"))
       (f-files ${1:dir} nil t))
 #+end_src
+
 * iterate all file names under a directory, recursively, with an optional filter function
-#+begin_src java
+#+begin_src emacs-lisp
 ;; iterate all file names under directory ${1:dir} with an optional filter function, recursively
 (require 'f)
 (mapc (lambda (file)
@@ -251,9 +265,10 @@ The codes are copied form org-babel-find-named-block "
    ;; the second parameter can be a function filtering the file names.
 (f-files $1 nil ${2:recursivep$(yas-choose-value '("t" "nil"))}))
 #+end_src
+
 * helm other buffer
-#+begin_src java
-    (helm-other-buffer `((name . "${1:name}")
+#+begin_src emacs-lisp
+    (helm-other-buffer \`((name . "${1:name}")
                          (candidates . ${2:candidate})
                          (action . (lambda (cand)
                                      (message "Candidate %S" cand)
@@ -261,21 +276,25 @@ The codes are copied form org-babel-find-named-block "
                                      )))
                        "$1")
 #+end_src
+
 * get value from assoc list given key
-#+begin_src java
+#+begin_src emacs-lisp
 (cdr (assoc ${1:key} ${2:list}))
 #+end_src
+
 * get symbol / function from/given its name string
-#+begin_src java
+#+begin_src emacs-lisp
 (intern ${1:function_string_name})
 #+end_src
+
 * get sub list, from n to last element, nthcdr, that is, remove the first n elements form a list
-#+begin_src java
+#+begin_src emacs-lisp
 (nthcdr ${1:N} ${2:list})
 
 #+end_src
+
 * get source code block's mode in org mode file as string, for a local edit
-#+begin_src java
+#+begin_src emacs-lisp
 (let (info (lang ""))
         (when (and (eq major-mode 'org-mode)
                    (fboundp 'org-edit-src-find-region-and-lang))
@@ -290,41 +309,50 @@ The codes are copied form org-babel-find-named-block "
           lang)
 
 #+end_src
+
 * get selected/region content as string, empty string if not active
-#+begin_src java
+#+begin_src emacs-lisp
 (if mark-active (buffer-substring-no-properties (region-beginning) (region-end)) "")
 #+end_src
+
 * get register contents given name, which is a character, such as ?Y
-#+begin_src java
+#+begin_src emacs-lisp
 (get-register ?${1:name-char})
 #+end_src
+
 * get or create a buffer given name
-#+begin_src java
+#+begin_src emacs-lisp
 (get-buffer-create ${1:buffer-or-name})
 #+end_src
+
 * get nth element from a list
-#+begin_src java
+#+begin_src emacs-lisp
 (nth ${1:idx} ${2:list})
 #+end_src
+
 * get input by read-string
-#+begin_src java
+#+begin_src emacs-lisp
 (save-excursion (read-string ${1:prompt} nil nil ${2:default-value}))
 #+end_src
+
 * get file part of a full file name, delete the directory part
-#+begin_src java
+#+begin_src emacs-lisp
 (file-name-nondirectory ${1:file-name})
 #+end_src
+
 * get file name from minibuffer, prompt for
-#+begin_src java
+#+begin_src emacs-lisp
 (read-file-name "${1:File}: " nil nil nil ${2:default-file-name})
                                 
 #+end_src
+
 * get directory part of a full file name, delete the file part
-#+begin_src java
+#+begin_src emacs-lisp
 (replace-regexp-in-string "\\\\(.*[^/]+\\\\)/$" "\\\\1" (file-name-directory ${1:file-name}))
 #+end_src
+
 * get current src block mode name under cursor in a org mode file buffer
-#+begin_src java
+#+begin_src emacs-lisp
 (lambda ()
   "get current src block mode name under cursor in a org mode file buffer. If not applicatable, return nil"
   (let (info lang)
@@ -336,42 +364,51 @@ The codes are copied form org-babel-find-named-block "
       (setq lang-f (intern (concat lang "-mode"))))
     lang))
 #+end_src
+
 * get current major mode name as string, without the "-mode" suffix
-#+begin_src java
+#+begin_src emacs-lisp
 (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode)))
 #+end_src
+
 * get current date time as string, in a special format: year,month,day - hour,minute,seconds - microseconds
-#+begin_src java
+#+begin_src emacs-lisp
 (format-time-string "%Y%m%d-%H%M%S-%3N")
 #+end_src
+
 * get current date time as list, in form of : (year month day hour minute seconds)
-#+begin_src java
+#+begin_src emacs-lisp
 (nthcdr 3 (reverse (decode-time)))
 #+end_src
+
 * get all regular file names in a directory as a list, with an optional filter function
-#+begin_src java
+#+begin_src emacs-lisp
 (progn (require 'f) (f-files ${1:dir} nil ${2:recursive-p}))
 #+end_src
+
 * get all emacs mode names as a list
-#+begin_src java
+#+begin_src emacs-lisp
 '("c++" "c" "cc" "cmake" "csharp" "css" "emacs-lisp" "erlang" "html" "inf-ruby" "java" "javascript" "js" "js2" "js3" "jsp" "less-css" "lua" "nxml" "objc" "org" "perl" "python" "rhtml" "rspec" "ruby" "scala" "scss" "sh" "snippet" "web")
 #+end_src
+
 * get all directory names in a directory as a list, with an optional filter function
-#+begin_src java
+#+begin_src emacs-lisp
 (progn (require 'f) (f-directories ${1:dir} nil ${2:recursive-p}))
 
 #+end_src
+
 * format string, change \n to newline character
-#+begin_src java
+#+begin_src emacs-lisp
 (string-format "# -*- mode: snippet -*-\n#name : %s\n#contributor : %s\n# --\n%s")
 #+end_src
+
 * example: method: yas-expand-snippet, expand a snippet
-#+begin_src java
-(yas-expand-snippet "(message \\"\`header\`: \$1=%S\\" \${1:var})" (point) (point) '((yas-indent-line 'fixed) (header "DEBUG")))
+#+begin_src emacs-lisp
+(yas-expand-snippet "(message \\"\\`header\\`: \$1=%S\\" \${1:var})" (point) (point) '((yas-indent-line 'fixed) (header "DEBUG")))
 
 #+end_src
+
 * example: iterate on every element, child element recursively(treat the list as a tree), of a list, and convert all leaf to string
-#+begin_src java
+#+begin_src emacs-lisp
 ;; the depth is seems 2 or 3.
 (defun pns-convert-to-string-filed (lst)
   (tracel lst)
@@ -385,10 +422,11 @@ The codes are copied form org-babel-find-named-block "
               (format "%s" parameter)))
           lst))
 #+end_src
+
 * example: helm, multiple sources, the first source works like a default value
-#+begin_src java
+#+begin_src emacs-lisp
 (helm-other-buffer
-                        `(((name . "Current mode")
+                        \`(((name . "Current mode")
                            (candidates . ;; (replace-regexp-in-string "^\(\s*\)," "" content)
                                        ,(list (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode))))
                            (action . (lambda (c ) c))
@@ -400,12 +438,14 @@ The codes are copied form org-babel-find-named-block "
                         "Which mode ")
 
 #+end_src
+
 * error handling: throw an error
-#+begin_src java
+#+begin_src emacs-lisp
 (error "${1:msg}" $0)
 #+end_src
+
 * error, exception handling. try catch block in elisp. try: condition-case, catch: error, throw: error
-#+begin_src java
+#+begin_src emacs-lisp
 (condition-case *error-info*
     ;; raise an error explicitly
     (progn 
@@ -419,23 +459,27 @@ The codes are copied form org-babel-find-named-block "
     ))
       
 #+end_src
+
 * delete duplicate elements from a list, desctructively, and return it, by equal
-#+begin_src java
+#+begin_src emacs-lisp
 (delete-dups ${1:list})
 #+end_src
+
 * create random number string, max length 16
-#+begin_src java
+#+begin_src emacs-lisp
 ;; create a number string with length ${1:16}
 (replace-regexp-in-string " " "0" (format "%$1s" (random 10000000000000000)))
 #+end_src
+
 * create directory if not exists, recursively
-#+begin_src java
+#+begin_src emacs-lisp
 (unless (file-exists-p ${1:dir}) (message "Creating dir: %s" $1) (mkdir $1 t))
 
 
 #+end_src
+
 * create a unique not existing random string file name in a directory
-#+begin_src java
+#+begin_src emacs-lisp
 (lambda (dir)
   "Create a new file name under dir using the random number string method"
   (let ((not-found t) (file))
@@ -445,8 +489,9 @@ The codes are copied form org-babel-find-named-block "
         (setq not-found nil)))
     (format "%s/%s" dir file)))
 #+end_src
+
 * create a unique not existing date time file name in a directory
-#+begin_src java
+#+begin_src emacs-lisp
 (lambda (dir)
   "Create a new file name under dir using the current date time"
   (let ((not-found t) (file))
@@ -457,12 +502,14 @@ The codes are copied form org-babel-find-named-block "
         (setq not-found nil)))
     (format "%s/%s" dir file)))
 #+end_src
+
 * cre a buff
-#+begin_src java
+#+begin_src emacs-lisp
 
 #+end_src
+
 * cond: switch case in lisp, judge by string-equal
-#+begin_src java
+#+begin_src emacs-lisp
 (cond ((string-equal ${1:var} "${2:value1}")
        $0
        )
@@ -471,19 +518,43 @@ The codes are copied form org-babel-find-named-block "
       (t
       ))
 #+end_src
+
 * check if a function exists
-#+begin_src java
+#+begin_src emacs-lisp
 (fboundp '${1:function-name})
 #+end_src
+
 * check if a buffer exists
-#+begin_src java
+#+begin_src emacs-lisp
 (when (get-buffer ${1:buffer-or-name})
     (message "Buffer exists: %s" $1)
     $1
   )
 #+end_src
+
+* key binding enter key
+#+begin_src emacs-lisp
+(kbd "RET")
+#+end_src
+
+* setup/define key binding for a mode in a specific evil state, by use evil-define-key
+#+begin_src emacs-lisp
+;; Define key for evil normal state
+(evil-define-key 'normal scb-mode-map (kbd "r") 'scb-redisplay-buffer)
+(evil-define-key 'normal scb-mode-map (kbd "g") 'scb-goto-file)
+(evil-define-key 'normal scb-mode-map (kbd "v") 'scb-view-file)
+(evil-define-key 'normal scb-mode-map (kbd "t") 'toggle-truncate-lines)
+
+
+#+end_src
+
+* set proxy
+#+begin_src emacs-lisp
+(setq url-proxy-services '(("http" . "www.server.com:8080")))
+#+end_src
+
 * a function get current major mode name as string, without the "-mode" suffix, handling org src block mode
-#+begin_src java
+#+begin_src emacs-lisp
     (defun pns-get-current-mode ()
       "get current src block mode name under cursor in a org mode file buffer. If not applicatable, return nil"
       (or 
@@ -497,8 +568,9 @@ The codes are copied form org-babel-find-named-block "
        (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode))))
 
 #+end_src
+
 * example: create a major mode for bnf syntax highlight
-#+begin_src java
+#+begin_src emacs-lisp
 (define-generic-mode 'bnf-mode
   () ;; comment char: inapplicable because # must be at start of line
   nil ;; keywords
@@ -515,8 +587,9 @@ The codes are copied form org-babel-find-named-block "
   "Major mode for BNF highlighting.")
 
 #+end_src
+
 * narrow to region, org capture
-#+begin_src java
+#+begin_src emacs-lisp
 (defun org-capture-narrow (beg end)
   "Narrow, unless configuration says not to narrow."
   (unless (org-capture-get :unnarrowed)
@@ -525,8 +598,9 @@ The codes are copied form org-babel-find-named-block "
 
 
 #+end_src
+
 * add element to a list without change the list's address, destructively, by nconc
-#+begin_src java
+#+begin_src emacs-lisp
 ;; listb-or-element will be appended to lista. If listb-or-element is a list, then all elements of that element wille appended to lista. Lista will still have its original address.
 ;; (nconc a b c d): a, b, c all should be list, d can be a atom. The effect is:
 ;; 1. set last sublist of a's cdr(which is nil) to b;
@@ -536,8 +610,9 @@ The codes are copied form org-babel-find-named-block "
 ;; (nconc a '3) will do the same thing, then its last sublist's cdr will be 3 insteadof a list. the next call to (nconc a b), 3 will be replaced by b.
 (nconc ${1:lista} ${2:listb-or-element})
 #+end_src
+
 * example regexp
-#+begin_src java
+#+begin_src emacs-lisp
 General rule:
 Regexp in elisp is expressed by string. So the '\x' character will first be treated as a quote character in a string. With all quoted character processed, the result is the actual regexp.
 
@@ -549,21 +624,22 @@ string literal => string => regexp
 ;; because regexp is expressed in string, so a regexp "\\\\" is actually the /\\/ regexp in perl, which will match a \ character in target text.
 ;; Noted that 
 
-;; match a \`
-;; (while (re-search-forward "\\\\`" (point-max) t)
+;; match a \\`
+;; (while (re-search-forward "\\\\\`" (point-max) t)
 ;;    (replace-match --random-string))
 
 
-;; replace with \`
-(replace-match "\\\\`"))
+;; replace with \\`
+(replace-match "\\\\\`"))
 
 
 ;; express \(, just use "\\(".
 
 
 #+end_src
+
 * iterate all matched text in current buffer after current position, given pattern regexp. with an replace action
-#+begin_src java
+#+begin_src emacs-lisp
 (while (re-search-forward ${1:matching-regexp} (point-max) t)
            ;; here (match-string 1) is the matched text by first (), (match-string 0) is th whole matched data.
            ;; add processing codes here
@@ -574,8 +650,9 @@ string literal => string => regexp
            )
 
 #+end_src
+
 * with given patterns/texts/regexp temporarily replaced/deleted/hidden from current buffer texts
-#+begin_src java
+#+begin_src emacs-lisp
 (let ((--hidden-regexp ${1:regexp})
       (--random-string (replace-regexp-in-string " " "0" (format "%16s" (random 10000000000000000)))))
   ;; ensure --random-string not exists in the buffer
@@ -600,37 +677,45 @@ string literal => string => regexp
 
 
 #+end_src
+
 * org mode show all cycle
-#+begin_src java
+#+begin_src emacs-lisp
 (org-cycle 3)
 #+end_src
+
 * helm goto file line
-#+begin_src java
+#+begin_src emacs-lisp
 (helm-goto-file-line ${1:line} "" ${2:file})
 #+end_src
+
 * get a value from a hash table given key
-#+begin_src java
+#+begin_src emacs-lisp
 (gethash ${1:key} ${2:hash-table})
 #+end_src
+
 * put a key value pair to a hash table
-#+begin_src java
+#+begin_src emacs-lisp
 (puthash ${1:key} ${2:vlaue} ${3:hash-table})
 #+end_src
+
 * create a hash table
-#+begin_src java
+#+begin_src emacs-lisp
 (make-hash-table :test 'equal)
 #+end_src
+
 * check if a file is newer than another
-#+begin_src java
+#+begin_src emacs-lisp
 ;;return t if file1 is newer than file2
 (file-newer-than-file-p ${1:file1} ${2:file2})
 #+end_src
+
 * get / read whole content of a file in one pass as string
-#+begin_src java
+#+begin_src emacs-lisp
 (with-temp-buffer (insert-file-contents ${1:file}) (buffer-string))
 #+end_src
+
 * write dump save variable lists to a file, then after the file loaded, the variables loaded
-#+begin_src java
+#+begin_src emacs-lisp
 ;; http://stackoverflow.com/questions/2321904/elisp-how-to-save-data-in-a-file
 (lambda (varlist filename)
   "simplistic dumping of variables in VARLIST to a file FILENAME"
@@ -650,7 +735,8 @@ string literal => string => regexp
 
 
 #+end_src
+
 * get file last modified time, the seconds since epoc
-#+begin_src java
+#+begin_src emacs-lisp
 (time-to-seconds (nth 5 (file-attributes ${1:file} 'string)))
 #+end_src

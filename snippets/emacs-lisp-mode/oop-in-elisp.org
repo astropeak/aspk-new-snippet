@@ -19,12 +19,16 @@
      "${2:doc}")
    #+end_src
 ** oop: create a member method for a class
+   When define a method, ':before', ':after', ':primary' can be put following the method name. If omited , ':primary' withh be the default value.
+   Theat value defines the way how the method is called.
+   A ':before' method will be called before the ':primary' one, and the ':after' method called after. The return value is as the ':primary' one. All three method should have the same name.
+
    #+NAME: no-name
    #+begin_src elisp
    ;; the metehod is dispatched based on the type of first parameter, which is always a type class
    (defmethod `method` ((inst `class`) &optional other-args-here)
      "doc"
-     ;; access a member variable by (oref object name)
+     ;; access a member variable by (oref inst :filed-name)
      $0
      )
    #+end_src
@@ -37,7 +41,7 @@
 ** oop: get member variable / field given an object
    #+NAME: no-name
    #+begin_src elisp
-  (oref `object` `field1`)
+  (oref `object` :`field1`)
    #+end_src
 
 ** Naming Conventions
@@ -48,3 +52,40 @@ Come up with a package prefix that is relatively short. Prefix all classes, and 
 Do not prefix method names with the class name. All methods in EIEIO are “virtual”, and are dynamically dispatched. Anyone can override your methods at any time. Your methods should be prefixed with your package name.
 Do not prefix slots in your class. The slots are always locally scoped to your class, and need no prefixing.
 If your library inherits from other libraries of classes, you must “require” that library with the require command.
+** oop: a full example
+   #+BEGIN_SRC elisp
+   (defclass Foo () ; No superclasses
+     ((name :initarg :name
+            :initform ""
+            :type string
+            :custom string
+            :documentation "The name of a person.")
+      ;; add more field below, the syntax is the same as common lisp's CLOS.
+      
+      )
+     "doc")
+
+   ;; the metehod is dispatched based on the type of first parameter, which is always a type class
+   (defmethod getname ((inst Foo) &optional other-args-here)
+     "doc"
+     ;; access a member variable by (oref object name)
+     (message "primary aaa")
+     (oref inst :name)
+     )
+
+   (defmethod getname :after ((inst Foo) &optional other-args-here)
+     "doc"
+     ;; access a member variable by (oref object name)
+     (message "after called get name")
+     )
+
+
+
+   (setq f (Foo :name "Jom" ))
+
+   (getname f)
+
+   (oref f :name)
+
+   #+END_SRC
+

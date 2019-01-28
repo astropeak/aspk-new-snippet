@@ -1,0 +1,73 @@
+* show profiling status 
+** enable profiling
+  #+BEGIN_SRC sql
+  set profiling = 1;
+  #+END_SRC
+
+** show profiling, simple display
+  #+BEGIN_SRC sql
+  show profiles;
+  show profile for query 1;
+  #+END_SRC
+
+   
+
+** show profiling in sorted order
+  #+BEGIN_SRC sql
+  SET @query_id = 1;
+  SELECT STATE, SUM(DURATION) AS Total_R,
+      ROUND(
+         100 * SUM(DURATION) /
+            (SELECT SUM(DURATION)
+             FROM INFORMATION_SCHEMA.PROFILING
+             WHERE QUERY_ID = @query_id
+         ), 2) AS Pct_R,
+      COUNT(*) AS Calls,
+      SUM(DURATION) / COUNT(*) AS "R/Call"
+   FROM INFORMATION_SCHEMA.PROFILING
+   WHERE QUERY_ID = @query_id
+   GROUP BY STATE
+   ORDER BY Total_R DESC;
+  #+END_SRC
+
+   The query is
+   #+BEGIN_SRC sql
+   SELECT `myindex_index`.`company_id` AS `company`,
+          `myindex_company`.`name` AS `company__name`,
+          COUNT(`myindex_index`.`company_id`) AS `count`
+   FROM `myindex_clause`
+   INNER JOIN `myindex_index` ON (`myindex_clause`.`index_id` = `myindex_index`.`id`)
+   INNER JOIN `myindex_company` ON (`myindex_index`.`company_id` = `myindex_company`.`cik`)
+   GROUP BY `myindex_index`.`company_id`,
+            `myindex_company`.`name`
+   ORDER BY `company__name` ASC
+   LIMIT 20
+   #+END_SRC
+
+   The profing result is like this. It can be see that almost all the time are spent on copying to tmp table. Because the query involves three tables. So the join operation works by first creating a tmp table.
+   #+BEGIN_SRC text
+   +----------------------+----------+-------+-------+--------------+
+   | STATE                | Total_R  | Pct_R | Calls | R/Call       |
+   +----------------------+----------+-------+-------+--------------+
+   | Copying to tmp table | 4.265831 | 99.91 |     1 | 4.2658310000 |
+   | Sorting result       | 0.003009 |  0.07 |     1 | 0.0030090000 |
+   | freeing items        | 0.000412 |  0.01 |     1 | 0.0004120000 |
+   | starting             | 0.000075 |  0.00 |     1 | 0.0000750000 |
+   | statistics           | 0.000031 |  0.00 |     1 | 0.0000310000 |
+   | Opening tables       | 0.000026 |  0.00 |     1 | 0.0000260000 |
+   | Sending data         | 0.000025 |  0.00 |     1 | 0.0000250000 |
+   | init                 | 0.000021 |  0.00 |     1 | 0.0000210000 |
+   | Creating tmp table   | 0.000020 |  0.00 |     1 | 0.0000200000 |
+   | preparing            | 0.000013 |  0.00 |     1 | 0.0000130000 |
+   | optimizing           | 0.000012 |  0.00 |     1 | 0.0000120000 |
+   | closing tables       | 0.000010 |  0.00 |     1 | 0.0000100000 |
+   | checking permissions | 0.000009 |  0.00 |     3 | 0.0000030000 |
+   | System lock          | 0.000008 |  0.00 |     1 | 0.0000080000 |
+   | end                  | 0.000006 |  0.00 |     2 | 0.0000030000 |
+   | removing tmp table   | 0.000006 |  0.00 |     1 | 0.0000060000 |
+   | query end            | 0.000003 |  0.00 |     1 | 0.0000030000 |
+   | cleaning up          | 0.000003 |  0.00 |     1 | 0.0000030000 |
+   | logging slow query   | 0.000002 |  0.00 |     1 | 0.0000020000 |
+   | executing            | 0.000002 |  0.00 |     1 | 0.0000020000 |
+   +----------------------+----------+-------+-------+--------------+
+   #+END_SRC

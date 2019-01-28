@@ -1,5 +1,119 @@
 
 * bash alias, create another name for a command
-#+begin_src java
+#+begin_src sh
 alias ${1:name}="${2:command}"
+#+end_src
+
+* iterate all file names under a directory, recursively, with an optional filter function
+#+begin_src sh
+
+#+end_src
+
+* get current username without considering sudo
+#+begin_src sh
+who am i | awk '{print \$1}'
+
+#+end_src
+
+* get current date time as string
+#+begin_src sh
+date=\`date '+%Y%m%d_%H%M%S'\`
+
+#+end_src
+
+* check if a directory not/is exist
+#+begin_src sh
+if [ ! -d $install_dir ]; then
+    $0
+fi
+
+
+#+end_src
+
+* call a function or command, by $(cmd arg1 arg2)  or `cmd arg1 arg2`
+#+begin_src sh
+# install_dir=$$(abspath $$1)
+install_dir=\`abspath $$1\`
+
+#+end_src
+
+* change a path to absolute path
+#+begin_src sh
+abspath (){
+   echo "$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
+}
+
+
+#+end_src
+
+* check input command link argument
+#+begin_src sh
+if [ -z "$1" ]; then
+    echo "Please call '$0 INSTALL_DIR' to run this command!\n"
+    exit 1
+fi
+
+
+#+end_src
+
+* create a multipul line document/here doc
+#+begin_src sh
+cat >${1:filename}<<EOL
+$0
+EOL
+
+#+end_src
+
+* push local repo to github
+#+begin_src sh
+git remote add origin https://github.com/astropeak/blogger.git
+git push -u origin master
+
+then after you can just use git push to push
+
+
+#+end_src
+
+* delete a file in git repos history given the start hash(the hash is the)
+#+begin_src sh
+git filter-branch -f --index-filter 'git rm --cached --ignore-unmatch src/main/java/com/aspk/blogger/WordpressAccount.java' 2241935c15bdcd092298d41396b6576f2017ffa2..HEAD
+
+#+end_src
+
+* change author name and email in all git commit history
+#+begin_src sh
+#!/bin/sh
+
+git filter-branch --env-filter '
+OLD_EMAIL="luooofuq@WL316020.ap.tieto.com"
+CORRECT_NAME="Astropeak"
+CORRECT_EMAIL="astropeak@gmail.com"
+if [ "$GIT_COMMITTER_EMAIL" = "$OLD_EMAIL" ]
+then
+    export GIT_COMMITTER_NAME="$CORRECT_NAME"
+    export GIT_COMMITTER_EMAIL="$CORRECT_EMAIL"
+fi
+if [ "$GIT_AUTHOR_EMAIL" = "$OLD_EMAIL" ]
+then
+    export GIT_AUTHOR_NAME="$CORRECT_NAME"
+    export GIT_AUTHOR_EMAIL="$CORRECT_EMAIL"
+fi
+' --tag-name-filter cat -- --branches --tags
+#+end_src
+
+* debian apt-get install oracle java 8 
+#+begin_src sh
+su -
+echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee /etc/apt/sources.list.d/webupd8team-java.list
+echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee -a /etc/apt/sources.list.d/webupd8team-java.list
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886
+apt-get update
+apt-get install oracle-java8-installer
+update-alternatives --config java 
+exit
+#+end_src
+
+* 
+#+begin_src sh
+cleartool find . -element "{created_since(${1:1-mar-2015})}" -print
 #+end_src

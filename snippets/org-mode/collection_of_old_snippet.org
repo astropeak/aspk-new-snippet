@@ -1,6 +1,15 @@
 
+* Source Code Block: Text
+#+begin_src org
+#+BEGIN_SRC text$>
+$0$>
+#+END_SRC$>
+
+
+#+end_src
+
 * create visual function in emacs lisp, act as interface, a variable save the real function, and can be bind dynamically
-#+begin_src java
+#+begin_src org
 * $1
   #+NAME: vars
   #+begin_src elisp :noweb yes
