@@ -1454,13 +1454,16 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     
 *** use headings to select detailed snippets instead of the fisrt parameter
     
-*** add mode support
+*** DONE add mode support
+    CLOSED: [2019-01-29 Tue 08:39]
+    - State "DONE"       from ""           [2019-01-29 Tue 08:39] \\
+      Looks like already done
     Only that mode's snippet can be selected.
     With a prefix, select form all modes.
     
     Then I should add another field to module: mode
     
-    create all mode dir
+    this code create directories for each mode
     #+NAME: no-name
     #+begin_src elisp
 
@@ -1474,7 +1477,15 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     
     shortcut may be a general idea. It can combine any snippet sources. The aspk-code-snippet works good seems. we should only use key words to search for a snippet, wether if it is a snippet or a shortcut.
     
-*** pns should also support the yas snippet function.
+*** DONE pns should also support the yas snippet function.
+    CLOSED: [2019-01-29 Tue 08:35]
+    - State "DONE"       from ""           [2019-01-29 Tue 08:35] \\
+      Looks like this is already suppored. Just write the simple yas snippet in source blocks. And it will work.
+      
+        #+begin_src python :results output
+        print("%{1:var}=%s" % ($1))
+        $0
+        #+end_src
     for simple snippet, aspk-code-snippet works better. simple snippet can be created quickly.
     
     But for complex snippet, aspk-new-snippet is better. The writting is quite complex.
@@ -2002,17 +2013,18 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+NAME: methods
     #+begin_src elisp
     (defun pns-create-template-table (&optional mode)
-      "Create a name to template object table(list of cons), given template. Key is name, value is template. this table can be used as helm candidates. MODE is a regexp to match the mode(if nil the for all modes)"
+      "Create a name to template object table(list of cons). Key is name, value is list of (template filename). this table can be used as helm candidates. MODE is a regexp to match the mode(if nil the for all modes)"
       (or mode (setq mode ".*"))
       (let (rst)
-        (maphash (lambda (key val)
+        (maphash (lambda (filename val)
                    (when (and  (stringp (pns-assoc 'mode val))
                                (string-match mode (pns-assoc 'mode val)))
                      (aspk/tree-iterate (pns-assoc 'template val)
                                         ;; (lambda (elem parent depth)
                                         (lambda (elem-subtree parent-subtree depth)
                                           (setq rst (append (list (cons (pns-assoc 'name (car elem-subtree))
-                                                                        (car elem-subtree)))
+                                                                        (list (car elem-subtree)
+                                                                              filename)))
                                                             rst))))))
                  pns-template-set)
         rst))
@@ -2028,19 +2040,17 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
       (save-excursion (pns-update-template-list))
       (message "in 1 pns-expand-template-by-name Buffer:%S" (current-buffer))
-
-      (let ((template
-             (save-excursion
-               (helm-other-buffer
-                `(((name . "Template")
-                   (candidates . ,(pns-create-template-table (pns-get-current-mode)))
-                   (action . (lambda (tmpl) tmpl))
-                   (accept-empty . t)))
-                "Template"))))
-        (message "Template: %S" template)
-
-        (message "in 2 pns-expand-template-by-name Buffer:%S" (current-buffer))
-        (pns-expand-tempalte template)))
+      (helm-other-buffer
+       `(((name . ,(format "Template in %s" (pns-get-current-mode)))
+          (candidates . ,(pns-create-template-table (pns-get-current-mode)))
+          ;; value in action is a list of (template filename)
+          (action . (("expand" . (lambda (value) (pns-expand-tempalte (nth 0 value))))
+                     ("open" . (lambda (value)
+                                 (pns-open-template
+                                  (nth 0 value)
+                                  (f-join pns-snippet-dir (string-remove-prefix "/" (nth 1 value))))))))
+          (accept-empty . t)))
+       "Template"))
 
     (defun pns-get-current-mode ()
       "get current src block mode name under cursor in a org mode file buffer. If not applicatable, return nil"
@@ -2054,6 +2064,20 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
          lang)
        (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode))))
 
+    ;; (f-join pns-snippet-dir "aaa/bbb")
+    (defun pns-open-template (template filename)
+      "Open the TEMPLATE, which is defined in FILENAME"
+      (let ((snippet-text (pns-assoc 'text template))
+            (snippet-name (pns-assoc 'name template))
+            (search-text))
+        ;; (message "Open template. Snippet text: %s, name: %s, file name: %s" snippet-text snippet-name filename)
+        (find-file filename)
+        (goto-char (point-max))
+        (setq search-text snippet-text)
+        (if (equal "" (string-trim snippet-text))
+          (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
+          (search-backward snippet-text))
+        ))
     #+end_src
 
     create template:
@@ -2194,7 +2218,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       (message "Done"))
 
     #+end_src
-*** multiple src blocks in one entry will be treadted as if they are in different entry
+*** DONE multiple src blocks in one entry will be treadted as if they are in different entry
+    CLOSED: [2019-01-29 Tue 08:39]
+    - State "DONE"       from ""           [2019-01-29 Tue 08:39] \\
+      Every src block will be a snippet in current implementation
     Currently we assume there are only one src bolck in an entry
 *** don't parse `(xxx yyy)` as hungry var
     Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
@@ -2214,12 +2241,60 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
     Then I will have the uniform way of taking notes.
 *** 190128 add an action for an snippet: go to the source org file of a snippet
+    - Note taken on [2019-01-29 Tue 12:07] \\
+      Implemented a working solution.
+      New function added: pns-open-template
+      And add a new action 'open' to helm
     When running pns-expand-template-by-name
     Curruently there is only one action: expand the snippet.
-    Go to the source org file will be helpful. You can see doc there (DEMO VERSION!) or modify the snippet.
+    Go to the source org file will be helpful. You can see doc there or modify the snippet.
+
+    This is a feature I want to implement at this moment.
+
+
+    All snippets are stored in 'pns-template-set', which is a hash table, whose key is file name, value is an assoc list of '((update-time .) (template ...) (mode .)'.
+    An example:
+    #+BEGIN_SRC elisp
+    "/emacs-lisp-mode/update-file-processing-when-newer-pattern.org"
+    ((update-time . 1483934152.0)
+     (template
+      ((name . "root")
+       (var-table)
+       (hungry-vars)
+       (precondition-table)
+       (text . ""))
+      (((name . "update file processing result when newer patern")
+        (var-table)
+        (hungry-vars hash file processing-function)
+        (precondition-table)
+        (text . "  (setq `hash` (make-hash-table :test 'equal))\n  (let (elem time elem2 result)\n    (setq elem (gethash `file` `hash`))\n    (setq time (time-to-seconds (nth 5 (file-attributes `file` 'string))))\n    (unless (and elem (<= time (pns-assoc 'update-time elem)))\n      (message \"Updating result for file %s\" `file`)\n      (setq result (`processing-function` `file`))\n      (setq elem2 (list (cons 'update-time time)\n                        (cons 'result result)\n                        ;; and other field here\n                        ))\n      (puthash `file` elem2 `hash`)))\n"))))
+     (mode . "emacs-lisp"))
+
+    #+END_SRC
+
+    The '(template ...)' in the assoc list is the real template. The value is a tree. Each element in the tree is an assco list.
+    - name: the headline of this snippet
+    - hungry-vars: the variables defained in this snippet. You can do it by this syntax: `varname`.
+    - var-table: this saves the possible value of a variable.
+    - precondition-table: the precondition when is snippet should be expanded. Only take effect when the snippet is called by its parent snippet.
+    - text: the real snippet.
+
+
+    To implement this feature, we might need to add a new field (DEMO VERSION!) to the assco list:
+    - filename: the file name where this template is defined.
+
 *** 190128 think of a way to adding snippet efficiently
     Current you can only edit the org files under pns-snippet-dir manually.
-    The good is that after the updateion, the new snippet will be avaliable on next run
+    The good is that after the addtion, the new snippet will be avaliable on next run.
+
+    Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
+    And then save the snippet to mode-dir/inbox.org 
+
+*** 190129 BUG '\\' become to '\' after (DEMO VERSION!) expandation
+    For below code snippet text:
+          (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
+    It will become to below after expandation:
+          (re-search-backward (format "^\*+[ \t\n]+%s" (string-trim snippet-name)))
 
 ** run
    - Note taken on [2017-01-06 Fri 21:23]

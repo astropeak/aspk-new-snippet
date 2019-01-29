@@ -1,0 +1,4 @@
+* regexp: search for org mode headline/title
+  #+BEGIN_SRC elisp
+  (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim ${1:headline})))
+  #+END_SRC

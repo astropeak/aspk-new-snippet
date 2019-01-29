@@ -1,0 +1,10 @@
+* test simple snippet
+  #+begin_src python :results output
+  print("%{1:var}=%s" % ($1))
+  $0
+  #+end_src
+* test simple snippet 2
+  #+begin_src python :results output
+  print("${1:var}=%s" % ($1))
+  $0
+  #+end_src
