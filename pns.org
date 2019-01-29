@@ -1065,6 +1065,16 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
 
 ** issues
+*** 190129 make python snippet not indent automatically
+    A test code: add below line will do the job to 'pns-expand-template
+      ;; (setq hungry-vars '((yas-indent-line 'fixed)))
+
+
+    A problem:
+    The snippet text get from a org file source block have some leading blanks. Those blanks should be trimed if 'yas-indent-line is set to fixed.
+
+    Also we don't know the template mode. We will only want to this if mode is 'python-mode.
+
 *** DONE " myTemp" not killed may cause snippet file not found
     CLOSED: [2017-01-03 Tue 11:45]
     - State "DONE"       from ""           [2017-01-03 Tue 11:45]
@@ -2204,6 +2214,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
           (message "Template-Element: %S, buffer: %S" template-element (current-buffer))
           (setq text (pns-assoc 'text template-element))
           (setq hungry-vars (pns-get-hungry-values template-element filled-vars))
+          ;; (setq hungry-vars '((yas-indent-line 'fixed)))
           (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
           ;; expand this
           (if (region-active-p)
@@ -2295,6 +2306,27 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
           (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
     It will become to below after expandation:
           (re-search-backward (format "^\*+[ \t\n]+%s" (string-trim snippet-name)))
+
+
+    Seems this bug is in yas-expand-snippet
+    (setq text "\\\\*")
+    here text (DEMO VERSION!) is a string with two '\'
+    (yas-expand-snippet  text)
+
+    The expaned string is "\*", but "\\*' is expected. The below one will expand to "\\*"
+    (setq text "\\\\\\\\*")
+    (yas-expand-snippet  text)
+
+    So it looks like if there is two '\' in text, then after expand there will be one. and four to two.
+    And one also to one. like below.
+    (yas-expand-snippet "\\*")
+
+    Why the above behavior?
+    Because '\' is also treated as a special char in snippet by yassnippet. It is used to quote two special chars in the (DEMO VERSION!) snipppet: '$' and '`', to input them literally.
+
+
+    So there is no bug in the software, instead, you should change your (DEMO VERSION!) snippet. To output a '\' after expandation, you should use '\\' in the snippet.
+
 
 ** run
    - Note taken on [2017-01-06 Fri 21:23]

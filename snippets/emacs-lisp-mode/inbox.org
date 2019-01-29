@@ -2,3 +2,23 @@
   #+BEGIN_SRC elisp
   (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim ${1:headline})))
   #+END_SRC
+* regexp tips: about back quote char(\) in regexp and in string
+  Because regexp in elisp is represented by a string, and when elisp reading strings, it will frist process the back quote char. For example, for this string literal: (DEMO VERSION!) "\Aaa", after emacs get it, the back quote char already be droped.
+  (eval "\yaa")
+  result is "yaa".
+
+
+  So if you want a back quote char go to the regexp, you should use two back quote.
+  For exampel, when you want match a regural '*' literally, you should use '\*' in the regexp syntax. Bacause '*' is a special char in regexp.
+  Then when you define that regexp using elisp string, (DEMO VERSION!) you should use:
+  "\\*"
+
+  After read, the string becomes to "\*".
+
+* regexp: match a literal '*', by "\\*"
+  After expandation, it will be "\\*"
+  #+NAME: no-name
+  #+begin_src elisp
+  "\\\\*"$0
+  #+end_src
+
