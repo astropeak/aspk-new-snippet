@@ -1,0 +1,81 @@
+* jsonpath
+** about query path syntax
+   a.b to access dictionary field
+   a[0] to access array element
+** the original jsonpath, the general idea
+   https://goessner.net/articles/JsonPath/
+   The jsonpath is much similar to xpath, which is for xml files
+
+** about jsonpath-rw package, this is an jsonpath implementation in python
+   The jsonpath-rw module don't support filter in query path.
+   https://github.com/kennknowles/python-jsonpath-rw/issues/54
+   E.g, the below is not supported:
+   using the symbol '@' for the current object. Filter expressions are supported via the syntax ?() as in
+
+   $.store.book[?(@.price < 10)].title
+
+   $..book[?(@.isbn)] | filter all books with isbn number
+   $..book[?(@.price<10)] | filter all books cheapier than 10  
+
+** jsonpath usage example
+   #+begin_src python :results output
+   from jsonpath_rw import jsonpath, parse, Index, Fields, Root, DatumInContext
+
+   def get(json_obj, query_path):
+     c = parse(query_path).find(json_obj)
+     return [x.value for x in c]
+
+   def set(json_obj, query_path, value, index=0):
+     """set query_path of json_obj to value. There maybe more than one match for query_path, so index specify the index"""
+     # on implemnetation: https://github.com/kennknowles/python-jsonpath-rw/issues/21
+     c = parse(query_path).find(json_obj)
+     d = c[index]
+     if not isinstance(d, DatumInContext):
+       raise Exception("Nothing found by the given json-path")
+
+     path = d.path
+     if isinstance(path, Index):
+       d.context.value[d.path.index] = value
+     elif isinstance(path, Fields):
+       d.context.value[d.path.fields[0]] = value
+
+     return json_obj
+
+
+   a = {'a': [{'b': 1, 'c': 'number one'}, {'b': 2, 'c': 'number two'}]}
+
+   # select all b's value. For array, use []. For dict, use '.'
+   c = parse('a[*].b').find(a)
+   assert(len(c) == 2)
+   assert(c[0].value == 1)
+   assert(c[1].value == 2)
+
+
+   # modify the value
+   # the implementation: https://github.com/kennknowles/python-jsonpath-rw/issues/21
+   # before modification, the value is 1
+   assert(a['a'][0]['b'] == 1)
+
+   d = c[0]
+   path = d.path
+   if isinstance(path, Index):
+     d.context.value[d.path.index] = 3
+   elif isinstance(path, Fields):
+     d.context.value[d.path.fields[0]] = 3
+
+   # after modification, the value is 3
+   assert(a['a'][0]['b'] == 3)
+
+
+   # using the set method to modify
+   assert(a['a'][1]['b'] == 2)
+   assert(get(a, 'a[1].b')[0] == 2)
+   set(a, 'a[1].b', 4)
+   assert(a['a'][1]['b'] == 4)
+   assert(get(a, 'a[1].b')[0] == 4)
+
+   assert(isinstance(get(a, 'a[0]')[0], dict))
+   set(a, 'a[0]', 'ss')
+   assert(isinstance(get(a, 'a[0]')[0], str))
+   assert(get(a, 'a[0]')[0] == 'ss')
+   #+end_src

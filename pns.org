@@ -1,4 +1,11 @@
 * pns
+** overal note
+   - aspk-new-snippet can completely replace aspk-code-snippet.
+   - write by literate programming.
+     All source code contains in this org file
+   - based on org-mode, yasnippet, helm
+     snippet is saved in org-mode file, can can have a tree structure.
+
 ** inbox
 *** 170101, thinking and ideas
     # -*- mode: snippet -*-
