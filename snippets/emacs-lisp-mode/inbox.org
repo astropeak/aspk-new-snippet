@@ -1,7 +1,14 @@
-* regexp: search for org mode headline/title
+
+* regexp value: org mode headline/title (** a title)
+  org-outline-regexp-bol: means begining of line
+  (pns-get-src-block-info)
+  After expand, this will become: "^\\*+[ \t]+"
   #+BEGIN_SRC elisp
-  (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim ${1:headline})))
+  "^\\\\*+[ \t]+"
   #+END_SRC
+
+  ;; or use this variable: org-outline-regexp-bol
+
 * regexp tips: about back quote char(\) in regexp and in string
   Because regexp in elisp is represented by a string, and when elisp reading strings, it will frist process the back quote char. For example, for this string literal: (DEMO VERSION!) "\Aaa", after emacs get it, the back quote char already be droped.
   (eval "\yaa")
@@ -15,10 +22,39 @@
 
   After read, the string becomes to "\*".
 
-* regexp: match a literal '*', by "\\*"
+
+* regexp value: a literal '*', by "\\*"
   After expandation, it will be "\\*"
   #+NAME: no-name
   #+begin_src elisp
   "\\\\*"$0
   #+end_src
+
+* yasnippet: make not indent automatically by set yas-indent-line to 'fixed in expand-env
+  The default value is 'auto. Then after expanded it will indent the content
+  (yas-expand-snippet "snippet" nil nil '((yas-indent-line 'auto)))
+
+  If set (DEMO VERSION!) to 'fixed, then the content will be fixed on current column.
+
+  The forth parameter is a list of (VAR VALUE), you can setup many variable to control some behavir
+
+
+  You can also add a '$>' to the end of lines in a snippet content to do a forced indent, even when yas-indent-line is set to 'fixed.
+
+  #+NAME: no-name
+  #+begin_src elisp
+  (yas-expand-snippet "snippet" nil nil '((yas-indent-line 'fixed)))
+  #+end_src
+
+* orgmode:regexp value: src block name (#+name: )
+  #+NAME: no-name
+  #+begin_src elisp
+  org-babel-src-name-regexp 
+  #+end_src
+* orgmode: regexp value: src block (#+begin_src ... #+end_src)
+  #+NAME: no-name
+  #+begin_src elisp
+  org-babel-src-block-regexp
+  #+end_src
+
 
