@@ -15,6 +15,186 @@
     #+end_src
 
     This function will update pns-template-set, which is a hash table, used to save template.
+    
+**** get src blocks in a org-mode file
+***** example
+      There are 3 blocks in the org file, but one is filterd out, so the result is 2 blocks.
+      A proble can be seen: the block name is always empty.
+      (press C-c C-c to run the src block)
+      #+begin_src emacs-lisp 
+      ;; (setq org-mode-file-name (aspk-org-tangle-next-test-data-block))
+      (setq org-mode-file-name "test/data/1.org")
+      ;; (format "%S" (pns-get-all-src-blocks org-mode-file-name nil "data"))
+      (format "%S" (pns-get-all-src-blocks org-mode-file-name))
+      #+end_src
+
+      #+RESULTS:
+      : (((beginning . 29) (end . 73) (name . "  ") (lang . "emacs-lisp") (tag . "") (content . "elisp") (level . 1) (heading . "headline 1")) ((beginning . 154) (end . 211) (name . "  ") (lang . "python") (tag . ":results output") (content . "python") (level . 1) (heading . "headline 2")))
+
+      This is the input of test case:
+      #+name: input
+      #+begin_src org
+      ,#+begin_src emacs-lisp
+      elisp
+      ,#+end_src
+
+      ,#+begin_src emacs-lisp :not-a-snippet
+      elisp2
+      ,#+end_src
+
+      ,* headline 2
+      ,#+begin_src python :results output
+      python
+      ,#+end_src
+      #+end_src
+
+
+      This is the expected result of the test case:
+      #+name: result
+      #+begin_src emacs-lisp
+      '(((beginning . 14) (end . 52) (name . "") (lang . "emacs-lisp") (tag . "") (content . "elisp") (level . 1) (heading . "headline 1"))
+        ((beginning . 123) (end . 174) (name . "") (lang . "python") (tag . ":results output") (content . "python") (level . 1) (heading . "headline 2")))
+      #+end_src
+
+***** main function
+      Function get all src block, (name, content, belonging-heading-level), in the same order they are defined.
+     
+     Give an org file, get all src blocks as a list.
+    #+NAME: methods
+    #+begin_src elisp
+    (defun pns-get-all-src-blocks (snippet &optional entry name)
+      (pns-src-block-filter
+       (pns-get-all-src-blocks-coolie snippet entry name)))
+
+    (defun pns-get-all-src-blocks-coolie (snippet &optional entry name)
+      "Get all src blocks of the given snippet file name, return as a list. All src blocks should be in a entry, or there will be error. If the entry is provided, then only get that entry's src blocks. entry is regexp to match a headline. If name is given, only get blocks with NAME."
+      (let (tmp rst)
+        ;; create temp buffer without undo record or font lock. (more efficient)
+        ;; first space in temp buff name is necessary
+        (and (get-buffer " myTemp") (kill-buffer " myTemp"))
+        (set-buffer (get-buffer-create " myTemp"))
+        (insert-file-contents snippet nil nil nil t)
+
+        ;; get only the entry's content
+        (when entry
+          (goto-char 1)
+          (if (re-search-forward entry nil t)
+              (let ((heading (match-string 0))
+                    (entry (org-get-entry)))
+                (erase-buffer)
+                (insert heading)
+                (insert "\n")
+                (insert entry))
+            (error "Entry %S not found, file: %s, src block name: %s." entry snippet name)))
+
+        ;; (write-file "aaa")
+        (goto-char 1)
+        (while (setq tmp (pns-get-src-block-info name))
+          (push tmp rst))
+        (prog1 (reverse rst)
+          (kill-buffer " myTemp"))))
+    #+end_src
+***** get a src block in current buffer
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-get-src-block-info (&optional name)
+       "Get one src block after current positon in current buffer, return as a accoc list of block info. If no src blocks, return nil, and position will not be moved. If NAME is given, then only get a src block with that NAME. NAME is a regular expression that must contain a match pair \\(\\), to let the re searching get the result.
+             The codes are copied form org-babel-find-named-block .
+         "
+       ;; Return value example: ((tag . ":not-a-snippet :noweb") (beginning . 179) (end . 228) (name . "  ") (lang . "elisp") (content . "  \"^\\\\\\\\*+[ \\t]+\"\n") (level . 1) (heading . "regexp value: org mode headline/title (** a title)"))
+       (interactive)
+       ;; (or name (setq name "\\(.*\\)"))
+       (let* ((case-fold-search t)
+              (regexp (if name (concat org-babel-src-name-regexp name "[ \t(]*[\r\n]\\(?:^#.*[\r\n]\\)*"
+                                       (substring org-babel-src-block-regexp 1))
+                        org-babel-src-block-regexp)))
+
+         (when (re-search-forward regexp nil t)
+           (append
+            ;; position: beginning and end
+            (list (cons 'beginning (match-beginning 0))
+                  (cons 'end (match-end 0)))
+
+            ;; src block name, lang, tag, content
+            (mapcar (lambda (elem)
+                      (let ((idx (car elem)) (property-name (cdr elem)))
+                        (cons property-name
+                              (if (equal property-name 'content)
+                                  (pns-post-process-src-block-content
+                                   (substring-no-properties (or (match-string idx) "")))
+                                (substring-no-properties (or (match-string idx) ""))))))
+                    (if name
+                        '((1 . name) (3 . lang) (5 . tag) (6 . content))
+                      '((1 . name) (2 . lang) (4 . tag) (5 . content))))
+
+            ;; belonging heading and level
+            (save-excursion
+              (let ((p (point)))
+                (org-back-to-heading)
+                (move-beginning-of-line 1)
+                (if (re-search-forward "^\\(\\*+\\)\s+\\(.*\\)" p t)
+                    (list (cons 'level (length (match-string 1)))
+                          (cons 'heading (substring-no-properties (match-string 2)))))))))))
+
+     ;; there is a bug in regexp-quote: '\\|' will be quoted to '\\\\|'
+
+     (defun pns-post-process-src-block-content (content)
+       (pns-remove-leading-spaces 
+        (pns-remove-src-block-last-new-line-char 
+         (pns-unquote-src-block-content content)))
+       )
+
+     (defun pns-unquote-src-block-content (content)
+       "Remove all leading ',' in each line of content"
+       (replace-regexp-in-string "^\\(\s*\\)," "" content)) ;;remove all leading line helps indent.
+
+     (defun pns-remove-src-block-last-new-line-char (content)
+       "Remove the last new line char in content. Because when using it as a snippet, it always has a new line char at the end which is not needed"
+       (replace-regexp-in-string "\n$" "" content))
+
+     (defun pns-remove-leading-spaces (content)
+       "Remove unneeded leading spaces in each line of CONTENT"
+       (let ((unneeded-spaces 
+              ;; (when (not (equal (string-match "^\s*" content) 0))
+              ;;   (match-string 0))
+              (with-temp-buffer (insert content) (goto-char 1)
+                                (when (re-search-forward "^\s+" nil t)
+                                  (match-string 0)))
+              ))
+         (if unneeded-spaces
+             (replace-regexp-in-string (format "^%s" unneeded-spaces) "" content)
+           content)))
+
+     #+end_src
+
+    
+    #+NAME: vars-
+    #+begin_src elisp
+    (setq pns-src-block-name-regexp "\\(header\\|content\\)")
+    #+end_src
+
+    #+name: test-
+    #+begin_src elisp
+    (defun pns-tmp ()
+      (interactive)
+      (save-excursion
+        (message "%s" (pns-get-src-block-info))))
+    #+end_src
+
+    #+RESULTS: test-
+    : pns-tmp
+
+***** filter out some src blocks
+      Remove blocks whose tag contains ':not-a-snippet'
+      #+name: methods
+      #+begin_src emacs-lisp
+      (defun pns-src-block-filter (blocks)
+        "Filter src blocks.  Remove the blocks whose tag contains ':not-a-snippet. This is a way to indicate a src block is not used as a snippet"
+        (-filter (lambda (x) (not (s-contains? ":not-a-snippet" (pns-assoc 'tag x))))
+                 blocks))
+      #+end_src
+
+ 
 *** expand a snippet 
     pns-expand-template-by-name 
 *** var-table, hungry-vars in a template
@@ -338,7 +518,9 @@
     #+end_src
     
     #+RESULTS: methods
-=pns-tool-convert-all
+=pns-get-all-src-blocks-coolie
+==pns-src-block-filter
+==pns-tool-convert-all
 =    ==============    ==    ==    ===================pns-do-xxx
     =    
     
@@ -749,120 +931,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
     
     
-    DONE. a function get all src block, (name, content, belonging-heading-level), in the same order they are defined.
-    #+NAME: vars
-    #+begin_src elisp
-    (setq pns-src-block-name-regexp "\\(header\\|content\\)")
-    #+end_src
-    
-    #+NAME: methods
-    #+begin_src elisp
-    (defun pns-get-all-src-blocks (snippet &optional entry name)
-      "Get all src blocks of the given snippet file name, return as a list. All src blocks should be in a entry, or there will be error. If the entry is provided, then only get that entry's src blocks. entry is regexp to match a headline. If name is given, only get blocks with NAME."
-      (let (tmp rst)
-        ;; create temp buffer without undo record or font lock. (more efficient)
-        ;; first space in temp buff name is necessary
-        (and (get-buffer " myTemp") (kill-buffer " myTemp"))
-        (set-buffer (get-buffer-create " myTemp"))
-        (insert-file-contents snippet nil nil nil t)
-
-        ;; get only the entry's content
-        (when entry
-          (goto-char 1)
-          (if (re-search-forward entry nil t)
-              (let ((heading (match-string 0))
-                    (entry (org-get-entry)))
-                (erase-buffer)
-                (insert heading)
-                (insert "\n")
-                (insert entry))
-            (error "Entry %S not found, file: %s, src block name: %s." entry snippet name)))
-
-        ;; (write-file "aaa")
-        (goto-char 1)
-        (while (setq tmp (pns-get-src-block-info name))
-          (push tmp rst))
-        (prog1 (reverse rst)
-          (kill-buffer " myTemp"))))
-
-    (defun pns-get-src-block-info (&optional name)
-      "Get one src block after current positon in current buffer, return as a accoc list of block info. If no src blocks, return nil, and position will not be moved. If NAME is given, then only get a src block with that NAME. NAME is a regular expression that must contain a match pair \\(\\), to let the re searching get the result.
-            The codes are copied form org-babel-find-named-block .
-        "
-      ;; Return value example: ((tag . ":not-a-snippet :noweb") (beginning . 179) (end . 228) (name . "  ") (lang . "elisp") (content . "  \"^\\\\\\\\*+[ \\t]+\"\n") (level . 1) (heading . "regexp value: org mode headline/title (** a title)"))
-      (interactive)
-      ;; (or name (setq name "\\(.*\\)"))
-      (let* ((case-fold-search t)
-             (regexp (if name (concat org-babel-src-name-regexp name "[ \t(]*[\r\n]\\(?:^#.*[\r\n]\\)*"
-                                      (substring org-babel-src-block-regexp 1))
-                       org-babel-src-block-regexp)))
-
-        (when (re-search-forward regexp nil t)
-          (append
-           ;; position: beginning and end
-           (list (cons 'beginning (match-beginning 0))
-                 (cons 'end (match-end 0)))
-
-           ;; src block name, lang, tag, content
-           (mapcar (lambda (elem)
-                     (let ((idx (car elem)) (property-name (cdr elem)))
-                       (cons property-name
-                             (if (equal property-name 'content)
-                                 (pns-post-process-src-block-content
-                                  (substring-no-properties (or (match-string idx) "")))
-                               (substring-no-properties (or (match-string idx) ""))))))
-                   (if name
-                       '((1 . name) (3 . lang) (5 . tag) (6 . content))
-                     '((1 . name) (2 . lang) (4 . tag) (5 . content))))
-
-           ;; belonging heading and level
-           (save-excursion
-             (let ((p (point)))
-               (org-back-to-heading)
-               (move-beginning-of-line 1)
-               (if (re-search-forward "^\\(\\*+\\)\s+\\(.*\\)" p t)
-                   (list (cons 'level (length (match-string 1)))
-                         (cons 'heading (substring-no-properties (match-string 2)))))))))))
-
-    ;; there is a bug in regexp-quote: '\\|' will be quoted to '\\\\|'
-
-    (defun pns-post-process-src-block-content (content)
-      (pns-remove-leading-spaces 
-       (pns-remove-src-block-last-new-line-char 
-        (pns-unquote-src-block-content content)))
-      )
-
-    (defun pns-unquote-src-block-content (content)
-      "Remove all leading ',' in each line of content"
-      (replace-regexp-in-string "^\\(\s*\\)," "" content)) ;;remove all leading line helps indent.
-
-    (defun pns-remove-src-block-last-new-line-char (content)
-      "Remove the last new line char in content. Because when using it as a snippet, it always has a new line char at the end which is not needed"
-      (replace-regexp-in-string "\n$" "" content))
-
-    (defun pns-remove-leading-spaces (content)
-      "Remove unneeded leading spaces in each line of CONTENT"
-      (let ((unneeded-spaces 
-             ;; (when (not (equal (string-match "^\s*" content) 0))
-             ;;   (match-string 0))
-             (with-temp-buffer (insert content) (goto-char 1)
-                               (when (re-search-forward "^\s+" nil t)
-                                 (match-string 0)))
-             ))
-        (if unneeded-spaces
-            (replace-regexp-in-string (format "^%s" unneeded-spaces) "" content)
-          content)))
-
-    #+end_src
-    
-    #+NAME: test-
-    #+begin_src elisp
-    (defun pns-tmp ()
-      (interactive)
-      (message "%s" (pns-get-src-block-info pns-src-block-name-regexp)))
-    #+end_src
-    
-    
+   
     convert the source blocks to templates list:
     Given src blocks, get the templates.
     #+NAME: methods
