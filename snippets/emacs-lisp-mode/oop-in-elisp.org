@@ -1,12 +1,12 @@
 * oop by eieio
   https://www.gnu.org/software/emacs/manual/html_node/eieio/Quick-Start.html#Quick-Start
   #+NAME: no-name
-  #+begin_src elisp
+  #+begin_src emacs-lisp
 @(get class field1)
   #+end_src
 
 ** oop: create a class
-   #+begin_src elisp
+   #+begin_src emacs-lisp
    (defclass `class` () ; No superclasses
      ((`field1` :initarg :`field1`
                   :initform ""
@@ -24,7 +24,7 @@
    A ':before' method will be called before the ':primary' one, and the ':after' method called after. The return value is as the ':primary' one. All three method should have the same name.
 
    #+NAME: no-name
-   #+begin_src elisp
+   #+begin_src emacs-lisp
    ;; the metehod is dispatched based on the type of first parameter, which is always a type class
    (defmethod `method` ((inst `class`) &optional other-args-here)
      "doc"
@@ -34,13 +34,13 @@
    #+end_src
 ** oop: create an object for a class
    #+NAME: no-name
-   #+begin_src elisp
+   #+begin_src emacs-lisp
    (`class` :`field1` `value1` $0)
    #+end_src
 
 ** oop: get member variable / field given an object
    #+NAME: no-name
-   #+begin_src elisp
+   #+begin_src emacs-lisp
   (oref `object` :`field1`)
    #+end_src
 
@@ -53,7 +53,7 @@ Do not prefix method names with the class name. All methods in EIEIO are “virt
 Do not prefix slots in your class. The slots are always locally scoped to your class, and need no prefixing.
 If your library inherits from other libraries of classes, you must “require” that library with the require command.
 ** oop: a full example
-   #+BEGIN_SRC elisp
+   #+begin_src emacs-lisp
    (defclass Foo () ; No superclasses
      ((name :initarg :name
             :initform ""

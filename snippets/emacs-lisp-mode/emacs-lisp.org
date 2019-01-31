@@ -19,7 +19,7 @@
    #+end_src
    
    #+NAME: no-name
-   #+begin_src elisp
+   #+begin_src emacs-lisp
       ;; iterate all file names under directory "." with an optional filter function, recursively
    (require 'f)
    (mapc (lambda (file)
@@ -36,6 +36,6 @@
 ** details
    This entry is used to delete every snippet.
    #+NAME: header
-   #+begin_src elisp
+   #+begin_src emacs-lisp
    (())
    #+end_src

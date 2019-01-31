@@ -3,9 +3,9 @@
   org-outline-regexp-bol: means begining of line
   (pns-get-src-block-info)
   After expand, this will become: "^\\*+[ \t]+"
-  #+BEGIN_SRC elisp
+  #+begin_src emacs-lisp
   "^\\\\*+[ \t]+"
-  #+END_SRC
+  #+end_src
 
   ;; or use this variable: org-outline-regexp-bol
 
@@ -26,7 +26,7 @@
 * regexp value: a literal '*', by "\\*"
   After expandation, it will be "\\*"
   #+NAME: no-name
-  #+begin_src elisp
+  #+begin_src emacs-lisp
   "\\\\*"$0
   #+end_src
 
@@ -42,18 +42,18 @@
   You can also add a '$>' to the end of lines in a snippet content to do a forced indent, even when yas-indent-line is set to 'fixed.
 
   #+NAME: no-name
-  #+begin_src elisp
+  #+begin_src emacs-lisp
   (yas-expand-snippet "snippet" nil nil '((yas-indent-line 'fixed)))
   #+end_src
 
 * orgmode:regexp value: src block name (#+name: )
   #+NAME: no-name
-  #+begin_src elisp
+  #+begin_src emacs-lisp
   org-babel-src-name-regexp 
   #+end_src
 * orgmode: regexp value: src block (#+begin_src ... #+end_src)
   #+NAME: no-name
-  #+begin_src elisp
+  #+begin_src emacs-lisp
   org-babel-src-block-regexp
   #+end_src
 
@@ -68,7 +68,7 @@
   (append '(1 2)  5 '(3 4)) ;; => error: (wrong-type-argument sequencep 5)
 
   #+NAME: no-name
-  #+begin_src elisp
+  #+begin_src emacs-lisp
   (append ${1:list} $0)
   #+end_src
 
@@ -101,7 +101,7 @@
 * regexp: string: match a regexp in sring. BUGGY, not use!!!
   string-match is buggy, nerver use it!!!  But use re-search-forward instead(first insert the string to a temp (DEMO VERSION!) buffer)
   #+NAME: no-name
-  #+begin_src elisp
+  #+begin_src emacs-lisp
   (setq content "    aaa")
   ;; (setq content "aaa")
   (setq a 

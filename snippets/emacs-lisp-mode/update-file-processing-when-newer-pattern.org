@@ -31,7 +31,7 @@
      create a empty hash. 
      Seem no constructor support from eieio.
 
-  #+begin_src elisp
+  #+begin_src emacs-lisp
   (setq `hash` (make-hash-table :test 'equal))
   (let (elem time elem2 result)
     (setq elem (gethash `file` `hash`))
