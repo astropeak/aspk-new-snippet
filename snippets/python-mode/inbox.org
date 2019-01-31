@@ -1,0 +1,15 @@
+* import a module given its string name
+
+  #+begin_src python
+  def import_module(module_name):
+    import importlib
+    try:
+      return importlib.import_module(module_name)
+    except ImportError:
+      return None
+  #+end_src
+
+* a test
+  #+begin_src python :results output
+import os
+  #+end_src

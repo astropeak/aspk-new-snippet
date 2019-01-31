@@ -1,0 +1,7 @@
+* FF
+  #+begin_src org
+  ,* ${1:headline}
+    ,#+begin_src ${2:lang}
+    $0
+    ,#+end_src
+  #+end_src
