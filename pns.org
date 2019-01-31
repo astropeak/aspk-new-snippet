@@ -8,7 +8,7 @@
 
 ** doc
 *** get snippet by parsing org mode file
-    function:
+    by this function:
     #+NAME: no-name
     #+begin_src elisp
 (pns-update-template-list)
@@ -17,7 +17,26 @@
     This function will update pns-template-set, which is a hash table, used to save template.
 *** expand a snippet 
     pns-expand-template-by-name 
-   
+*** var-table, hungry-vars in a template
+    hungry-vars: a list of (VAR VALUE), which is used to passed to yas-expand-snippet as the EXPAND-ENV parameter.
+    var-table: a list of (VAR POSSIBLE-VALUE), which is used to define possiable values for a var. That (DEMO VERSION!) information comes from the org mode snippet blocks.
+
+    The `emacs-lisp-code` syntax in a yas (DEMO VERSION!) snippet let user embed a emacs lisp code inside the snippet.
+    The emacs-lisp code will be evaluated .
+
+    PNS use this feature to embed a variable in snippets. This is achieved by:
+    1. put a (var value) in expand-env parameter of yas-expand-snippet.
+    2. use `var` in the snippet text to refer to that var.
+    
+    Because variables in the expand-env parameter will be defined like a let variable, so it will be a locale variable when the snippet is expanded. so the syntax `var`is acturally refers to a variable. A variable in list evaluates to its value.
+
+    This is an example, it will expand to "name: Tom".
+    #+NAME: no-name
+    #+begin_src elisp
+    (yas-expand-snippet "name: `name`" nil nil '((name "Tom")))
+    #+end_src
+
+    
 ** inbox
 *** 170101, thinking and ideas
     # -*- mode: snippet -*-
