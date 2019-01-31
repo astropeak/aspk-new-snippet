@@ -1,0 +1,8 @@
+* a test of aall mode
+  #+begin_src python :results output
+  python
+  #+end_src
+
+  #+begin_src emacs-lisp :results output
+  elisp
+  #+end_src

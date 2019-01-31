@@ -1121,6 +1121,19 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
 
 ** issues
+
+*** DONE 190131 filter snippet by its src block lang instead of the file mode
+    CLOSED: [2019-01-31 Thu 16:46]
+    - State "DONE"       from ""           [2019-01-31 Thu 16:46]
+    The old implemntation all snippets defined in a file have the same mode, regardless the src block lang.
+    This should be changed.
+
+    One benifet is we can define snippets for different mode in a single file.
+
+    A remaining problem:
+    a src block with lang 'elisp' is also a emacs-lisp mode one. This will make the filter failed.
+    So for a emacs lisp src block, we should use 'emacs-lisp' as the lang value, instead of 'elisp'.
+    
 *** DONE 190130 remove the last new line character of a snippet text
     CLOSED: [2019-01-30 Wed 14:32]
     - State "DONE"       from ""           [2019-01-30 Wed 14:32] \\
@@ -2114,16 +2127,20 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       (or mode (setq mode ".*"))
       (let (rst)
         (maphash (lambda (filename val)
-                   (when (and  (stringp (pns-assoc 'mode val))
-                               (string-match mode (pns-assoc 'mode val)))
-                     (aspk/tree-iterate-element-value
-                      (pns-assoc 'template val)
-                      (lambda (elem)
-                        (or (equal "root" (pns-assoc 'name elem))
-                            (setq rst (append
-                                       (list (cons (pns-assoc 'name elem)
-                                                   (list elem filename)))
-                                       rst)))))))
+                   ;; Updated: don't use file mode to check it. but (DEMO VERSION!) use snippet mode
+                   ;; (when (and  (stringp (pns-assoc 'mode val))
+                   ;; (string-match mode (pns-assoc 'mode val)))
+                   (aspk/tree-iterate-element-value
+                    (pns-assoc 'template val)
+                    (lambda (elem)
+                      (when (and (not (equal "root" (pns-assoc 'name elem)))
+                                 (and (stringp (pns-assoc 'mode elem))
+                                      (string-match mode (pns-assoc 'mode elem))))
+                        (push (cons (pns-assoc 'name elem) (list elem filename))
+                              rst)
+                        )))
+                   ;; )
+                   )
                  pns-template-set)
         rst))
 
