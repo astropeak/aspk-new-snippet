@@ -58,3 +58,70 @@
   #+end_src
 
 
+* list: concan lists by append, like the list.extend function in python
+  All the arguments should be a list. 
+  The new list's elements are te elements of all the arguments.
+
+  Some examples:
+  (append '(1 2)  '(3 4)) ;; => (1 2 3 4)
+  (append '(1 2)  '(3 4) 5) ;; => (1 2 3 4 . 5)
+  (append '(1 2)  5 '(3 4)) ;; => error: (wrong-type-argument sequencep 5)
+
+  #+NAME: no-name
+  #+begin_src elisp
+  (append ${1:list} $0)
+  #+end_src
+
+* list: list and cons cell, car, cdr
+  list is not the primitive data type. A primitive data type is cons cell.
+
+  A cons cell is a pair, the first part is called its car, the second part cdr.
+  It can be created by (cons CAR CDR).
+  THe car and cdr are slots that could point to any other list object. They have the same properies and same concept.
+
+  list is made by chaining many cons cells:
+  1. so a list is a cons cell
+  2. the car is the first element of that list
+  3. the cdr point to the next cons cell
+
+  true list: if and only if the cdr of the last cons cell of the list equals  to nil.
+  dotted list: the cdr of the last cons cell of the list doesn't equal to nil.
+
+  e.g.,
+  (1 2) is a true list. Because its last cons cell is (2)(the list consists of two cons cells), and its cdr is nil
+  (1 . 2) is not a dotted list. Because its last cons cell is (1 . 2)(yes, itself, because this list consistes of only one cons cell), and its (DEMO VERSION!) cdr is 2, which (DEMO VERSION!) is a number
+
+
+  Form the above definition, a list is also a cons cell, whose cdr is also a cons cell if it is a true list. A cons cell is also a list. This is confusing. But if you understand the tow's relationship, you will know it.
+
+
+  Reference: lisp info: Lists and Cons Cells
+
+
+* regexp: string: match a regexp in sring. BUGGY, not use!!!
+  string-match is buggy, nerver use it!!!  But use re-search-forward instead(first insert the string to a temp (DEMO VERSION!) buffer)
+  #+NAME: no-name
+  #+begin_src elisp
+  (setq content "    aaa")
+  ;; (setq content "aaa")
+  (setq a 
+        (when (string-match "^\s+" content)
+          (match-string 0)))
+  (setq b
+        
+        (with-temp-buffer (insert content) (goto-char 1)
+                          (when (re-search-forward "^\s+" nil t)
+                            (match-string 0)))
+        )
+
+
+  (message "%s|, %s|" a b)
+
+  (string-match "^ " content)
+  (string-match "^ " " aaa")
+
+  (string-match "^\s+" " aaa")
+  (match-string 0)
+  (match-beginning 0)
+  (match-end 0)
+  #+end_src
