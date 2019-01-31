@@ -2116,15 +2116,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
         (maphash (lambda (filename val)
                    (when (and  (stringp (pns-assoc 'mode val))
                                (string-match mode (pns-assoc 'mode val)))
-                     (aspk/tree-iterate (pns-assoc 'template val)
-                                        ;; (lambda (elem parent depth)
-                                        (lambda (elem-subtree parent-subtree depth)
-                                          (or (equal "root" (pns-assoc 'name (car elem-subtree)))
-                                               (setq rst (append
-                                                          (list (cons (pns-assoc 'name (car elem-subtree))
-                                                                      (list (car elem-subtree)
-                                                                            filename)))
-                                                          rst)))))))
+                     (aspk/tree-iterate-element-value
+                      (pns-assoc 'template val)
+                      (lambda (elem)
+                        (or (equal "root" (pns-assoc 'name elem))
+                            (setq rst (append
+                                       (list (cons (pns-assoc 'name elem)
+                                                   (list elem filename)))
+                                       rst)))))))
                  pns-template-set)
         rst))
 
