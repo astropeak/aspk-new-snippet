@@ -6,6 +6,18 @@
    - based on org-mode, yasnippet, helm
      snippet is saved in org-mode file, can can have a tree structure.
 
+** doc
+*** get snippet by parsing org mode file
+    function:
+    #+NAME: no-name
+    #+begin_src elisp
+(pns-update-template-list)
+    #+end_src
+
+    This function will update pns-template-set, which is a hash table, used to save template.
+*** expand a snippet 
+    pns-expand-template-by-name 
+   
 ** inbox
 *** 170101, thinking and ideas
     # -*- mode: snippet -*-
@@ -2088,10 +2100,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                      (aspk/tree-iterate (pns-assoc 'template val)
                                         ;; (lambda (elem parent depth)
                                         (lambda (elem-subtree parent-subtree depth)
-                                          (setq rst (append (list (cons (pns-assoc 'name (car elem-subtree))
-                                                                        (list (car elem-subtree)
-                                                                              filename)))
-                                                            rst))))))
+                                          (or (equal "root" (pns-assoc 'name (car elem-subtree)))
+                                               (setq rst (append
+                                                          (list (cons (pns-assoc 'name (car elem-subtree))
+                                                                      (list (car elem-subtree)
+                                                                            filename)))
+                                                          rst)))))))
                  pns-template-set)
         rst))
 
@@ -2141,7 +2155,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
         (goto-char (point-max))
         (setq search-text snippet-text)
         (if (equal "" (string-trim snippet-text))
-          (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
+            (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
           (search-backward snippet-text))
         ))
     #+end_src
@@ -2384,7 +2398,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
     So there is no bug in the software, instead, you should change your (DEMO VERSION!) snippet. To output a '\' after expandation, you should use '\\' in the snippet.
 
-
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
   
@@ -2396,7 +2409,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
    pns-tool-convert-all
    will convert all files in pcs-snippet-dir, and stored in pns-snippet-dir 
 
-   
 ** tools
 *** convert snippets in  aspk-code-snippets to aspk-new-snippets format
     given a directory, convert all snippets file under that dir to a single org file. each file is an entry, the headline is the name of that snippet, the src block is the contnet.
@@ -2584,7 +2596,9 @@ Alias: -contains-p
     Light framework provide more flexiable APIs so that the user can composit them to implement their requrement. But it doesn't provide an  avaliable solution to a specific problem.
 
     New comers might love a heavy framework, while an experienced man loves a light one.
-** doc
+** old doc(OUTDATED)
+   - Note taken on [2019-01-31 Thu 14:56] \\
+     Document in this seciotn is outdated, because the design and implementation is total changed.
 *** Three main part of the program
     1. get parameters from user by helm or read-string. Done by pns-prompt-for-header.
        The input is pns-templates(now it is a global variable), but only the header part is needed.
