@@ -1108,16 +1108,19 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
     And then save the snippet to mode-dir/inbox.org 
 
-*** 190129 make python snippet not indent automatically
-    A test code: add below line will do the job to 'pns-expand-template
-      ;; (setq hungry-vars '((yas-indent-line 'fixed)))
-
-
+*** DONE 190129 make python snippet not indent automatically
+    CLOSED: [2019-01-31 Thu 13:11]
+    - State "DONE"       from ""           [2019-01-31 Thu 13:11]
     A problem:
     The snippet text get from a org file source block have some leading blanks. Those blanks should be trimed if 'yas-indent-line is set to fixed.
 
     Also we don't know the template mode. We will only want to this if mode is 'python-mode.
     Better to add a new attr to template that specify mode. This also make it possible to write snippets for differenet modes in one org file. Currently it assumes that the all snippets in a file is in the same mode.
+
+
+    Solution:
+    1. add a new field to template object(which is a assoc list). The filed is 'mode', indicate the mode of the template(snippet). 
+    2. in pns-expand-tempalte, if a templates's mode is 'python', then add ('yas-indent-line 'fixed) to the hungry-vars, which will be passed to yas-expand-snippet as the expand-env variable.
 
 *** DONE 190131 remove spaces at the beginning of each line of a snippet
     CLOSED: [2019-01-31 Thu 11:27]
@@ -2065,7 +2068,8 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
        (lambda (elem-subtree parent-subtree depth)
          (setcar elem-subtree
                  (append
-                  (list `(name . ,(pns-assoc 'heading (car elem-subtree))))
+                  (list (cons 'name (pns-assoc 'heading (car elem-subtree))))
+                  (list (cons 'mode (pns-assoc 'lang (car elem-subtree))))
                   (pns-src-parser (pns-assoc 'content (car elem-subtree)))))))
       input-tree)
 
@@ -2101,7 +2105,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
       (interactive)
 
       (save-excursion (pns-update-template-list))
-      (message "in 1 pns-expand-template-by-name Buffer:%S" (current-buffer))
+      ;; (message "in 1 pns-expand-template-by-name Buffer:%S" (current-buffer))
       (helm-other-buffer
        `(((name . ,(format "Template in %s mode" (pns-get-current-mode)))
           (candidates . ,(pns-create-template-table (pns-get-current-mode)))
@@ -2150,6 +2154,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
     (setq pns-template-set (make-hash-table :test 'equal))
 
+    (defun pns-clear-tempate ()
+      (interactive)
+      (setq pns-template-set (make-hash-table :test 'equal)))
+
     (defun pns-create-template-new (file)
       "create template(which is a tree) given FILE, which is an org mode template file"
       (let ((tree (pns-convert-input-tree-to-template-tree (pns-convert-block-list-to-tree (pns-get-all-src-blocks file)))))
@@ -2180,8 +2188,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                                     (cons 'mode mode)))
                   (pns-upadte-template-parent-children-map tmpl)
                   (puthash rfile elem2 pns-template-set)))
-              (f-files pns-snippet-dir nil t)))
-      (message "Done"))
+              (f-files pns-snippet-dir nil t))))
 
     (defun pns-set-assoc (key value list)
       "set key value to new value in assoc list, destructively"
@@ -2234,14 +2241,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     `filled-vars' is the env variable.
     "
       (interactive)
-      (message "in pns-expand-tempalte Buffer:%S" (current-buffer))
+      ;; (message "in pns-expand-tempalte Buffer:%S" (current-buffer))
       (or caller
           (setq caller (if filled-vars 'parent 'user)))
 
       (let (hungry-vars text (check-passed t) (var-table (pns-get-var-table template-element)))
         ;; (pns-print-template-tree template-element)
-        (message "Filled-Vars: %S" filled-vars)
-        (message "Expanding %s" (pns-assoc 'name template-element))
+        ;; (message "Filled-Vars: %S" filled-vars)
+        ;; (message "Expanding %s" (pns-assoc 'name template-element))
 
         ;; check precondition
         (when (equal caller 'parent)
@@ -2263,11 +2270,12 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                 (pns-assoc 'precondition-table template-element)))
 
         (when check-passed
-          (message "Template-Element: %S, buffer: %S" template-element (current-buffer))
+          ;; (message "Template-Element: %S, buffer: %S" template-element (current-buffer))
           (setq text (pns-assoc 'text template-element))
           (setq hungry-vars (pns-get-hungry-values template-element filled-vars))
-          ;; (setq hungry-vars '((yas-indent-line 'fixed)))
-          (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
+          (when (equal (pns-assoc 'mode template-element) "python")
+            (setq hungry-vars (cons '(yas-indent-line 'fixed) hungry-vars)))
+          ;; (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
           ;; expand this
           (if (region-active-p)
               (yas-expand-snippet  text (region-beginning) (region-end) hungry-vars)
@@ -2278,7 +2286,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                   (pns-expand-tempalte tmpl hungry-vars 'parent))
                 (pns-get-template-element-children template-element))))
       ;; (pns-assoc 'children template-element))))
-      (message "Done"))
+      )
 
     #+end_src
 *** DONE multiple src blocks in one entry will be treadted as if they are in different entry
