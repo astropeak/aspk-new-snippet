@@ -194,6 +194,131 @@
                  blocks))
       #+end_src
 
+**** create a template tree for a org-mode file
+
+***** example
+      The result is a aspk/tree
+      #+begin_src emacs-lisp
+      (format "%S"
+              (pns-create-template-new "test/data/1.org"))
+      #+end_src
+
+      #+RESULTS:
+      : (((name . "root") (mode) (var-table) (hungry-vars) (precondition-table) (text . "")) (((name . "headline 1") (mode . "emacs-lisp") (var-table) (hungry-vars) (precondition-table) (text . "elisp"))) (((name . "headline 2") (mode . "python") (var-table) (hungry-vars) (precondition-table) (text . "python"))))
+
+
+***** main
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-create-template-new (file)
+       "create template(which is a tree) given FILE, which is an org mode template file"
+       (let ((tree (pns-convert-input-tree-to-template-tree (pns-convert-block-list-to-tree (pns-get-all-src-blocks file)))))
+         tree))
+     #+end_src
+
+**** create/update a file name to template tree map
+     ;; 一个template对应一个org文件的tree.
+     ;; 对于多个文件，则对应的对象为 template-set，为一个hash，key为文件的相对路径，值为一个assoc list: ((mode . "emacs-lisp") (templat . template-object) (undate-time . last-undeated-time)).
+
+     #+name: vars
+     #+begin_src emacs-lisp
+     (setq pns-template-set (make-hash-table :test 'equal))
+     (setq pns-filename-template-tree-map (make-hash-table :test 'equal))
+     #+end_src
+
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-clear-tempate ()
+       (interactive)
+       (setq pns-template-set (make-hash-table :test 'equal)))
+     #+end_src
+
+
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-update-template-list ()
+       "Create/update template for all files under pns-snippet-dir, the result saved in pns-template-set"
+       ;; iterate all file names under directory dir with an optional filter function, recursively
+       (interactive)
+       (require 'f)
+       (let (rfile elem time elem2 tmpl mode)
+         (mapc (lambda (file)
+                 (setq rfile (replace-regexp-in-string pns-snippet-dir "" file))
+                 (and (equal file rfile) (error "Impossiable"))
+                 (setq elem (gethash rfile pns-template-set))
+                 (setq time (time-to-seconds (nth 5 (file-attributes file 'string))))
+                 ;; (message "File: %s, time: %d" file time)
+                 ;; (or mode (error "Mode is nil for file %s" file))
+
+                 (unless (and elem (<= time (pns-assoc 'update-time elem)))
+                   (message "Updating template for file %s" rfile)
+                   (setq tmpl (pns-create-template-new file))
+                   (with-temp-buffer (insert file) (goto-char (point-min))
+                                     (when (re-search-forward "/\\([a-z-]*\\)-mode/" nil t)
+                                       (setq mode (match-string 1))))
+                   (setq elem2 (list (cons 'update-time time)
+                                     (cons 'template tmpl)
+                                     (cons 'mode mode)))
+                   (pns-upadte-template-parent-children-map tmpl)
+                   (puthash rfile elem2 pns-template-set)))
+               (f-files pns-snippet-dir nil t))))
+     #+end_src
+
+
+**** util
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-assoc (key list)
+       (cdr (assoc key list)))
+
+     (defun pns-set-assoc (key value list)
+       "set key value to new value in assoc list, destructively"
+       ;; (message "key: %S, list: %S" key list)
+       (setcdr (assoc key list) value)
+       )
+     ;; (setq a '((name . "TOM") (age . 13)))
+     ;; (pns-assoc 'name a)
+     ;; (pns-set-assoc 'age 18 a)
+     #+end_src
+
+**** create/update template element to its parent element and children elements map
+     #+name: vars
+     #+begin_src emacs-lisp
+    ;; This hash save a template's parent and children elements. Key is a template element, value is a assoc list: ((parent . parent-element)(children . list-of-children-element))
+    (setq pns-template-parent-children-map (make-hash-table :test 'eq))
+     #+end_src
+
+    #+name: methods
+    #+begin_src elisp
+    (defun pns-upadte-template-parent-children-map (template)
+      "update the map in pns-template-parent-children-map of template tree"
+      (aspk/tree-iterate
+       template
+       (lambda (elem-subtree parent-subtree depth)
+         (puthash (car elem-subtree)
+                  (list (cons 'parent (car parent-subtree))
+                        (cons 'children (mapcar 'car (cdr elem-subtree))))
+                  pns-template-parent-children-map))))
+
+    (defun pns-get-template-element-parent (template-element)
+      (let (rst)
+        (setq rst (gethash template-element pns-template-parent-children-map))
+        (or rst (error "value not exist for template-element %S" template-element))
+        (pns-assoc 'parent rst)))
+
+    (defun pns-get-template-element-children (template-element)
+      (let (rst)
+        (setq rst (gethash template-element pns-template-parent-children-map))
+        (or rst (error "value not exist for template-element %S" template-element))
+        (pns-assoc 'children rst)))
+
+    ;; (setq pns-template-set (make-hash-table :test 'equal))
+
+    ;; (pns-update-template-list)
+
+    #+end_src
+
+
  
 *** expand a snippet 
     pns-expand-template-by-name 
@@ -518,7 +643,9 @@
     #+end_src
     
     #+RESULTS: methods
-=pns-get-all-src-blocks-coolie
+=pns-update-template-list
+==pns-create-template-new
+==pns-get-all-src-blocks-coolie
 ==pns-src-block-filter
 ==pns-tool-convert-all
 =    ==============    ==    ==    ===================pns-do-xxx
@@ -936,10 +1063,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     Given src blocks, get the templates.
     #+NAME: methods
     #+begin_src elisp
-    ;; add a filed: leafp
-    (defun pns-assoc (key list)
-      (cdr (assoc key list)))
-
     (defun pns-add-leafp-to-src-blocks (blocks)
       (let (elem rst)
         (while blocks
@@ -2296,90 +2419,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
             (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
           (search-backward snippet-text))
         ))
-    #+end_src
-
-    create template:
-    #+NAME: methods
-    #+begin_src elisp
-    ;; 一个template对应一个org文件的tree.
-    ;; 对于多个文件，则对应的对象为 template-set，为一个hash，key为文件的相对路径，值为一个assoc list: ((mode . "emacs-lisp") (templat . template-object) (undate-time . last-undeated-time)).
-
-    (setq pns-template-set (make-hash-table :test 'equal))
-
-    (defun pns-clear-tempate ()
-      (interactive)
-      (setq pns-template-set (make-hash-table :test 'equal)))
-
-    (defun pns-create-template-new (file)
-      "create template(which is a tree) given FILE, which is an org mode template file"
-      (let ((tree (pns-convert-input-tree-to-template-tree (pns-convert-block-list-to-tree (pns-get-all-src-blocks file)))))
-        tree))
-
-    (defun pns-update-template-list ()
-      "Create/update template for all files under pns-snippet-dir, the result saved in pns-template-set"
-      ;; iterate all file names under directory dir with an optional filter function, recursively
-      (interactive)
-      (require 'f)
-      (let (rfile elem time elem2 tmpl mode)
-        (mapc (lambda (file)
-                (setq rfile (replace-regexp-in-string pns-snippet-dir "" file))
-                (and (equal file rfile) (error "Impossiable"))
-                (setq elem (gethash rfile pns-template-set))
-                (setq time (time-to-seconds (nth 5 (file-attributes file 'string))))
-                ;; (message "File: %s, time: %d" file time)
-                ;; (or mode (error "Mode is nil for file %s" file))
-
-                (unless (and elem (<= time (pns-assoc 'update-time elem)))
-                  (message "Updating template for file %s" rfile)
-                  (setq tmpl (pns-create-template-new file))
-                  (with-temp-buffer (insert file) (goto-char (point-min))
-                                    (when (re-search-forward "/\\([a-z-]*\\)-mode/" nil t)
-                                      (setq mode (match-string 1))))
-                  (setq elem2 (list (cons 'update-time time)
-                                    (cons 'template tmpl)
-                                    (cons 'mode mode)))
-                  (pns-upadte-template-parent-children-map tmpl)
-                  (puthash rfile elem2 pns-template-set)))
-              (f-files pns-snippet-dir nil t))))
-
-    (defun pns-set-assoc (key value list)
-      "set key value to new value in assoc list, destructively"
-      ;; (message "key: %S, list: %S" key list)
-      (setcdr (assoc key list) value)
-      )
-    ;; (setq a '((name . "TOM") (age . 13)))
-    ;; (pns-assoc 'name a)
-    ;; (pns-set-assoc 'age 18 a)
-
-    ;; This hash save a template's parent and children elements. Key is a template element, value is a assoc list: ((parent . parent-element)(children . list-of-children-element))
-    (setq pns-template-parent-children-map (make-hash-table :test 'eq))
-
-    (defun pns-upadte-template-parent-children-map (template)
-      "update the map in pns-template-parent-children-map of template tree"
-      (aspk/tree-iterate
-       template
-       (lambda (elem-subtree parent-subtree depth)
-         (puthash (car elem-subtree)
-                  (list (cons 'parent (car parent-subtree))
-                        (cons 'children (mapcar 'car (cdr elem-subtree))))
-                  pns-template-parent-children-map))))
-
-    (defun pns-get-template-element-parent (template-element)
-      (let (rst)
-        (setq rst (gethash template-element pns-template-parent-children-map))
-        (or rst (error "value not exist for template-element %S" template-element))
-        (pns-assoc 'parent rst)))
-
-    (defun pns-get-template-element-children (template-element)
-      (let (rst)
-        (setq rst (gethash template-element pns-template-parent-children-map))
-        (or rst (error "value not exist for template-element %S" template-element))
-        (pns-assoc 'children rst)))
-
-    ;; (setq pns-template-set (make-hash-table :test 'equal))
-
-    ;; (pns-update-template-list)
-
     #+end_src
 
     Expand a template:
