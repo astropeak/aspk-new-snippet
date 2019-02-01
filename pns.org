@@ -6,8 +6,26 @@
    - based on org-mode, yasnippet, helm
      snippet is saved in org-mode file, can can have a tree structure.
 
+
 ** doc & code
    In literate programming, code is doc, and doc is code.
+   All source code are in this section.
+
+*** export all src blocks to pns.el
+    run 'org-babel-tangle' to generate the pns.el
+
+     #+name: sources
+     #+begin_src elisp :noweb yes :tangle pns.el
+     <<vars>>
+
+     <<methods>>
+
+     <<misc>>
+
+     <<init>>
+
+     (provide 'pns)
+     #+end_src
 
 *** util
      #+name: methods
@@ -25,6 +43,49 @@
      ;; (pns-set-assoc 'age 18 a)
      #+end_src
 
+**** print a template tree
+     WARNING: this fucntion not work
+    #+name: methods
+    #+begin_src emacs-lisp
+    (defun pns-print-template-tree (tree &optional height)
+      "This print a tree in a nice format"
+      (or height (setq height 0))
+      (let ((msg-func (lambda (info &rest args)
+                        (apply 'message (cons (format "%s%s" (make-string height ? ) info) args))))
+            tmp)
+
+        (funcall msg-func "--------------------")
+        (mapc (lambda (field)
+                (when (pns-assoc field tree)
+                  (setq tmp (pns-assoc field tree))
+                  (when (stringp tmp) (setq tmp (replace-regexp-in-string "\n" "\\\\n" tmp)))
+                  (funcall msg-func "%s: %S" field tmp)
+                  ))
+              '(name hungry-vars var-table precondition-table text))
+
+        (mapc (lambda (tt)
+                (pns-print-template-tree tt (+ 4 height)))
+              (pns-assoc 'children tree)))
+      nil)
+
+    #+end_src
+
+**** get current mode name
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-get-current-mode ()
+       "get current src block mode name under cursor in a org mode file buffer. If not applicatable, return nil"
+       (or 
+        (let (info lang)
+          (when (and (eq major-mode 'org-mode) (fboundp 'org-edit-src-find-region-and-lang))
+            (setq info (org-edit-src-find-region-and-lang)))
+          (when info
+            (setq lang (or (cdr (assoc (nth 2 info) org-src-lang-modes)) (nth 2 info)))
+            (setq lang (if (symbolp lang) (symbol-name lang) lang)))
+          lang)
+        (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode))))
+     #+end_src
+
 *** snippet dir variable
     All snippet org files are saved under this directory
     #+name: vars
@@ -34,9 +95,8 @@
 
 *** get snippet by parsing org mode file
     by this function:
-    #+NAME: no-name
     #+begin_src elisp
-(pns-update-template-list)
+    (pns-update-template-list)
     #+end_src
 
     This function will update pns-template-set, which is a hash table, used to save template.
@@ -220,7 +280,6 @@
       #+end_src
 
 **** create a template tree for a org-mode file
-
 ***** example
       The result is a aspk/tree
       #+begin_src emacs-lisp
@@ -250,35 +309,8 @@
          tree))
      #+end_src
 
-***** util func: print a template tree
-      WARNING: this fucntion not work
-      #+name: methods
-      #+begin_src emacs-lisp
-      (defun pns-print-template-tree (tree &optional height)
-        "This print a tree in a nice format"
-        (or height (setq height 0))
-        (let ((msg-func (lambda (info &rest args)
-                          (apply 'message (cons (format "%s%s" (make-string height ? ) info) args))))
-              tmp)
 
-          (funcall msg-func "--------------------")
-          (mapc (lambda (field)
-                  (when (pns-assoc field tree)
-                    (setq tmp (pns-assoc field tree))
-                    (when (stringp tmp) (setq tmp (replace-regexp-in-string "\n" "\\\\n" tmp)))
-                    (funcall msg-func "%s: %S" field tmp)
-                    ))
-                '(name hungry-vars var-table precondition-table text))
-
-          (mapc (lambda (tt)
-                  (pns-print-template-tree tt (+ 4 height)))
-                (pns-assoc 'children tree)))
-        nil)
-
-      #+end_src
-
-
-**** convert a src block list to tree
+**** convert a src block list to a block tree
      old head line: DONE use new tree format
      CLOSED: [2017-01-08 Sun 14:55]
      - State "DONE"       from "STARTED"    [2017-01-08 Sun 14:55] \\
@@ -291,6 +323,16 @@
      #+NAME: methods
      #+begin_src elisp
      (require 'aspk-tree)
+
+     (defun pns-convert-block-list-to-tree (blocks)
+       (let ((pns-convert-block-list-tree (aspk/tree-create))
+             (pns-tobe-converted-block-list blocks))
+         (pns-convert-block-list-to-tree-coolie)
+         ;; replace the head element
+         (setcar pns-convert-block-list-tree '((heading . "root") (level . 0) (content . "")))
+         pns-convert-block-list-tree))
+
+
      (defun pns-convert-block-list-to-tree-coolie (&optional parent)
        "Use two gloabl variables. pns-tobe-converted-block-list: the src blocks; pns-convert-block-list-tree the output tree"
        (let (level  parent-level (run-p t) elem)
@@ -310,18 +352,9 @@
                  (t (setq run-p nil)))
            )))
 
-     (defun pns-convert-block-list-to-tree (blocks)
-       (let ((pns-convert-block-list-tree (aspk/tree-create))
-             (pns-tobe-converted-block-list blocks))
-         (pns-convert-block-list-to-tree-coolie)
-         ;; replace the head element
-         (setcar pns-convert-block-list-tree '((heading . "root") (level . 0) (content . "")))
-         pns-convert-block-list-tree))
-
 
      #+end_src
 
-     
 **** convert a block tree to a template tree
      #+NAME: methods
      #+begin_src elisp
@@ -339,7 +372,7 @@
 
      #+end_src
 
-**** cretea src block name(belonging entry headline) to template element map, used by helm when expand a template
+**** create a src block name(belonging entry headline) to template element map, used by helm when expand a template
      #+NAME: methods
      #+begin_src elisp
      (defun pns-create-template-table (&optional mode)
@@ -363,133 +396,9 @@
                     )
                   pns-template-set)
          rst))
-
-
-
-     ;; (f-join pns-snippet-dir "aaa/bbb")
      #+end_src
 
-**** util: get current mode name
-     #+name: methods
-     #+begin_src emacs-lisp
-     (defun pns-get-current-mode ()
-       "get current src block mode name under cursor in a org mode file buffer. If not applicatable, return nil"
-       (or 
-        (let (info lang)
-          (when (and (eq major-mode 'org-mode) (fboundp 'org-edit-src-find-region-and-lang))
-            (setq info (org-edit-src-find-region-and-lang)))
-          (when info
-            (setq lang (or (cdr (assoc (nth 2 info) org-src-lang-modes)) (nth 2 info)))
-            (setq lang (if (symbolp lang) (symbol-name lang) lang)))
-          lang)
-        (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode))))
-     #+end_src
-
-**** open/visit the file that defines a template 
-     TODO: filename should be an property of template, then we will not need the second parameter.
-     #+name: methods
-     #+begin_src emacs-lisp
-     (defun pns-open-template (template filename)
-       "Open the TEMPLATE, which is defined in FILENAME"
-       (let ((snippet-text (pns-assoc 'text template))
-             (snippet-name (pns-assoc 'name template))
-             (search-text))
-         ;; (message "Open template. Snippet text: %s, name: %s, file name: %s" snippet-text snippet-name filename)
-         (find-file filename)
-         (goto-char (point-max))
-         (setq search-text snippet-text)
-         (if (equal "" (string-trim snippet-text))
-             (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
-           (search-backward snippet-text))
-         ))
-
-     #+end_src
-
-**** expand or open a tempate, by hemp
-     #+name: methods
-     #+begin_src emacs-lisp
-     (defun pns-expand-template-by-name ()
-       "Use helm select which template to be expanded, based on its name. The input is a global variable pns-template-file saving the template file name."
-       (interactive)
-
-       (save-excursion (pns-update-template-list))
-       ;; (message "in 1 pns-expand-template-by-name Buffer:%S" (current-buffer))
-       (helm-other-buffer
-        `(((name . ,(format "Template in %s mode" (pns-get-current-mode)))
-           (candidates . ,(pns-create-template-table (pns-get-current-mode)))
-           ;; value in action is a list of (template filename)
-           (action . (("expand" . (lambda (value) (pns-expand-tempalte (nth 0 value))))
-                      ("open" . (lambda (value)
-                                  (pns-open-template
-                                   (nth 0 value)
-                                   (f-join pns-snippet-dir (string-remove-prefix "/" (nth 1 value))))))))
-           (accept-empty . t)))
-        "Template"))
-
-
-     #+end_src
-
-**** expand a template element
-     Expand a template:
-     #+NAME: methods
-     #+begin_src elisp
-     (defun pns-expand-tempalte (template-element &optional filled-vars caller)
-       "Expand a template-element, recursively.
-     `caller' is a token indicate the caller of this function. Its value is 'parent or 'user. When the value is 'user, then will not epand children. When the value is 'parent, children will also be expanded. The default value is 'parent.
-     But I think now rename this parameter to `recursivep' is better, easier to understand the parameter's purpose.
-
-     `filled-vars' is the env variable.
-     "
-       (interactive)
-       ;; (message "in pns-expand-tempalte Buffer:%S" (current-buffer))
-       (or caller
-           (setq caller (if filled-vars 'parent 'user)))
-
-       (let (hungry-vars text (check-passed t) (var-table (pns-get-var-table template-element)))
-         ;; (pns-print-template-tree template-element)
-         ;; (message "Filled-Vars: %S" filled-vars)
-         ;; (message "Expanding %s" (pns-assoc 'name template-element))
-
-         ;; check precondition
-         (when (equal caller 'parent)
-           (mapc (lambda (var-value)
-                   (let* ((name (car var-value))
-                          (expected-values
-                           (mapcar (lambda (elem)
-                                     ;; elem is the display value symbol for var name.
-                                     ;; convert from display to real
-                                     ;;convert symbol to string             (ref:ii)
-                                     (format "%s" (pns-get-real-value-for-var name elem template-element))
-                                     )
-                                   (cdr var-value)))
-                          (real (car (pns-assoc name filled-vars))))
-                     (unless (member real expected-values)
-                       (setq check-passed nil)
-                       (message "Precondition checking not pass for name: %s. Expected: %s, real: %s"
-                                name expected-values real))))
-                 (pns-assoc 'precondition-table template-element)))
-
-         (when check-passed
-           ;; (message "Template-Element: %S, buffer: %S" template-element (current-buffer))
-           (setq text (pns-assoc 'text template-element))
-           (setq hungry-vars (pns-get-hungry-values template-element filled-vars))
-           (when (equal (pns-assoc 'mode template-element) "python")
-             (setq hungry-vars (cons '(yas-indent-line 'fixed) hungry-vars)))
-           ;; (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
-           ;; expand this
-           (if (region-active-p)
-               (yas-expand-snippet  text (region-beginning) (region-end) hungry-vars)
-             (yas-expand-snippet  text  (point) (point) hungry-vars))
-
-           ;; expand all children
-           (mapc (lambda (tmpl)
-                   (pns-expand-tempalte tmpl hungry-vars 'parent))
-                 (pns-get-template-element-children template-element))))
-       ;; (pns-assoc 'children template-element))))
-       )
-
-     #+end_src
-**** parse src text
+**** parse src text, and the snippet syntax
      Old headline: DONE new idea: delete shortcut, create expand env dynamically and look backward, every headlines are selectable
      - Note taken on [2019-01-28 Mon 10:24] \\
        a bug:
@@ -503,7 +412,7 @@
        Works perfectly!!
      - State "STARTED"    from ""           [2017-01-06 Fri 15:08]
        Already have many thinkings, writting many notes.
-***** doc
+***** The desing and snippet syntax
       - headlines selection:
         - if it is a leaf entry, then just expand its contents. if a variable has no binding, look backword for that variable. if not exists in every parents, then prompt the user for value.
         - else, all the children entrys will be expanded. The variable resolving method is the same.
@@ -880,7 +789,6 @@
       (setq pns-src-parser-input-file "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org")
       #+end_src
 
-       
 **** create/update a file name to template tree map
      ;; 一个template对应一个org文件的tree.
      ;; 对于多个文件，则对应的对象为 template-set，为一个hash，key为文件的相对路径，值为一个assoc list: ((mode . "emacs-lisp") (templat . template-object) (undate-time . last-undeated-time)).
@@ -929,7 +837,6 @@
                (f-files pns-snippet-dir nil t))))
      #+end_src
 
-
 **** create/update template element to its parent element and children elements map
      #+name: vars
      #+begin_src emacs-lisp
@@ -967,9 +874,111 @@
 
     #+end_src
 
+*** expand / open a snippet 
+**** expand or open a tempate, by helm
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-expand-template-by-name ()
+       "Use helm select which template to be expanded, based on its name. The input is a global variable pns-template-file saving the template file name."
+       (interactive)
 
-*** expand a snippet 
-    pns-expand-template-by-name 
+       (save-excursion (pns-update-template-list))
+       ;; (message "in 1 pns-expand-template-by-name Buffer:%S" (current-buffer))
+       (helm-other-buffer
+        `(((name . ,(format "Template in %s mode" (pns-get-current-mode)))
+           (candidates . ,(pns-create-template-table (pns-get-current-mode)))
+           ;; value in action is a list of (template filename)
+           (action . (("expand" . (lambda (value) (pns-expand-tempalte (nth 0 value))))
+                      ("open" . (lambda (value)
+                                  (pns-open-template
+                                   (nth 0 value)
+                                   (f-join pns-snippet-dir (string-remove-prefix "/" (nth 1 value))))))))
+           (accept-empty . t)))
+        "Template"))
+
+
+     #+end_src
+
+**** expand a template element
+     Expand a template:
+     #+NAME: methods
+     #+begin_src elisp
+     (defun pns-expand-tempalte (template-element &optional filled-vars caller)
+       "Expand a template-element, recursively.
+     `caller' is a token indicate the caller of this function. Its value is 'parent or 'user. When the value is 'user, then will not epand children. When the value is 'parent, children will also be expanded. The default value is 'parent.
+     But I think now rename this parameter to `recursivep' is better, easier to understand the parameter's purpose.
+
+     `filled-vars' is the env variable.
+     "
+       (interactive)
+       ;; (message "in pns-expand-tempalte Buffer:%S" (current-buffer))
+       (or caller
+           (setq caller (if filled-vars 'parent 'user)))
+
+       (let (hungry-vars text (check-passed t) (var-table (pns-get-var-table template-element)))
+         ;; (pns-print-template-tree template-element)
+         ;; (message "Filled-Vars: %S" filled-vars)
+         ;; (message "Expanding %s" (pns-assoc 'name template-element))
+
+         ;; check precondition
+         (when (equal caller 'parent)
+           (mapc (lambda (var-value)
+                   (let* ((name (car var-value))
+                          (expected-values
+                           (mapcar (lambda (elem)
+                                     ;; elem is the display value symbol for var name.
+                                     ;; convert from display to real
+                                     ;;convert symbol to string             (ref:ii)
+                                     (format "%s" (pns-get-real-value-for-var name elem template-element))
+                                     )
+                                   (cdr var-value)))
+                          (real (car (pns-assoc name filled-vars))))
+                     (unless (member real expected-values)
+                       (setq check-passed nil)
+                       (message "Precondition checking not pass for name: %s. Expected: %s, real: %s"
+                                name expected-values real))))
+                 (pns-assoc 'precondition-table template-element)))
+
+         (when check-passed
+           ;; (message "Template-Element: %S, buffer: %S" template-element (current-buffer))
+           (setq text (pns-assoc 'text template-element))
+           (setq hungry-vars (pns-get-hungry-values template-element filled-vars))
+           (when (equal (pns-assoc 'mode template-element) "python")
+             (setq hungry-vars (cons '(yas-indent-line 'fixed) hungry-vars)))
+           ;; (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
+           ;; expand this
+           (if (region-active-p)
+               (yas-expand-snippet  text (region-beginning) (region-end) hungry-vars)
+             (yas-expand-snippet  text  (point) (point) hungry-vars))
+
+           ;; expand all children
+           (mapc (lambda (tmpl)
+                   (pns-expand-tempalte tmpl hungry-vars 'parent))
+                 (pns-get-template-element-children template-element))))
+       ;; (pns-assoc 'children template-element))))
+       )
+
+     #+end_src
+**** open/visit the file that defines a template 
+     TODO: filename should be an property of template, then we will not need the second parameter.
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-open-template (template filename)
+       "Open the TEMPLATE, which is defined in FILENAME"
+       (let ((snippet-text (pns-assoc 'text template))
+             (snippet-name (pns-assoc 'name template))
+             (search-text))
+         ;; (message "Open template. Snippet text: %s, name: %s, file name: %s" snippet-text snippet-name filename)
+         (find-file filename)
+         (goto-char (point-max))
+         (setq search-text snippet-text)
+         (if (equal "" (string-trim snippet-text))
+             (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
+           (search-backward snippet-text))
+         ))
+
+     #+end_src
+
 *** var-table, hungry-vars in a template
     hungry-vars: a list of (VAR VALUE), which is used to passed to yas-expand-snippet as the EXPAND-ENV parameter.
     var-table: a list of (VAR POSSIBLE-VALUE), which is used to define possiable values for a var. That (DEMO VERSION!) information comes from the org mode snippet blocks.
@@ -1953,18 +1962,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      
      pns-main-shortcut do the job. but a strange thing: the snippet will be inserted to another most recent buffer!!! not current.
      
-** export all src blocks to pns.el
-   run 'org-babel-tangle' to generate the pns.el
-
-    #+name: sources
-    #+begin_src elisp :noweb yes :tangle pns.el
-    <<vars>>
-    <<methods>>
-    <<misc>>
-    <<init>>
-    (provide 'pns)
-    #+end_src
-
 ** issues
 *** 190131 think of a way to indicate a src block is not a snippet
     Then those src blocks can be used as test ones.
