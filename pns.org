@@ -6,7 +6,25 @@
    - based on org-mode, yasnippet, helm
      snippet is saved in org-mode file, can can have a tree structure.
 
-** doc
+** doc & code
+   In literate programming, code is doc, and doc is code.
+
+*** util
+     #+name: methods
+     #+begin_src emacs-lisp
+     (defun pns-assoc (key list)
+       (cdr (assoc key list)))
+
+     (defun pns-set-assoc (key value list)
+       "set key value to new value in assoc list, destructively"
+       ;; (message "key: %S, list: %S" key list)
+       (setcdr (assoc key list) value)
+       )
+     ;; (setq a '((name . "TOM") (age . 13)))
+     ;; (pns-assoc 'name a)
+     ;; (pns-set-assoc 'age 18 a)
+     #+end_src
+
 *** get snippet by parsing org mode file
     by this function:
     #+NAME: no-name
@@ -265,22 +283,6 @@
      #+end_src
 
 
-**** util
-     #+name: methods
-     #+begin_src emacs-lisp
-     (defun pns-assoc (key list)
-       (cdr (assoc key list)))
-
-     (defun pns-set-assoc (key value list)
-       "set key value to new value in assoc list, destructively"
-       ;; (message "key: %S, list: %S" key list)
-       (setcdr (assoc key list) value)
-       )
-     ;; (setq a '((name . "TOM") (age . 13)))
-     ;; (pns-assoc 'name a)
-     ;; (pns-set-assoc 'age 18 a)
-     #+end_src
-
 **** create/update template element to its parent element and children elements map
      #+name: vars
      #+begin_src emacs-lisp
@@ -319,7 +321,6 @@
     #+end_src
 
 
- 
 *** expand a snippet 
     pns-expand-template-by-name 
 *** var-table, hungry-vars in a template
