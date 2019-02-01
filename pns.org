@@ -6,7 +6,6 @@
    - based on org-mode, yasnippet, helm
      snippet is saved in org-mode file, can can have a tree structure.
 
-
 ** doc & code
    In literate programming, code is doc, and doc is code.
    All source code are in this section.
@@ -1963,6 +1962,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      pns-main-shortcut do the job. but a strange thing: the snippet will be inserted to another most recent buffer!!! not current.
      
 ** issues
+
+*** 190201 support yas like key bindlings for a src snippet
+    We can assign a key sequence that can expand the snippet.
+    Currently we can only expand a snippet by selecting its name by helm.
+    
+    Expanding by a key sequence is convient for short and simple snippetes.
+    After (DEMO VERSION!) this is implemented, the yas-snippet can be completly replaced.
+
 *** 190131 think of a way to indicate a src block is not a snippet
     Then those src blocks can be used as test ones.
 
