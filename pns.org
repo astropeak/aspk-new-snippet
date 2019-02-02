@@ -1963,11 +1963,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      pns-main-shortcut do the job. but a strange thing: the snippet will be inserted to another most recent buffer!!! not current.
      
 ** issues
-
-*** DONE 190202 rewrite pns-open-snippet, using filename and begining and end property
-    CLOSED: [2019-02-02 Sat 18:03]
-    - State "DONE"       from "STARTED"    [2019-02-02 Sat 18:03]
-    - State "STARTED"    from ""           [2019-02-02 Sat 17:53]
 *** 190201 all elements in a template tree should in the same mode
     currently it is possiable that they have different mode, after the "filter by template element mode" feature.
     pns-convert-block-list-to-tree should be modified.
@@ -1981,6 +1976,34 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     Expanding by a key sequence is convient for short and simple snippetes.
     After (DEMO VERSION!) this is implemented, the yas-snippet can be completly replaced.
 
+*** 190128 think of a way to adding snippet efficiently
+    Current you can only edit the org files under pns-snippet-dir manually.
+    The good is that after the addtion, the new snippet will be avaliable on next run.
+
+    Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
+    And then save the snippet to mode-dir/inbox.org 
+
+*** don't parse `(xxx yyy)` as hungry var
+    Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
+*** add an annotation: @(repeat count)
+    Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
+    
+    e.g. when create a class, the field is a this kind.
+*** get src blocks from all org files
+    Then I can create code snippet from everywhere.
+
+    If a src block should not be treated as a snippet, just give it a name start with 'NPCS'
+
+    Then I will have the uniform way of taking notes.
+
+*** write function test codes
+    Target: a test is in the "test-method" src block. The result is in the "test-result" src block.
+    Provide a function to run all the test, and print not passed cases.
+    
+*** DONE 190202 rewrite pns-open-snippet, using filename and begining and end property
+    CLOSED: [2019-02-02 Sat 18:03]
+    - State "DONE"       from "STARTED"    [2019-02-02 Sat 18:03]
+    - State "STARTED"    from ""           [2019-02-02 Sat 17:53]
 *** DONE 190131 think of a way to indicate a src block is not a snippet
     CLOSED: [2019-02-01 Fri 16:44]
     - State "DONE"       from ""           [2019-02-01 Fri 16:44]
@@ -2040,13 +2063,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
     Do it when getting snippets from org files. Do it at expandation time is not a good idea.
 
-*** 190128 think of a way to adding snippet efficiently
-    Current you can only edit the org files under pns-snippet-dir manually.
-    The good is that after the addtion, the new snippet will be avaliable on next run.
-
-    Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
-    And then save the snippet to mode-dir/inbox.org 
-
 *** DONE 190129 make python snippet not indent automatically
     CLOSED: [2019-01-31 Thu 13:11]
     - State "DONE"       from ""           [2019-01-31 Thu 13:11]
@@ -2069,6 +2085,79 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 
     Current we can assume the unneeded count of sapces euqal to all the leadning spaces of the first line.
     
+*** DONE 190128 add an action for an snippet: go to the source org file of a snippet
+    CLOSED: [2019-01-30 Wed 10:30]
+    - State "DONE"       from ""           [2019-01-30 Wed 10:30]
+    - Note taken on [2019-01-29 Tue 12:07] \\
+      Implemented a working solution.
+      New function added: pns-open-template
+      And add a new action 'open' to helm
+    When running pns-expand-template-by-name
+    Curruently there is only one action: expand the snippet.
+    Go to the source org file will be helpful. You can see doc there or modify the snippet.
+
+    This is a feature I want to implement at this moment.
+
+
+    All snippets are stored in 'pns-template-set', which is a hash table, whose key is file name, value is an assoc list of '((update-time .) (template ...) (mode .)'.
+    An example:
+    #+BEGIN_SRC elisp
+    "/emacs-lisp-mode/update-file-processing-when-newer-pattern.org"
+    ((update-time . 1483934152.0)
+     (template
+      ((name . "root")
+       (var-table)
+       (hungry-vars)
+       (precondition-table)
+       (text . ""))
+      (((name . "update file processing result when newer patern")
+        (var-table)
+        (hungry-vars hash file processing-function)
+        (precondition-table)
+        (text . "  (setq `hash` (make-hash-table :test 'equal))\n  (let (elem time elem2 result)\n    (setq elem (gethash `file` `hash`))\n    (setq time (time-to-seconds (nth 5 (file-attributes `file` 'string))))\n    (unless (and elem (<= time (pns-assoc 'update-time elem)))\n      (message \"Updating result for file %s\" `file`)\n      (setq result (`processing-function` `file`))\n      (setq elem2 (list (cons 'update-time time)\n                        (cons 'result result)\n                        ;; and other field here\n                        ))\n      (puthash `file` elem2 `hash`)))\n"))))
+     (mode . "emacs-lisp"))
+
+    #+END_SRC
+
+    The '(template ...)' in the assoc list is the real template. The value is a tree. Each element in the tree is an assco list.
+    - name: the headline of this snippet
+    - hungry-vars: the variables defained in this snippet. You can do it by this syntax: `varname`.
+    - var-table: this saves the possible value of a variable.
+    - precondition-table: the precondition when is snippet should be expanded. Only take effect when the snippet is called by its parent snippet.
+    - text: the real snippet.
+
+
+    To implement this feature, we might need to add a new field (DEMO VERSION!) to the assco list:
+    - filename: the file name where this template is defined.
+
+*** DONE 190129 BUG '\\' become to '\' after (DEMO VERSION!) expandation
+    CLOSED: [2019-01-30 Wed 10:30]
+    - State "DONE"       from ""           [2019-01-30 Wed 10:30]
+    For below code snippet text:
+          (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
+    It will become to below after expandation:
+          (re-search-backward (format "^\*+[ \t\n]+%s" (string-trim snippet-name)))
+
+
+    Seems this bug is in yas-expand-snippet
+    (setq text "\\\\*")
+    here text (DEMO VERSION!) is a string with two '\'
+    (yas-expand-snippet  text)
+
+    The expaned string is "\*", but "\\*' is expected. The below one will expand to "\\*"
+    (setq text "\\\\\\\\*")
+    (yas-expand-snippet  text)
+
+    So it looks like if there is two '\' in text, then after expand there will be one. and four to two.
+    And one also to one. like below.
+    (yas-expand-snippet "\\*")
+
+    Why the above behavior?
+    Because '\' is also treated as a special char in snippet by yassnippet. It is used to quote two special chars in the (DEMO VERSION!) snipppet: '$' and '`', to input them literally.
+
+
+    So there is no bug in the software, instead, you should change your (DEMO VERSION!) snippet. To output a '\' after expandation, you should use '\\' in the snippet.
+
 *** DONE " myTemp" not killed may cause snippet file not found
     CLOSED: [2017-01-03 Tue 11:45]
     - State "DONE"       from ""           [2017-01-03 Tue 11:45]
@@ -2148,7 +2237,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
 (pns-main-1)
     #+end_src
     
-*** write a snippet file for java file processsing,  by io
+*** CANCELLED write a snippet file for java file processsing,  by io
+    CLOSED: [2019-02-02 Sat 18:07]
+    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:07]
     
 *** DONE multiple snippet files supports, integrated to helm-c-yasnippet
     CLOSED: [2017-01-05 Thu 11:48]
@@ -2213,8 +2304,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
                            "Module")))
     #+end_src
     
-    
-*** throw error when current idx has more than one parameter keys
+*** CANCELLED throw error when current idx has more than one parameter keys
+    CLOSED: [2019-02-02 Sat 18:08]
+    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:08] \\
+      This is a problem in old implementation which is not exists any more
     Or the user will no know what going wrong.
     
     THis function:
@@ -2266,7 +2359,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "STARTED"    from ""           [2017-01-03 Tue 21:34]
     (name (key1 value1) (key1 value2)) works.
     
-*** SOMEDAY can't reference another variables in header
+*** CANCELLED can't reference another variables in header
+    CLOSED: [2019-02-02 Sat 18:08]
+    - State "CANCELLED"  from "SOMEDAY"    [2019-02-02 Sat 18:08] \\
+      THis is old design which not exists any more.
     - State "SOMEDAY"    from "STARTED"    [2017-01-03 Tue 22:36]
     - Note taken on [2017-01-03 Tue 22:14] \\
       this variable should be expanded before pass to yas-expand-snippet.
@@ -2297,7 +2393,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     pns.el:pns-create-expand-env:148:	elem=(method . allocate), tmp=(allocate directAllocate), tmp1=directAllocate
     pns.el:pns-create-expand-env:148:	elem=(size . 111), tmp=nil, tmp1=111
     Mark set
-    
     
 *** DONE add shortcut to nio snippet org file
     CLOSED: [2017-01-04 Wed 17:40]
@@ -2332,7 +2427,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     
     Solution: just pass a filter-header(current the initial value is nil, so select every template in pns-templates). Then only the needed parameters needs to be selected.
     
-*** parameter format related
+*** CANCELLED parameter format related
+    CLOSED: [2019-02-02 Sat 18:09]
+    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:09] \\
+      related to old design
 **** default value for parameter
      XXX But seems now it's hard to add addtional data to a parameter without modifing its type.
      
@@ -2409,7 +2507,10 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     pns.el:nil:113:	values=(part1 part2)
     pns.el:nil:113:	values=(nil)
     i
-*** shortcut: string value, the '"' will missing in the generated codes.
+*** CANCELLED shortcut: string value, the '"' will missing in the generated codes.
+    CLOSED: [2019-02-02 Sat 18:09]
+    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:09] \\
+      old design
     e.g. after expanded, file name  is `aa.bb' instead of `"aa.bb"'
     (file-name "aa.bb")
     
@@ -2439,10 +2540,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     in shortcut,pooint: 19961
     p
     
-*** write function test codes
-    Target: a test is in the "test-method" src block. The result is in the "test-result" src block.
-    Provide a function to run all the test, and print not passed cases.
-    
 *** DONE src block: if lang is org, then some special chars will be quoted
     CLOSED: [2017-01-05 Thu 12:22]
     - State "DONE"       from "STARTED"    [2017-01-05 Thu 12:22]
@@ -2455,7 +2552,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     
     ,#+end_src
     
-*** use headings to select detailed snippets instead of the fisrt parameter
+*** DONE use headings to select detailed snippets instead of the fisrt parameter
+    CLOSED: [2019-02-02 Sat 18:10]
+    - State "DONE"       from ""           [2019-02-02 Sat 18:10]
     
 *** DONE add mode support
     CLOSED: [2019-01-29 Tue 08:39]
@@ -2506,96 +2605,11 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     - State "DONE"       from ""           [2019-01-29 Tue 08:39] \\
       Every src block will be a snippet in current implementation
     Currently we assume there are only one src bolck in an entry
-*** don't parse `(xxx yyy)` as hungry var
-    Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
-*** add an annotation: @(repeat count)
-    Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
-    
-    e.g. when create a class, the field is a this kind.
 *** DONE only expand snippets belong to current mode
     CLOSED: [2017-01-12 Thu 11:22]
     - State "DONE"       from "STARTED"    [2017-01-12 Thu 11:22]
     - State "STARTED"    from ""           [2017-01-12 Thu 10:53]
     I find this is a good way, and I don't need all other modes.
-*** get src blocks from all org files
-    Then I can create code snippet from everywhere.
-
-    If a src block should not be treated as a snippet, just give it a name start with 'NPCS'
-
-    Then I will have the uniform way of taking notes.
-*** DONE 190128 add an action for an snippet: go to the source org file of a snippet
-    CLOSED: [2019-01-30 Wed 10:30]
-    - State "DONE"       from ""           [2019-01-30 Wed 10:30]
-    - Note taken on [2019-01-29 Tue 12:07] \\
-      Implemented a working solution.
-      New function added: pns-open-template
-      And add a new action 'open' to helm
-    When running pns-expand-template-by-name
-    Curruently there is only one action: expand the snippet.
-    Go to the source org file will be helpful. You can see doc there or modify the snippet.
-
-    This is a feature I want to implement at this moment.
-
-
-    All snippets are stored in 'pns-template-set', which is a hash table, whose key is file name, value is an assoc list of '((update-time .) (template ...) (mode .)'.
-    An example:
-    #+BEGIN_SRC elisp
-    "/emacs-lisp-mode/update-file-processing-when-newer-pattern.org"
-    ((update-time . 1483934152.0)
-     (template
-      ((name . "root")
-       (var-table)
-       (hungry-vars)
-       (precondition-table)
-       (text . ""))
-      (((name . "update file processing result when newer patern")
-        (var-table)
-        (hungry-vars hash file processing-function)
-        (precondition-table)
-        (text . "  (setq `hash` (make-hash-table :test 'equal))\n  (let (elem time elem2 result)\n    (setq elem (gethash `file` `hash`))\n    (setq time (time-to-seconds (nth 5 (file-attributes `file` 'string))))\n    (unless (and elem (<= time (pns-assoc 'update-time elem)))\n      (message \"Updating result for file %s\" `file`)\n      (setq result (`processing-function` `file`))\n      (setq elem2 (list (cons 'update-time time)\n                        (cons 'result result)\n                        ;; and other field here\n                        ))\n      (puthash `file` elem2 `hash`)))\n"))))
-     (mode . "emacs-lisp"))
-
-    #+END_SRC
-
-    The '(template ...)' in the assoc list is the real template. The value is a tree. Each element in the tree is an assco list.
-    - name: the headline of this snippet
-    - hungry-vars: the variables defained in this snippet. You can do it by this syntax: `varname`.
-    - var-table: this saves the possible value of a variable.
-    - precondition-table: the precondition when is snippet should be expanded. Only take effect when the snippet is called by its parent snippet.
-    - text: the real snippet.
-
-
-    To implement this feature, we might need to add a new field (DEMO VERSION!) to the assco list:
-    - filename: the file name where this template is defined.
-
-*** DONE 190129 BUG '\\' become to '\' after (DEMO VERSION!) expandation
-    CLOSED: [2019-01-30 Wed 10:30]
-    - State "DONE"       from ""           [2019-01-30 Wed 10:30]
-    For below code snippet text:
-          (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
-    It will become to below after expandation:
-          (re-search-backward (format "^\*+[ \t\n]+%s" (string-trim snippet-name)))
-
-
-    Seems this bug is in yas-expand-snippet
-    (setq text "\\\\*")
-    here text (DEMO VERSION!) is a string with two '\'
-    (yas-expand-snippet  text)
-
-    The expaned string is "\*", but "\\*' is expected. The below one will expand to "\\*"
-    (setq text "\\\\\\\\*")
-    (yas-expand-snippet  text)
-
-    So it looks like if there is two '\' in text, then after expand there will be one. and four to two.
-    And one also to one. like below.
-    (yas-expand-snippet "\\*")
-
-    Why the above behavior?
-    Because '\' is also treated as a special char in snippet by yassnippet. It is used to quote two special chars in the (DEMO VERSION!) snipppet: '$' and '`', to input them literally.
-
-
-    So there is no bug in the software, instead, you should change your (DEMO VERSION!) snippet. To output a '\' after expandation, you should use '\\' in the snippet.
-
 ** run
    - Note taken on [2017-01-06 Fri 21:23]
   
