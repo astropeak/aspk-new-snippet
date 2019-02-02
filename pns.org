@@ -990,6 +990,852 @@
     (yas-expand-snippet "name: `name`" nil nil '((name "Tom")))
     #+end_src
 
+** issues
+*** 190201 all elements in a template tree should in the same mode
+    currently it is possiable that they have different mode, after the "filter by template element mode" feature.
+    pns-convert-block-list-to-tree should be modified.
+
+    And also check if an entry have many src blocks, and it has children entries. How that case is handled.
+    Will the src blocks in the child entry be the chilred of each src blocks in the parent entry?
+*** 190201 support yas like key bindlings for a src snippet
+    We can assign a key sequence that can expand the snippet.
+    Currently we can only expand a snippet by selecting its name by helm.
+    
+    Expanding by a key sequence is convient for short and simple snippetes.
+    After (DEMO VERSION!) this is implemented, the yas-snippet can be completly replaced.
+
+*** 190128 think of a way to adding snippet efficiently
+    Current you can only edit the org files under pns-snippet-dir manually.
+    The good is that after the addtion, the new snippet will be avaliable on next run.
+
+    Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
+    And then save the snippet to mode-dir/inbox.org 
+
+*** don't parse `(xxx yyy)` as hungry var
+    Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
+*** add an annotation: @(repeat count)
+    Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
+    
+    e.g. when create a class, the field is a this kind.
+*** get src blocks from all org files
+    Then I can create code snippet from everywhere.
+
+    If a src block should not be treated as a snippet, just give it a name start with 'NPCS'
+
+    Then I will have the uniform way of taking notes.
+
+*** write function test codes
+    Target: a test is in the "test-method" src block. The result is in the "test-result" src block.
+    Provide a function to run all the test, and print not passed cases.
+    
+*** DONE 190202 rewrite pns-open-snippet, using filename and begining and end property
+    CLOSED: [2019-02-02 Sat 18:03]
+    - State "DONE"       from "STARTED"    [2019-02-02 Sat 18:03]
+    - State "STARTED"    from ""           [2019-02-02 Sat 17:53]
+*** DONE 190131 think of a way to indicate a src block is not a snippet
+    CLOSED: [2019-02-01 Fri 16:44]
+    - State "DONE"       from ""           [2019-02-01 Fri 16:44]
+    Then those src blocks can be used as test ones.
+
+    An idea is by giving a ':not-a-snippt tag, like:
+    #+begin_src python :not-a-snippet :result output   a
+    print("I am not a snippet")
+    #+end_src
+
+    #+RESULTS:
+    : None
+
+    #+name: get the next src block info
+    #+begin_src emacs-lisp
+    (defun aa ()
+      (interactive)
+      (re-search-forward                    org-babel-src-block-regexp nil t)
+      (mapcar (lambda (idx)
+                (cons idx (match-string idx)))
+              '(1 2 3 4 5 6 7 8 9)))
+    #+end_src
+
+
+    When to filter out snippets with a tag ':not-a-snippet'?
+    It can be done in pns-get-all-src-blocks, But I don't want to do it there. I want to keep it in the template.
+    But for now, I will do it there.
+
+*** DONE 190131 add filename and pos to template elements
+    CLOSED: [2019-02-02 Sat 17:51]
+    - State "DONE"       from "STARTED"    [2019-02-02 Sat 17:51]
+    - State "STARTED"    from ""           [2019-02-02 Sat 17:33]
+    Then opening a snippet can be rewrited. Just open the file and goto the pos
+    pos is the point position of the template element in the file.
+    
+    Added filename, beginning and end
+*** DONE 190131 filter snippet by its src block lang instead of the file mode
+    CLOSED: [2019-01-31 Thu 16:46]
+    - State "DONE"       from ""           [2019-01-31 Thu 16:46]
+    The old implemntation all snippets defined in a file have the same mode, regardless the src block lang.
+    This should be changed.
+
+    One benifet is we can define snippets for different mode in a single file.
+
+    A remaining problem:
+    a src block with lang 'elisp' is also a emacs-lisp mode one. This will make the filter failed.
+    So for a emacs lisp src block, we should use 'emacs-lisp' as the lang value, instead of 'elisp'.
+    
+*** DONE 190130 remove the last new line character of a snippet text
+    CLOSED: [2019-01-30 Wed 14:32]
+    - State "DONE"       from ""           [2019-01-30 Wed 14:32] \\
+      Add a new function pns-post-process-src-block-content to post processing the block content.
+      It is called in pns-get-src-block-info.
+    Because the snippet text is defined in (DEMO VERSION!) an org mode src block, so there will always be a new line character in the end, which is unneeded.
+
+    The problem is that after expanded, there will be one new line (DEMO VERSION!) character at the end.
+
+    Do it when getting snippets from org files. Do it at expandation time is not a good idea.
+
+*** DONE 190129 make python snippet not indent automatically
+    CLOSED: [2019-01-31 Thu 13:11]
+    - State "DONE"       from ""           [2019-01-31 Thu 13:11]
+    A problem:
+    The snippet text get from a org file source block have some leading blanks. Those blanks should be trimed if 'yas-indent-line is set to fixed.
+
+    Also we don't know the template mode. We will only want to this if mode is 'python-mode.
+    Better to add a new attr to template that specify mode. This also make it possible to write snippets for differenet modes in one org file. Currently it assumes that the all snippets in a file is in the same mode.
+
+
+    Solution:
+    1. add a new field to template object(which is a assoc list). The filed is 'mode', indicate the mode of the template(snippet). 
+    2. in pns-expand-tempalte, if a templates's mode is 'python', then add ('yas-indent-line 'fixed) to the hungry-vars, which will be passed to yas-expand-snippet as the expand-env variable.
+
+*** DONE 190131 remove spaces at the beginning of each line of a snippet
+    CLOSED: [2019-01-31 Thu 11:27]
+    - State "DONE"       from ""           [2019-01-31 Thu 11:27] \\
+      'string-match' is buggy. Wasted an hour on it.
+    Because the snippet is saves in an orgmode src bock, so there is many spaces at the begining of each line.
+
+    Current we can assume the unneeded count of sapces euqal to all the leadning spaces of the first line.
+    
+*** DONE 190128 add an action for an snippet: go to the source org file of a snippet
+    CLOSED: [2019-01-30 Wed 10:30]
+    - State "DONE"       from ""           [2019-01-30 Wed 10:30]
+    - Note taken on [2019-01-29 Tue 12:07] \\
+      Implemented a working solution.
+      New function added: pns-open-template
+      And add a new action 'open' to helm
+    When running pns-expand-template-by-name
+    Curruently there is only one action: expand the snippet.
+    Go to the source org file will be helpful. You can see doc there or modify the snippet.
+
+    This is a feature I want to implement at this moment.
+
+
+    All snippets are stored in 'pns-template-set', which is a hash table, whose key is file name, value is an assoc list of '((update-time .) (template ...) (mode .)'.
+    An example:
+    #+BEGIN_SRC elisp
+    "/emacs-lisp-mode/update-file-processing-when-newer-pattern.org"
+    ((update-time . 1483934152.0)
+     (template
+      ((name . "root")
+       (var-table)
+       (hungry-vars)
+       (precondition-table)
+       (text . ""))
+      (((name . "update file processing result when newer patern")
+        (var-table)
+        (hungry-vars hash file processing-function)
+        (precondition-table)
+        (text . "  (setq `hash` (make-hash-table :test 'equal))\n  (let (elem time elem2 result)\n    (setq elem (gethash `file` `hash`))\n    (setq time (time-to-seconds (nth 5 (file-attributes `file` 'string))))\n    (unless (and elem (<= time (pns-assoc 'update-time elem)))\n      (message \"Updating result for file %s\" `file`)\n      (setq result (`processing-function` `file`))\n      (setq elem2 (list (cons 'update-time time)\n                        (cons 'result result)\n                        ;; and other field here\n                        ))\n      (puthash `file` elem2 `hash`)))\n"))))
+     (mode . "emacs-lisp"))
+
+    #+END_SRC
+
+    The '(template ...)' in the assoc list is the real template. The value is a tree. Each element in the tree is an assco list.
+    - name: the headline of this snippet
+    - hungry-vars: the variables defained in this snippet. You can do it by this syntax: `varname`.
+    - var-table: this saves the possible value of a variable.
+    - precondition-table: the precondition when is snippet should be expanded. Only take effect when the snippet is called by its parent snippet.
+    - text: the real snippet.
+
+
+    To implement this feature, we might need to add a new field (DEMO VERSION!) to the assco list:
+    - filename: the file name where this template is defined.
+
+*** DONE 190129 BUG '\\' become to '\' after (DEMO VERSION!) expandation
+    CLOSED: [2019-01-30 Wed 10:30]
+    - State "DONE"       from ""           [2019-01-30 Wed 10:30]
+    For below code snippet text:
+          (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
+    It will become to below after expandation:
+          (re-search-backward (format "^\*+[ \t\n]+%s" (string-trim snippet-name)))
+
+
+    Seems this bug is in yas-expand-snippet
+    (setq text "\\\\*")
+    here text (DEMO VERSION!) is a string with two '\'
+    (yas-expand-snippet  text)
+
+    The expaned string is "\*", but "\\*' is expected. The below one will expand to "\\*"
+    (setq text "\\\\\\\\*")
+    (yas-expand-snippet  text)
+
+    So it looks like if there is two '\' in text, then after expand there will be one. and four to two.
+    And one also to one. like below.
+    (yas-expand-snippet "\\*")
+
+    Why the above behavior?
+    Because '\' is also treated as a special char in snippet by yassnippet. It is used to quote two special chars in the (DEMO VERSION!) snipppet: '$' and '`', to input them literally.
+
+
+    So there is no bug in the software, instead, you should change your (DEMO VERSION!) snippet. To output a '\' after expandation, you should use '\\' in the snippet.
+
+*** DONE " myTemp" not killed may cause snippet file not found
+    CLOSED: [2017-01-03 Tue 11:45]
+    - State "DONE"       from ""           [2017-01-03 Tue 11:45]
+    If snippet is relative path, then if this function exit without kill the buffer, then the buffer will keep exists.
+    Fix by first kill the buffer.
+*** DONE let the user input value if a parameter's value is "nil"
+    CLOSED: [2017-01-03 Tue 15:43]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 15:43] \\
+      Create a special case for this situation.
+      (if (and (stringp (car values)) (string-equal (car values) "nil"))
+      
+      At create expand-env,  contains function, and prompt for input.
+    - State "STARTED"    from ""           [2017-01-03 Tue 14:45]
+    Now the parameter is just selected.
+*** DONE create a function to create expand-env for yas-expand-snippet
+    CLOSED: [2017-01-03 Tue 16:00]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 16:00]
+    - State "STARTED"    from ""           [2017-01-03 Tue 15:54]
+    Currently the codes are in another function.
+    
+*** DONE build pns-header-names dynamically based on pns-templates
+    CLOSED: [2017-01-03 Tue 17:26]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 17:26]
+      Rewrite pns-prompt-for-header. the codes not good.
+      The codes 
+    - Note taken on [2017-01-03 Tue 17:20] \\
+      Arealdy fixed the bug. And find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
+    - State "STARTED"    from ""           [2017-01-03 Tue 16:07] \\
+      This function should be modified.
+      (defun pns-prompt-for-header (header-names)
+    Now it is specified in pns-main-1
+    
+*** DONE create templates bug: multiple parameter values will be one
+    CLOSED: [2017-01-03 Tue 17:43]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 17:43] \\
+      Codes is correct. It is the snippet error. So modify snippet to fix it.
+      
+      This function do the conversion. recursively.
+      (defun pns-convert-to-string-filed (lst)
+    - State "STARTED"    from ""           [2017-01-03 Tue 17:33]
+    find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
+    
+*** CANCELLED Symbol’s value as variable is void: for-value
+    CLOSED: [2017-01-03 Tue 18:07]
+    - State "CANCELLED"  from "STARTED"    [2017-01-03 Tue 18:07] \\
+      the name represent the value, no need to write name-value. So I feel this function isn't that so useful.
+    - Note taken on [2017-01-03 Tue 17:51] \\
+      expand-env works like let*. so we can just add a function to create the variables.
+      Below codes works
+      
+      #+NAME: no-name
+      #+begin_src elisp
+          (yas-expand-snippet "open my $fh, \"`for-value`\", ${1:file};" (point) (point) '((for (read "<++")) (for-value (if (consp for) (cdr for) for))))
+      #+end_src
+    - Note taken on [2017-01-03 Tue 17:46] \\
+      for-key   should be (if (consp for) (car for) for)
+      for-value should be (if (consp for) (cdr for) for)
+      
+      This works for all expand-evn variable.
+    - State "STARTED"    from ""           [2017-01-03 Tue 17:45]
+    Symbol’s value as variable is void: for-value', open or die "Open command for [yas] elisp error: Symbol’s value as variable is void: for-key failed";
+    
+*** DONE write a snippet file for java file processsing,  by nio
+    CLOSED: [2017-01-03 Tue 23:28]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 23:28]
+      file saved in ./snippets/file-processing.org
+    - State "STARTED"    from "TODO"       [2017-01-03 Tue 20:10]
+    - State "TODO"       from ""           [2017-01-03 Tue 18:17]
+    create a new snippet file under ./snippets/.
+    
+    The perl file processing snippet now works quite good. Maybe we can share headers between different language, then converting to indepenndent templates. This the key to uniform all language with same promption. But the drawbacks is maybe we need prompt for more data to make it uniform.
+    Add many lanuage's file processing apis in to one snippet file, and see how it works, do there will be some problem.
+    
+    #+NAME: no-name
+    #+begin_src elisp
+(setq pns-snippet-file (expand-file-name "snippets/file-processing.org"))
+(pns-main-1)
+    #+end_src
+    
+*** CANCELLED write a snippet file for java file processsing,  by io
+    CLOSED: [2019-02-02 Sat 18:07]
+    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:07]
+    
+*** DONE multiple snippet files supports, integrated to helm-c-yasnippet
+    CLOSED: [2017-01-05 Thu 11:48]
+    - State "DONE"       from "STARTED"    [2017-01-05 Thu 11:48] \\
+      tested. With little bug for org.org snippet.
+    - Note taken on [2017-01-05 Thu 11:44] \\
+      codes write done. Based on the underlining functions, the function can be created quite easy.
+    - Note taken on [2017-01-05 Thu 10:56] \\
+      one snippet file is a module. all files is a list of module, pns-modules.
+    - State "STARTED"    from ""           [2017-01-05 Thu 10:08]
+      What finished now is processing a single snippet file, which has two parts: a snippet entry and a shortcut entry.
+    Each file contains a list of templates. different file's templates are independent.
+    
+    #+NAME: vars-
+    #+begin_src elisp
+(defvar pns-modules nil "List of modules. a module corespongidng to a snippet file")
+(defvar pns-module-name nil "this var is used to save current module name when processing")
+    #+end_src
+    
+    create pns-modules
+    #+NAME: methods-
+    #+begin_src elisp
+    (defun pns-create-module-1 (file)
+      (let (pns-templates pns-shortcuts (pns-snippet-file file))
+        (pns-main-update-templates)
+        (pns-update-shortcuts)
+        (list (cons 'name (file-name-nondirectory file))
+              (cons 'templates pns-templates)
+              (cons 'shortcuts pns-shortcuts))))
+
+    (defun pns-create-modules (dir)
+      ;; iterate all file names under directory dir with an optional filter function, recursively
+      (require 'f)
+      (mapcar (lambda (file)
+                ;; (message "File: %s" file)
+                ;; Here file is file name, add processing codes here
+                (pns-create-module-1 file))
+              ;; the second parameter can be a function filtering the file names.
+              (f-files dir nil t)))
+
+    (defun pns-create-modules-run ()
+      "A run funcion alwasy has no parameter and no return value"
+      (interactive)
+      (setq pns-modules (pns-create-modules pns-snippet-dir)))
+    #+end_src
+    
+    select module with helm
+    #+NAME: methods-
+    #+begin_src elisp
+    (defun pns-main-module ()
+      "using helm to select a module and run. Input is pns-modules"
+      (interactive)
+      (let ((cand (mapcar (lambda (module)
+                            (cons (pns-assoc 'name module) module))
+                          pns-modules)))
+        (helm-other-buffer `((name . "module")
+                             (candidates . ,cand)
+                             (action . (lambda (module)
+                                         (let ((pns-templates (pns-assoc 'templates module))
+                                               (pns-shortcuts (pns-assoc 'shortcuts module)))
+                                           (pns-main-shortcut)))))
+                           "Module")))
+    #+end_src
+    
+*** CANCELLED throw error when current idx has more than one parameter keys
+    CLOSED: [2019-02-02 Sat 18:08]
+    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:08] \\
+      This is a problem in old implementation which is not exists any more
+    Or the user will no know what going wrong.
+    
+    THis function:
+    (defun  pns-prompt-for-header () 
+    "Prompt for each parameter. Assumption: in the filtered templates, only one parameter key exists at pos idx. Not checked if there are two, but will use the first one silently. Snippet file should ensule this."
+    
+*** DONE if root entry don't have a header src block, then children will be nil
+    CLOSED: [2017-01-03 Tue 22:35]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 22:35]
+    - State "STARTED"    from ""           [2017-01-03 Tue 22:26]
+    Root cause is parents's second element is nil, so the children will be nil.
+    Should fix by setting all element of parents to rst.
+    And also throw an error when children is nil, or idx exceed the max element in parents.
+    
+    (defun pns-convert-block-list-to-tree (blocks)
+    "Covert a block list to a tree based on level. use the children and parent property"
+    (let* ((elem nil)
+    (idx 0)
+    ;; below line will not work, the rst will change every time. Acturally, it will be the same value the last time run
+    ;; (rst '((children . (a)) (parent . nil)))
+    ;; this works though
+    (rst (list (list 'children idx) (list 'parent)))
+    
+    ;; parents save the current level parent block
+    # (parents (list rst rst rst nil nil nil nil)) ;; this will work
+    (parents (list rst nil nil nil nil nil nil))
+    
+*** DONE a bug: header ((buffer-types Byte Char Int)), pns-convert-to-string-filed  not works
+    CLOSED: [2017-01-03 Tue 22:25]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 22:25]
+    - State "STARTED"    from ""           [2017-01-03 Tue 22:23]
+      
+    Below is modified vesion. seems it works
+    (defun pns-convert-to-string-filed (lst)
+    (tracel lst)
+    (mapcar (lambda (parameter)
+    (if (listp parameter)
+    (cons (format "%s" (car parameter))
+    (if (> (length (cdr parameter)) 1)
+    (pns-convert-to-string-filed (cdr parameter))
+    (format "%s" (car (cdr parameter)))))
+    (format "%s" parameter)))
+    lst))
+    
+*** DONE seems if parameter is (name value1 value2), the helm selection will hang
+    CLOSED: [2017-01-03 Tue 21:49]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 21:49] \\
+      pns-contains don't consider this situation.
+    - State "STARTED"    from ""           [2017-01-03 Tue 21:34]
+    (name (key1 value1) (key1 value2)) works.
+    
+*** CANCELLED can't reference another variables in header
+    CLOSED: [2019-02-02 Sat 18:08]
+    - State "CANCELLED"  from "SOMEDAY"    [2019-02-02 Sat 18:08] \\
+      THis is old design which not exists any more.
+    - State "SOMEDAY"    from "STARTED"    [2017-01-03 Tue 22:36]
+    - Note taken on [2017-01-03 Tue 22:14] \\
+      this variable should be expanded before pass to yas-expand-snippet.
+      May be I should give up this now.
+    - State "STARTED"    from ""           [2017-01-03 Tue 21:58]
+    e.g.
+    ((buffer-types Byte Int ...))
+    ((command create-buffer) (type buffer-types))
+    type refer to buffer-types
+    
+    But in pns-templates, type's reference value 'buffer-types' will be convert to string directly.
+    ("type" . "buffer-types")
+    
+    Solution: should define a method to show how to do variable reference, now they will all be converted to string.
+    I will use the commer syntax. if a name is preceeded by a commer, then we will not convert it to a string. So the definition will be changed to:
+    ((buffer-types Byte Int ...))
+    ((command create-buffer) (type ,buffer-types))
+    
+*** DONE select type to Int, but in expanded codes it will always be Double
+    CLOSED: [2017-01-03 Tue 23:00]
+    - State "DONE"       from "STARTED"    [2017-01-03 Tue 23:00] \\
+      a bug in pns-create-expand-env
+    - State "STARTED"    from ""           [2017-01-03 Tue 22:37]
+    DoubleBuffer buffer = DoubleBuffer.directAllocate(111);
+    
+    pns.el:pns-create-expand-env:148:	elem=(command . create-buffer), tmp=create-buffer, tmp1=create-buffer
+    pns.el:pns-create-expand-env:148:	elem=(type . Short), tmp=(Byte Char Int Short Char Long Float Double), tmp1=Double
+    pns.el:pns-create-expand-env:148:	elem=(method . allocate), tmp=(allocate directAllocate), tmp1=directAllocate
+    pns.el:pns-create-expand-env:148:	elem=(size . 111), tmp=nil, tmp1=111
+    Mark set
+    
+*** DONE add shortcut to nio snippet org file
+    CLOSED: [2017-01-04 Wed 17:40]
+    - State "DONE"       from "STARTED"    [2017-01-04 Wed 17:40] \\
+      use pns-update-shortcuts to read shortcuts from snippet file and saved to pns-shortcuts
+      use pns-main-shortcut to trigger every shortcut.
+      Works very good!
+    - Note taken on [2017-01-04 Wed 17:09] \\
+      By make use of the former functions, the job is easy.
+      So it is good to write general functions. not use global variables.
+    - Note taken on [2017-01-04 Wed 17:06] \\
+      Done the basic codes. Works with little bug.
+    - Note taken on [2017-01-04 Wed 13:58] \\
+      Code modification done. Possiable to support shortcut. run pns-main-shortcut to see the effect.
+    - Note taken on [2017-01-04 Wed 11:42] \\
+      try to impelemnt. just add a parameter filter-header will works.
+      But below will cause template nill.
+      
+      (pns-do-expand '(("command" . "create-channel") ("for" ("read" "Input")))))
+      
+      below one works, but "for" still be promted:
+      (pns-do-expand '(("command" . "create-channel") ("for" . "read"))))
+      This wroks as expected.
+      Fix this by adding a judge: if the element exists in filter-header, then don't select it, just use its value.
+      
+    - State "STARTED"    from ""           [2017-01-03 Tue 23:35]
+    one to read file, including create channel, create buffer, read from channel to buffer, .., close file.
+    one to write file.
+    
+    a shortcut is just a list of expanded headers. it locates under '^* shortcut.*' entry.
+    TO the user, it works exactly the same as a snippet entry.
+    
+    Solution: just pass a filter-header(current the initial value is nil, so select every template in pns-templates). Then only the needed parameters needs to be selected.
+    
+*** CANCELLED parameter format related
+    CLOSED: [2019-02-02 Sat 18:09]
+    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:09] \\
+      related to old design
+**** default value for parameter
+     XXX But seems now it's hard to add addtional data to a parameter without modifing its type.
+     
+     It can be easily added.
+     Current structure of a parameter:
+     (key (select-value real-value))
+     
+     Then just add default value to the third place, 
+     (key (select-value real-value default-value)). If select-value is the same as real-value, just set they same.
+     
+     The format is compatible to the old one.
+     
+     Default value is displayed when selecting, if press enter, then key value will be nil.
+     
+**** parse value as symbol: a reference to another key
+     why this is useful?
+     Then I can define a 'global variable'(may be in another src block instead of header), and refer to that variable in another 'header' src block.
+     This is quite useful in this situation:
+     In a shortcut, two header refers to the same variable(such as filehandle, filename), by get that info and saved to a 'global variable', we avoid prompt for that info twice.
+     
+     The 'global variable' is used to collect all parameters needed by the whole shortcut headers, and in the header definition, we just pass all values.
+     
+     Maybe we can use this syntax to express a variable reference:
+     (key value)      : value is treated as string
+     (key $reference) : reference is treated as a symbol. prefixed by a '$'
+     (key @doc) : doc is the document for this parameter. prefixed by a '@'. Or (key "@this is a doc contais blanks"). and (key (select-value real-value @doc-for-selected-value)) also works, it add a doc to this value.
+     It will be displayed as name for helm.
+     (key =default-value): default-value is the default value of this parameter. prefixed by a "=".
+     
+     All those parameters are regular chars in lisp.
+     '#', '?' is not valid
+     
+     test:
+     #+NAME: no-name
+     #+begin_src elisp
+(setq a (read "(key *reference))"))
+
+(format "%S" (nth 1 a))
+
+(format "%S" (nth 0 a))
+
+
+
+
+     #+end_src
+     
+**** should provide a way to define non selectable parameters.
+     e.g. buffer-types parameter just servered as an global variable, not the headers.
+     
+     To fix, there are two ways: define other src names, such as 'global-definition' instead of 'header', the latter is used for prompt for input.
+     two: still use header name, but...
+     I prefer the first one.
+     
+*** CANCELLED refactory: pns-prompt-for-header
+    CLOSED: [2017-01-04 Wed 21:37]
+    - State "CANCELLED"  from ""           [2017-01-04 Wed 21:37]
+    - Note taken on [2017-01-04 Wed 21:33] \\
+      seems no need to do so. Because in shortcut we will use this feature.
+    TODO: seems we can return the real-value directly by helm. Now returned the select-value.
+    
+    this function: values is a list of string. better to use a list of cons if the parameter value is cons. Then no need to convert latter.
+    
+    (defun  pns-prompt-for-header (&optional filter-header) 
+    
+    
+    (setq values (pns-get-header-element-values key filter-header))
+    
+    (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
+    (action . (lambda (c) c)))
+    "Select"))
+    
+    pns.el:nil:113:	values=(create-channel create-buffer fill-buffer extract-buffer write-to-channel-from-buffer read-from-channel-to-buffer import-needed-package)
+    pns.el:nil:113:	values=(read write)
+    pns.el:nil:113:	values=(part1 part2)
+    pns.el:nil:113:	values=(nil)
+    i
+*** CANCELLED shortcut: string value, the '"' will missing in the generated codes.
+    CLOSED: [2019-02-02 Sat 18:09]
+    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:09] \\
+      old design
+    e.g. after expanded, file name  is `aa.bb' instead of `"aa.bb"'
+    (file-name "aa.bb")
+    
+*** DONE shortcut: import part will be inserted after the fowwling parts
+    CLOSED: [2017-01-04 Wed 21:15]
+    - State "DONE"       from "STARTED"    [2017-01-04 Wed 21:15]
+    - State "STARTED"    from ""           [2017-01-04 Wed 20:01]
+    caused by prompt for file name. if i set value for file-name, then it is ok.
+    (file-name "aa.bb")
+    
+    This issue should be caused by helm, not yasnippet. Because helm will save current position.
+    And two helm session is nested.
+    
+    After tested, it is 'read-string' that make point with wrong value.
+    in shortcut,pooint: 19803
+    point: 19803
+    after point: 19872
+    in shortcut,pooint: 19872
+    before read-string. ponint:19872
+    is-buffer-file-temp called
+    afeter read-string. ponint:19803
+    point: 19803
+    after point: 19906
+    in shortcut,pooint: 19906
+    point: 19906
+    after point: 19961
+    in shortcut,pooint: 19961
+    p
+    
+*** DONE src block: if lang is org, then some special chars will be quoted
+    CLOSED: [2017-01-05 Thu 12:22]
+    - State "DONE"       from "STARTED"    [2017-01-05 Thu 12:22]
+    - Note taken on [2017-01-05 Thu 11:54] \\
+      maybe we can just remove the leading ','.
+    - State "STARTED"    from ""           [2017-01-05 Thu 11:51]
+    So the expanded content will contains a ',' before.
+    ,#+name: content
+    ,#+begin_src csharp
+    
+    ,#+end_src
+    
+*** DONE use headings to select detailed snippets instead of the fisrt parameter
+    CLOSED: [2019-02-02 Sat 18:10]
+    - State "DONE"       from ""           [2019-02-02 Sat 18:10]
+    
+*** DONE add mode support
+    CLOSED: [2019-01-29 Tue 08:39]
+    - State "DONE"       from ""           [2019-01-29 Tue 08:39] \\
+      Looks like already done
+    Only that mode's snippet can be selected.
+    With a prefix, select form all modes.
+    
+    Then I should add another field to module: mode
+    
+    this code create directories for each mode
+    #+NAME: no-name
+    #+begin_src elisp
+
+    (mapcar (lambda (mode)
+              (setq dir (format "%s/%s-mode" pns-snippet-dir mode))
+              (unless (file-exists-p dir) (message "Creating dir: %s" dir) (mkdir dir t))
+              )
+            '("c++" "c" "cc" "cmake" "csharp" "css" "emacs-lisp" "erlang" "html" "inf-ruby" "java" "javascript" "js" "js2" "js3" "jsp" "less-css" "lua" "nxml" "objc" "org" "perl" "python" "rhtml" "rspec" "ruby" "scala" "scss" "sh" "snippet" "web"))
+
+    #+end_src
+    
+    shortcut may be a general idea. It can combine any snippet sources. The aspk-code-snippet works good seems. we should only use key words to search for a snippet, wether if it is a snippet or a shortcut.
+    
+*** DONE pns should also support the yas snippet function.
+    CLOSED: [2019-01-29 Tue 08:35]
+    - State "DONE"       from ""           [2019-01-29 Tue 08:35] \\
+      Looks like this is already suppored. Just write the simple yas snippet in source blocks. And it will work.
+      
+        #+begin_src python :results output
+        print("%{1:var}=%s" % ($1))
+        $0
+        #+end_src
+    for simple snippet, aspk-code-snippet works better. simple snippet can be created quickly.
+    
+    But for complex snippet, aspk-new-snippet is better. The writting is quite complex.
+    
+*** DONE not recogonize '\`', the backquote is ignored
+    CLOSED: [2017-01-07 Sat 23:39]
+    - State "DONE"       from ""           [2017-01-07 Sat 23:39]
+     
+*** DONE src blocks can't be found when #+name: xxx not exists
+    CLOSED: [2017-01-08 Sun 11:47]
+    - State "DONE"       from "STARTED"    [2017-01-08 Sun 11:47]
+    - State "STARTED"    from ""           [2017-01-07 Sat 23:57]
+*** DONE multiple src blocks in one entry will be treadted as if they are in different entry
+    CLOSED: [2019-01-29 Tue 08:39]
+    - State "DONE"       from ""           [2019-01-29 Tue 08:39] \\
+      Every src block will be a snippet in current implementation
+    Currently we assume there are only one src bolck in an entry
+*** DONE only expand snippets belong to current mode
+    CLOSED: [2017-01-12 Thu 11:22]
+    - State "DONE"       from "STARTED"    [2017-01-12 Thu 11:22]
+    - State "STARTED"    from ""           [2017-01-12 Thu 10:53]
+    I find this is a good way, and I don't need all other modes.
+** how to use this software
+   - Note taken on [2017-01-06 Fri 21:23]
+  
+   just run: pns-expand-template-by-name
+   (pns-update-template-list will be called inside that function)
+
+
+   convert the old snippet to new snippet by:
+   pns-tool-convert-all
+   will convert all files in pcs-snippet-dir, and stored in pns-snippet-dir 
+
+** tools
+*** convert snippets in  aspk-code-snippets to aspk-new-snippets format
+    given a directory, convert all snippets file under that dir to a single org file. each file is an entry, the headline is the name of that snippet, the src block is the contnet.
+    
+    Run this code block, then call pns-expand-template-by-name interactively, then all snippets files under pcs-snippet-dir/perl-mode can be selected.
+    
+    #+NAME: methods
+    #+begin_src elisp
+    (defun pns-tool-convert-aspk-code-snippets-to-new (dir output-file mode)
+      "Convert all snippets(native style) in DIR to a single org mode file OUTPUT-FILE. each file becomes an entry"
+      (with-current-buffer (find-file-noselect output-file)
+        (erase-buffer))
+      (let (name value)
+        (mapc (lambda (file)
+                ;; (message "file=%s" file)
+                (condition-case *error-info*
+                    (progn
+                      (and (get-buffer " myTemp") (kill-buffer " myTemp"))
+                      (set-buffer (get-buffer-create " myTemp"))
+                      (insert-file-contents file nil nil nil t))
+                  (error
+                   (message "Error happened: %S" *error-info*)
+                   (debug *error-info*)
+                   (list "Error: Fail to get snippet name. Error info below" *error-info*)))
+
+                (goto-char (point-min))
+                ;; (re-search-forward "^\s*#\s*name\s*:\s*\\(.*\\)" (point-max))
+                (when (re-search-forward "^\s*#\s*name\s*:\s*\\(.*\\)"(point-max) t)
+                  (match-string 1)
+                  ;; here (match-string 1) is the matched text by first (), add processing codes here
+                  (message "Matched string %s" (match-string 1))
+                  (setq name (match-string 1))
+                  (when (re-search-forward "^\s*#\s*--\s*\n"(point-max) t)
+                    (setq value (buffer-substring-no-properties (match-end 0) (point-max))))
+                  ;; replace ` with \`
+                  (setq value (replace-regexp-in-string "`" "\\`" value t t))
+                  (with-current-buffer (find-file-noselect output-file)
+                    ;; (erase-buffer)
+                    (goto-char (point-max))
+                    ;; (insert (format "\n* %s\n#+name:content\n#+begin_src java\n%s\n#+end_src" name value))
+                    (insert (format "\n* %s\n#+begin_src %s\n%s\n#+end_src\n" name mode value))
+                    (save-buffer)))
+                (kill-buffer " myTemp"))
+              (f-files dir nil t))))
+
+
+    ;; test:
+    (defun pns-tool-convert-all ()
+      (interactive)
+      (mapc (lambda (mode)
+              (let ((file (expand-file-name (format    "%s/%s-mode/collection_of_old_snippet.org" pns-snippet-dir mode)))
+                    (dir (expand-file-name (format "%s/%s-mode" pcs-snippet-dir mode))))
+                ;; (when (file-exists-p file)
+                ;;   (delete-file file))
+                (when (file-exists-p dir)
+                  (pns-tool-convert-aspk-code-snippets-to-new dir file mode))))
+            pcs--mode-names))
+
+    ;; "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org"
+    ;; (setq pns-template-file "/tmp/aa.org")
+
+    ;; then run pns-expand-template-by-name
+    #+end_src
+                    
+** programming notes
+*** 190131 elisp 'string-match' is very buggy, never use it
+    (string-match "^\s+" " aaa")
+    (match-string 0)
+    (match-beginning 0)
+    (match-end 0)
+
+
+    In the above example, the second line will raise an error. 
+
+    But use re-search-forward instead(first insert the string to a temp (DEMO VERSION!) buffer)
+
+*** throw errors guard correctness, detect fault in development stage
+    Then when error happens, the program stops at that place, debugging will be much easy.
+*** write test for each function
+    This helps understand the function. and also a regretion test.
+*** use uniform data format. If not the same, first convert to the same
+    This will greatly reduce complexsity of codes. 
+    
+    In this project, the parameter has tow form:
+    (key value) and (key (display-value real-value)).
+    
+    So there are lots of codes that handle the difference of those tow froms.
+    
+    Good way is: first convert to uniform format before processing.  This applys in many places.
+*** input-parser: a program should have a uniform/stable internal format for representing the input data
+    Then we can change the original input format easily, just write a new input parser.
+    
+    In this project, the input data is an org mode file. The internal format is a lists of template.
+    We can easily change the input date to a string, or a list, just write a new parser for that data format.
+    
+    We can name this function as xxx-input-parser, it accepts one type of input data, and always return the internal input format. The xxx-input-parser function call different coolier functions to process input data, based on their type.
+*** emacs lisp global variable, and funtion interface design
+    the -contains? function from dash package don't add a third parameter, but it use a global variable -compare-fn to used as compare function.
+    Since emacs list is dynamic binding, so we can use this idiom to express this without change the global value of '-comare-fn' value:
+    #+NAME: no-name
+    #+begin_src elisp :results value
+    (let ((-compare-fn (lambda (a b) (equal (+ 1 a) b))))
+      (-contains? '(1 2 3) 2)
+      )
+    ;; and here -contains-fn still its original value.
+    #+end_src
+    
+    This teckniques are used common when search regexp:
+    #+NAME: no-name
+    #+begin_src elisp
+    (let* (
+           (name "\\(header\\|content\\)")
+           (case-fold-search t)  ;; makes the searching ignore case
+           (regexp (concat org-babel-src-name-regexp name "[ \t(]*[\r\n]\\(?:^#.*[\r\n]\\)*"
+                           (substring org-babel-src-block-regexp 1))))
+      (re-search-forward regexp nil t))
+
+    #+end_src
+    
+    -contains? documents
+    #+BEGIN_SRC text
+    -contains? (list element)
+
+Return non-nil if list contains element.
+
+The test for equality is done with equal, or with -compare-fn if that's non-nil.
+
+Alias: -contains-p
+
+(-contains? '(1 2 3) 1) ;; => t
+(-contains? '(1 2 3) 2) ;; => t
+(-contains? '(1 2 3) 4) ;; => nil
+
+    #+END_SRC
+*** annotation is a great way for adding syntax to a existing grammer
+    I use annotation to add below syntaxs to org mode file grammer:
+    1. define variables formally
+    2. the if statement
+    3. get variable value
+       
+*** create a unique name for every concepts, things, and there relationships
+    This will make programming very clear!!!
+    
+*** 基础代码要做好，要与上层逻辑代码分离
+    这个项目中，在tree的实现上，花费了太多的时间，就是因为将tree的实现与其它逻辑搅在一起了。
+    
+    最后调用了之前写的tree模块，问题很快得到解决。
+    
+*** 编程的难点在哪里？
+    - 函数、API用错，可能是由于笔误，记忆不清，理解不够等
+    - 一直在重复，以前的经验没有用上。
+      
+    目前通过编写snippet，以上问题都能够得到解决。 
+    
+*** 感觉emacs的坑太多了。。以及dynamic好处、坏处分析
+    很容易出错，并且错误提示很不明显，都不知道到底哪错了。
+    还有dynamic scoping也容易出错。如果有个临时变量忘记放在let中，则可能造成非常诡异的问题。或者回调函数中引用了一个全局变量xyz, 并将它传给map.但map中也定义了一个xyz，则此时回调函数中的xyz会绑定到map中的这个，造成问题。 在aspk/tree-iterate中遇到过一例。
+    但dynamic scoping也有好处，可以通过全局变量达到传递参数的效果。
+    
+*** file system is a natual hash table(或者成为程序各个部分的连接点)
+    the key is the filename
+    value is whatever
+
+    check if a key exists by checking if a file exists
+    delete a key by delete a file
+
+    And has persistency natively.
+    The drawback is efficiency.
+
+    A great benifet is it aways exists and don't need any other third party tools/packages. And everyone already be very familar to this interface.
+
+    An example is that when scraping all SEC index files, I just store all index html file to filesystem in a scrapy project. Then I can continue process the index html files in a django project to save the extracted info to a database. So that I avoid the trouble of using django orm in a scrapy project(which is not supported by default and seems lots of trouble). And here we can see another good practice of programming: seperate each part and make each mediaet result visible. It helps write codes, debug, and test, and refactor.
+    
+    对于scrape all sec index html page 中的信息，并保存在mysql中，其中scraping这一块scrapy做的比较好，而将数据保存在mysql中django 的ORM则做的比较好。有两种方案
+    1. 协调两个工具，让其工作在一块。不管是在scrapy中调用django，还是在django中调用scrapy.（没有现成的解决方案，需要折腾）
+    2. 二者分开工作，但制订一个中间的通信协义。
+       
+    很明显第二种方案要好。文件系统就是一个非常好的通信媒介。scrapy 将所有的index html file保存file system中，然后在django中读取每个file，解析数据并保存在mysql中。
+
+*** the drawback of framework
+    1. You should learn how to use it, because it create many typecal ways of working that you must follow.
+    2. If your requirement doesn't supported by default, then it hard to make it work.
+
+    So heavy framework makes doing specific works easy while it is hard to adpat for new requirement.
+    Light framework provide more flexiable APIs so that the user can composit them to implement their requrement. But it doesn't provide an  avaliable solution to a specific problem.
+
+    New comers might love a heavy framework, while an experienced man loves a light one.
 ** inbox
 *** 170101, thinking and ideas
     # -*- mode: snippet -*-
@@ -1962,852 +2808,6 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      
      pns-main-shortcut do the job. but a strange thing: the snippet will be inserted to another most recent buffer!!! not current.
      
-** issues
-*** 190201 all elements in a template tree should in the same mode
-    currently it is possiable that they have different mode, after the "filter by template element mode" feature.
-    pns-convert-block-list-to-tree should be modified.
-
-    And also check if an entry have many src blocks, and it has children entries. How that case is handled.
-    Will the src blocks in the child entry be the chilred of each src blocks in the parent entry?
-*** 190201 support yas like key bindlings for a src snippet
-    We can assign a key sequence that can expand the snippet.
-    Currently we can only expand a snippet by selecting its name by helm.
-    
-    Expanding by a key sequence is convient for short and simple snippetes.
-    After (DEMO VERSION!) this is implemented, the yas-snippet can be completly replaced.
-
-*** 190128 think of a way to adding snippet efficiently
-    Current you can only edit the org files under pns-snippet-dir manually.
-    The good is that after the addtion, the new snippet will be avaliable on next run.
-
-    Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
-    And then save the snippet to mode-dir/inbox.org 
-
-*** don't parse `(xxx yyy)` as hungry var
-    Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
-*** add an annotation: @(repeat count)
-    Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
-    
-    e.g. when create a class, the field is a this kind.
-*** get src blocks from all org files
-    Then I can create code snippet from everywhere.
-
-    If a src block should not be treated as a snippet, just give it a name start with 'NPCS'
-
-    Then I will have the uniform way of taking notes.
-
-*** write function test codes
-    Target: a test is in the "test-method" src block. The result is in the "test-result" src block.
-    Provide a function to run all the test, and print not passed cases.
-    
-*** DONE 190202 rewrite pns-open-snippet, using filename and begining and end property
-    CLOSED: [2019-02-02 Sat 18:03]
-    - State "DONE"       from "STARTED"    [2019-02-02 Sat 18:03]
-    - State "STARTED"    from ""           [2019-02-02 Sat 17:53]
-*** DONE 190131 think of a way to indicate a src block is not a snippet
-    CLOSED: [2019-02-01 Fri 16:44]
-    - State "DONE"       from ""           [2019-02-01 Fri 16:44]
-    Then those src blocks can be used as test ones.
-
-    An idea is by giving a ':not-a-snippt tag, like:
-    #+begin_src python :not-a-snippet :result output   a
-    print("I am not a snippet")
-    #+end_src
-
-    #+RESULTS:
-    : None
-
-    #+name: get the next src block info
-    #+begin_src emacs-lisp
-    (defun aa ()
-      (interactive)
-      (re-search-forward                    org-babel-src-block-regexp nil t)
-      (mapcar (lambda (idx)
-                (cons idx (match-string idx)))
-              '(1 2 3 4 5 6 7 8 9)))
-    #+end_src
-
-
-    When to filter out snippets with a tag ':not-a-snippet'?
-    It can be done in pns-get-all-src-blocks, But I don't want to do it there. I want to keep it in the template.
-    But for now, I will do it there.
-
-*** DONE 190131 add filename and pos to template elements
-    CLOSED: [2019-02-02 Sat 17:51]
-    - State "DONE"       from "STARTED"    [2019-02-02 Sat 17:51]
-    - State "STARTED"    from ""           [2019-02-02 Sat 17:33]
-    Then opening a snippet can be rewrited. Just open the file and goto the pos
-    pos is the point position of the template element in the file.
-    
-    Added filename, beginning and end
-*** DONE 190131 filter snippet by its src block lang instead of the file mode
-    CLOSED: [2019-01-31 Thu 16:46]
-    - State "DONE"       from ""           [2019-01-31 Thu 16:46]
-    The old implemntation all snippets defined in a file have the same mode, regardless the src block lang.
-    This should be changed.
-
-    One benifet is we can define snippets for different mode in a single file.
-
-    A remaining problem:
-    a src block with lang 'elisp' is also a emacs-lisp mode one. This will make the filter failed.
-    So for a emacs lisp src block, we should use 'emacs-lisp' as the lang value, instead of 'elisp'.
-    
-*** DONE 190130 remove the last new line character of a snippet text
-    CLOSED: [2019-01-30 Wed 14:32]
-    - State "DONE"       from ""           [2019-01-30 Wed 14:32] \\
-      Add a new function pns-post-process-src-block-content to post processing the block content.
-      It is called in pns-get-src-block-info.
-    Because the snippet text is defined in (DEMO VERSION!) an org mode src block, so there will always be a new line character in the end, which is unneeded.
-
-    The problem is that after expanded, there will be one new line (DEMO VERSION!) character at the end.
-
-    Do it when getting snippets from org files. Do it at expandation time is not a good idea.
-
-*** DONE 190129 make python snippet not indent automatically
-    CLOSED: [2019-01-31 Thu 13:11]
-    - State "DONE"       from ""           [2019-01-31 Thu 13:11]
-    A problem:
-    The snippet text get from a org file source block have some leading blanks. Those blanks should be trimed if 'yas-indent-line is set to fixed.
-
-    Also we don't know the template mode. We will only want to this if mode is 'python-mode.
-    Better to add a new attr to template that specify mode. This also make it possible to write snippets for differenet modes in one org file. Currently it assumes that the all snippets in a file is in the same mode.
-
-
-    Solution:
-    1. add a new field to template object(which is a assoc list). The filed is 'mode', indicate the mode of the template(snippet). 
-    2. in pns-expand-tempalte, if a templates's mode is 'python', then add ('yas-indent-line 'fixed) to the hungry-vars, which will be passed to yas-expand-snippet as the expand-env variable.
-
-*** DONE 190131 remove spaces at the beginning of each line of a snippet
-    CLOSED: [2019-01-31 Thu 11:27]
-    - State "DONE"       from ""           [2019-01-31 Thu 11:27] \\
-      'string-match' is buggy. Wasted an hour on it.
-    Because the snippet is saves in an orgmode src bock, so there is many spaces at the begining of each line.
-
-    Current we can assume the unneeded count of sapces euqal to all the leadning spaces of the first line.
-    
-*** DONE 190128 add an action for an snippet: go to the source org file of a snippet
-    CLOSED: [2019-01-30 Wed 10:30]
-    - State "DONE"       from ""           [2019-01-30 Wed 10:30]
-    - Note taken on [2019-01-29 Tue 12:07] \\
-      Implemented a working solution.
-      New function added: pns-open-template
-      And add a new action 'open' to helm
-    When running pns-expand-template-by-name
-    Curruently there is only one action: expand the snippet.
-    Go to the source org file will be helpful. You can see doc there or modify the snippet.
-
-    This is a feature I want to implement at this moment.
-
-
-    All snippets are stored in 'pns-template-set', which is a hash table, whose key is file name, value is an assoc list of '((update-time .) (template ...) (mode .)'.
-    An example:
-    #+BEGIN_SRC elisp
-    "/emacs-lisp-mode/update-file-processing-when-newer-pattern.org"
-    ((update-time . 1483934152.0)
-     (template
-      ((name . "root")
-       (var-table)
-       (hungry-vars)
-       (precondition-table)
-       (text . ""))
-      (((name . "update file processing result when newer patern")
-        (var-table)
-        (hungry-vars hash file processing-function)
-        (precondition-table)
-        (text . "  (setq `hash` (make-hash-table :test 'equal))\n  (let (elem time elem2 result)\n    (setq elem (gethash `file` `hash`))\n    (setq time (time-to-seconds (nth 5 (file-attributes `file` 'string))))\n    (unless (and elem (<= time (pns-assoc 'update-time elem)))\n      (message \"Updating result for file %s\" `file`)\n      (setq result (`processing-function` `file`))\n      (setq elem2 (list (cons 'update-time time)\n                        (cons 'result result)\n                        ;; and other field here\n                        ))\n      (puthash `file` elem2 `hash`)))\n"))))
-     (mode . "emacs-lisp"))
-
-    #+END_SRC
-
-    The '(template ...)' in the assoc list is the real template. The value is a tree. Each element in the tree is an assco list.
-    - name: the headline of this snippet
-    - hungry-vars: the variables defained in this snippet. You can do it by this syntax: `varname`.
-    - var-table: this saves the possible value of a variable.
-    - precondition-table: the precondition when is snippet should be expanded. Only take effect when the snippet is called by its parent snippet.
-    - text: the real snippet.
-
-
-    To implement this feature, we might need to add a new field (DEMO VERSION!) to the assco list:
-    - filename: the file name where this template is defined.
-
-*** DONE 190129 BUG '\\' become to '\' after (DEMO VERSION!) expandation
-    CLOSED: [2019-01-30 Wed 10:30]
-    - State "DONE"       from ""           [2019-01-30 Wed 10:30]
-    For below code snippet text:
-          (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
-    It will become to below after expandation:
-          (re-search-backward (format "^\*+[ \t\n]+%s" (string-trim snippet-name)))
-
-
-    Seems this bug is in yas-expand-snippet
-    (setq text "\\\\*")
-    here text (DEMO VERSION!) is a string with two '\'
-    (yas-expand-snippet  text)
-
-    The expaned string is "\*", but "\\*' is expected. The below one will expand to "\\*"
-    (setq text "\\\\\\\\*")
-    (yas-expand-snippet  text)
-
-    So it looks like if there is two '\' in text, then after expand there will be one. and four to two.
-    And one also to one. like below.
-    (yas-expand-snippet "\\*")
-
-    Why the above behavior?
-    Because '\' is also treated as a special char in snippet by yassnippet. It is used to quote two special chars in the (DEMO VERSION!) snipppet: '$' and '`', to input them literally.
-
-
-    So there is no bug in the software, instead, you should change your (DEMO VERSION!) snippet. To output a '\' after expandation, you should use '\\' in the snippet.
-
-*** DONE " myTemp" not killed may cause snippet file not found
-    CLOSED: [2017-01-03 Tue 11:45]
-    - State "DONE"       from ""           [2017-01-03 Tue 11:45]
-    If snippet is relative path, then if this function exit without kill the buffer, then the buffer will keep exists.
-    Fix by first kill the buffer.
-*** DONE let the user input value if a parameter's value is "nil"
-    CLOSED: [2017-01-03 Tue 15:43]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 15:43] \\
-      Create a special case for this situation.
-      (if (and (stringp (car values)) (string-equal (car values) "nil"))
-      
-      At create expand-env,  contains function, and prompt for input.
-    - State "STARTED"    from ""           [2017-01-03 Tue 14:45]
-    Now the parameter is just selected.
-*** DONE create a function to create expand-env for yas-expand-snippet
-    CLOSED: [2017-01-03 Tue 16:00]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 16:00]
-    - State "STARTED"    from ""           [2017-01-03 Tue 15:54]
-    Currently the codes are in another function.
-    
-*** DONE build pns-header-names dynamically based on pns-templates
-    CLOSED: [2017-01-03 Tue 17:26]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 17:26]
-      Rewrite pns-prompt-for-header. the codes not good.
-      The codes 
-    - Note taken on [2017-01-03 Tue 17:20] \\
-      Arealdy fixed the bug. And find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
-    - State "STARTED"    from ""           [2017-01-03 Tue 16:07] \\
-      This function should be modified.
-      (defun pns-prompt-for-header (header-names)
-    Now it is specified in pns-main-1
-    
-*** DONE create templates bug: multiple parameter values will be one
-    CLOSED: [2017-01-03 Tue 17:43]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 17:43] \\
-      Codes is correct. It is the snippet error. So modify snippet to fix it.
-      
-      This function do the conversion. recursively.
-      (defun pns-convert-to-string-filed (lst)
-    - State "STARTED"    from ""           [2017-01-03 Tue 17:33]
-    find a new bug in create templates from snippet file: if a parameter has multiple values, it will have only one value, which is the string of that list.
-    
-*** CANCELLED Symbol’s value as variable is void: for-value
-    CLOSED: [2017-01-03 Tue 18:07]
-    - State "CANCELLED"  from "STARTED"    [2017-01-03 Tue 18:07] \\
-      the name represent the value, no need to write name-value. So I feel this function isn't that so useful.
-    - Note taken on [2017-01-03 Tue 17:51] \\
-      expand-env works like let*. so we can just add a function to create the variables.
-      Below codes works
-      
-      #+NAME: no-name
-      #+begin_src elisp
-          (yas-expand-snippet "open my $fh, \"`for-value`\", ${1:file};" (point) (point) '((for (read "<++")) (for-value (if (consp for) (cdr for) for))))
-      #+end_src
-    - Note taken on [2017-01-03 Tue 17:46] \\
-      for-key   should be (if (consp for) (car for) for)
-      for-value should be (if (consp for) (cdr for) for)
-      
-      This works for all expand-evn variable.
-    - State "STARTED"    from ""           [2017-01-03 Tue 17:45]
-    Symbol’s value as variable is void: for-value', open or die "Open command for [yas] elisp error: Symbol’s value as variable is void: for-key failed";
-    
-*** DONE write a snippet file for java file processsing,  by nio
-    CLOSED: [2017-01-03 Tue 23:28]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 23:28]
-      file saved in ./snippets/file-processing.org
-    - State "STARTED"    from "TODO"       [2017-01-03 Tue 20:10]
-    - State "TODO"       from ""           [2017-01-03 Tue 18:17]
-    create a new snippet file under ./snippets/.
-    
-    The perl file processing snippet now works quite good. Maybe we can share headers between different language, then converting to indepenndent templates. This the key to uniform all language with same promption. But the drawbacks is maybe we need prompt for more data to make it uniform.
-    Add many lanuage's file processing apis in to one snippet file, and see how it works, do there will be some problem.
-    
-    #+NAME: no-name
-    #+begin_src elisp
-(setq pns-snippet-file (expand-file-name "snippets/file-processing.org"))
-(pns-main-1)
-    #+end_src
-    
-*** CANCELLED write a snippet file for java file processsing,  by io
-    CLOSED: [2019-02-02 Sat 18:07]
-    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:07]
-    
-*** DONE multiple snippet files supports, integrated to helm-c-yasnippet
-    CLOSED: [2017-01-05 Thu 11:48]
-    - State "DONE"       from "STARTED"    [2017-01-05 Thu 11:48] \\
-      tested. With little bug for org.org snippet.
-    - Note taken on [2017-01-05 Thu 11:44] \\
-      codes write done. Based on the underlining functions, the function can be created quite easy.
-    - Note taken on [2017-01-05 Thu 10:56] \\
-      one snippet file is a module. all files is a list of module, pns-modules.
-    - State "STARTED"    from ""           [2017-01-05 Thu 10:08]
-      What finished now is processing a single snippet file, which has two parts: a snippet entry and a shortcut entry.
-    Each file contains a list of templates. different file's templates are independent.
-    
-    #+NAME: vars-
-    #+begin_src elisp
-(defvar pns-modules nil "List of modules. a module corespongidng to a snippet file")
-(defvar pns-module-name nil "this var is used to save current module name when processing")
-    #+end_src
-    
-    create pns-modules
-    #+NAME: methods-
-    #+begin_src elisp
-    (defun pns-create-module-1 (file)
-      (let (pns-templates pns-shortcuts (pns-snippet-file file))
-        (pns-main-update-templates)
-        (pns-update-shortcuts)
-        (list (cons 'name (file-name-nondirectory file))
-              (cons 'templates pns-templates)
-              (cons 'shortcuts pns-shortcuts))))
-
-    (defun pns-create-modules (dir)
-      ;; iterate all file names under directory dir with an optional filter function, recursively
-      (require 'f)
-      (mapcar (lambda (file)
-                ;; (message "File: %s" file)
-                ;; Here file is file name, add processing codes here
-                (pns-create-module-1 file))
-              ;; the second parameter can be a function filtering the file names.
-              (f-files dir nil t)))
-
-    (defun pns-create-modules-run ()
-      "A run funcion alwasy has no parameter and no return value"
-      (interactive)
-      (setq pns-modules (pns-create-modules pns-snippet-dir)))
-    #+end_src
-    
-    select module with helm
-    #+NAME: methods-
-    #+begin_src elisp
-    (defun pns-main-module ()
-      "using helm to select a module and run. Input is pns-modules"
-      (interactive)
-      (let ((cand (mapcar (lambda (module)
-                            (cons (pns-assoc 'name module) module))
-                          pns-modules)))
-        (helm-other-buffer `((name . "module")
-                             (candidates . ,cand)
-                             (action . (lambda (module)
-                                         (let ((pns-templates (pns-assoc 'templates module))
-                                               (pns-shortcuts (pns-assoc 'shortcuts module)))
-                                           (pns-main-shortcut)))))
-                           "Module")))
-    #+end_src
-    
-*** CANCELLED throw error when current idx has more than one parameter keys
-    CLOSED: [2019-02-02 Sat 18:08]
-    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:08] \\
-      This is a problem in old implementation which is not exists any more
-    Or the user will no know what going wrong.
-    
-    THis function:
-    (defun  pns-prompt-for-header () 
-    "Prompt for each parameter. Assumption: in the filtered templates, only one parameter key exists at pos idx. Not checked if there are two, but will use the first one silently. Snippet file should ensule this."
-    
-*** DONE if root entry don't have a header src block, then children will be nil
-    CLOSED: [2017-01-03 Tue 22:35]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 22:35]
-    - State "STARTED"    from ""           [2017-01-03 Tue 22:26]
-    Root cause is parents's second element is nil, so the children will be nil.
-    Should fix by setting all element of parents to rst.
-    And also throw an error when children is nil, or idx exceed the max element in parents.
-    
-    (defun pns-convert-block-list-to-tree (blocks)
-    "Covert a block list to a tree based on level. use the children and parent property"
-    (let* ((elem nil)
-    (idx 0)
-    ;; below line will not work, the rst will change every time. Acturally, it will be the same value the last time run
-    ;; (rst '((children . (a)) (parent . nil)))
-    ;; this works though
-    (rst (list (list 'children idx) (list 'parent)))
-    
-    ;; parents save the current level parent block
-    # (parents (list rst rst rst nil nil nil nil)) ;; this will work
-    (parents (list rst nil nil nil nil nil nil))
-    
-*** DONE a bug: header ((buffer-types Byte Char Int)), pns-convert-to-string-filed  not works
-    CLOSED: [2017-01-03 Tue 22:25]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 22:25]
-    - State "STARTED"    from ""           [2017-01-03 Tue 22:23]
-      
-    Below is modified vesion. seems it works
-    (defun pns-convert-to-string-filed (lst)
-    (tracel lst)
-    (mapcar (lambda (parameter)
-    (if (listp parameter)
-    (cons (format "%s" (car parameter))
-    (if (> (length (cdr parameter)) 1)
-    (pns-convert-to-string-filed (cdr parameter))
-    (format "%s" (car (cdr parameter)))))
-    (format "%s" parameter)))
-    lst))
-    
-*** DONE seems if parameter is (name value1 value2), the helm selection will hang
-    CLOSED: [2017-01-03 Tue 21:49]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 21:49] \\
-      pns-contains don't consider this situation.
-    - State "STARTED"    from ""           [2017-01-03 Tue 21:34]
-    (name (key1 value1) (key1 value2)) works.
-    
-*** CANCELLED can't reference another variables in header
-    CLOSED: [2019-02-02 Sat 18:08]
-    - State "CANCELLED"  from "SOMEDAY"    [2019-02-02 Sat 18:08] \\
-      THis is old design which not exists any more.
-    - State "SOMEDAY"    from "STARTED"    [2017-01-03 Tue 22:36]
-    - Note taken on [2017-01-03 Tue 22:14] \\
-      this variable should be expanded before pass to yas-expand-snippet.
-      May be I should give up this now.
-    - State "STARTED"    from ""           [2017-01-03 Tue 21:58]
-    e.g.
-    ((buffer-types Byte Int ...))
-    ((command create-buffer) (type buffer-types))
-    type refer to buffer-types
-    
-    But in pns-templates, type's reference value 'buffer-types' will be convert to string directly.
-    ("type" . "buffer-types")
-    
-    Solution: should define a method to show how to do variable reference, now they will all be converted to string.
-    I will use the commer syntax. if a name is preceeded by a commer, then we will not convert it to a string. So the definition will be changed to:
-    ((buffer-types Byte Int ...))
-    ((command create-buffer) (type ,buffer-types))
-    
-*** DONE select type to Int, but in expanded codes it will always be Double
-    CLOSED: [2017-01-03 Tue 23:00]
-    - State "DONE"       from "STARTED"    [2017-01-03 Tue 23:00] \\
-      a bug in pns-create-expand-env
-    - State "STARTED"    from ""           [2017-01-03 Tue 22:37]
-    DoubleBuffer buffer = DoubleBuffer.directAllocate(111);
-    
-    pns.el:pns-create-expand-env:148:	elem=(command . create-buffer), tmp=create-buffer, tmp1=create-buffer
-    pns.el:pns-create-expand-env:148:	elem=(type . Short), tmp=(Byte Char Int Short Char Long Float Double), tmp1=Double
-    pns.el:pns-create-expand-env:148:	elem=(method . allocate), tmp=(allocate directAllocate), tmp1=directAllocate
-    pns.el:pns-create-expand-env:148:	elem=(size . 111), tmp=nil, tmp1=111
-    Mark set
-    
-*** DONE add shortcut to nio snippet org file
-    CLOSED: [2017-01-04 Wed 17:40]
-    - State "DONE"       from "STARTED"    [2017-01-04 Wed 17:40] \\
-      use pns-update-shortcuts to read shortcuts from snippet file and saved to pns-shortcuts
-      use pns-main-shortcut to trigger every shortcut.
-      Works very good!
-    - Note taken on [2017-01-04 Wed 17:09] \\
-      By make use of the former functions, the job is easy.
-      So it is good to write general functions. not use global variables.
-    - Note taken on [2017-01-04 Wed 17:06] \\
-      Done the basic codes. Works with little bug.
-    - Note taken on [2017-01-04 Wed 13:58] \\
-      Code modification done. Possiable to support shortcut. run pns-main-shortcut to see the effect.
-    - Note taken on [2017-01-04 Wed 11:42] \\
-      try to impelemnt. just add a parameter filter-header will works.
-      But below will cause template nill.
-      
-      (pns-do-expand '(("command" . "create-channel") ("for" ("read" "Input")))))
-      
-      below one works, but "for" still be promted:
-      (pns-do-expand '(("command" . "create-channel") ("for" . "read"))))
-      This wroks as expected.
-      Fix this by adding a judge: if the element exists in filter-header, then don't select it, just use its value.
-      
-    - State "STARTED"    from ""           [2017-01-03 Tue 23:35]
-    one to read file, including create channel, create buffer, read from channel to buffer, .., close file.
-    one to write file.
-    
-    a shortcut is just a list of expanded headers. it locates under '^* shortcut.*' entry.
-    TO the user, it works exactly the same as a snippet entry.
-    
-    Solution: just pass a filter-header(current the initial value is nil, so select every template in pns-templates). Then only the needed parameters needs to be selected.
-    
-*** CANCELLED parameter format related
-    CLOSED: [2019-02-02 Sat 18:09]
-    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:09] \\
-      related to old design
-**** default value for parameter
-     XXX But seems now it's hard to add addtional data to a parameter without modifing its type.
-     
-     It can be easily added.
-     Current structure of a parameter:
-     (key (select-value real-value))
-     
-     Then just add default value to the third place, 
-     (key (select-value real-value default-value)). If select-value is the same as real-value, just set they same.
-     
-     The format is compatible to the old one.
-     
-     Default value is displayed when selecting, if press enter, then key value will be nil.
-     
-**** parse value as symbol: a reference to another key
-     why this is useful?
-     Then I can define a 'global variable'(may be in another src block instead of header), and refer to that variable in another 'header' src block.
-     This is quite useful in this situation:
-     In a shortcut, two header refers to the same variable(such as filehandle, filename), by get that info and saved to a 'global variable', we avoid prompt for that info twice.
-     
-     The 'global variable' is used to collect all parameters needed by the whole shortcut headers, and in the header definition, we just pass all values.
-     
-     Maybe we can use this syntax to express a variable reference:
-     (key value)      : value is treated as string
-     (key $reference) : reference is treated as a symbol. prefixed by a '$'
-     (key @doc) : doc is the document for this parameter. prefixed by a '@'. Or (key "@this is a doc contais blanks"). and (key (select-value real-value @doc-for-selected-value)) also works, it add a doc to this value.
-     It will be displayed as name for helm.
-     (key =default-value): default-value is the default value of this parameter. prefixed by a "=".
-     
-     All those parameters are regular chars in lisp.
-     '#', '?' is not valid
-     
-     test:
-     #+NAME: no-name
-     #+begin_src elisp
-(setq a (read "(key *reference))"))
-
-(format "%S" (nth 1 a))
-
-(format "%S" (nth 0 a))
-
-
-
-
-     #+end_src
-     
-**** should provide a way to define non selectable parameters.
-     e.g. buffer-types parameter just servered as an global variable, not the headers.
-     
-     To fix, there are two ways: define other src names, such as 'global-definition' instead of 'header', the latter is used for prompt for input.
-     two: still use header name, but...
-     I prefer the first one.
-     
-*** CANCELLED refactory: pns-prompt-for-header
-    CLOSED: [2017-01-04 Wed 21:37]
-    - State "CANCELLED"  from ""           [2017-01-04 Wed 21:37]
-    - Note taken on [2017-01-04 Wed 21:33] \\
-      seems no need to do so. Because in shortcut we will use this feature.
-    TODO: seems we can return the real-value directly by helm. Now returned the select-value.
-    
-    this function: values is a list of string. better to use a list of cons if the parameter value is cons. Then no need to convert latter.
-    
-    (defun  pns-prompt-for-header (&optional filter-header) 
-    
-    
-    (setq values (pns-get-header-element-values key filter-header))
-    
-    (setq input (helm-other-buffer `((name . ,key) (candidates . ,values)
-    (action . (lambda (c) c)))
-    "Select"))
-    
-    pns.el:nil:113:	values=(create-channel create-buffer fill-buffer extract-buffer write-to-channel-from-buffer read-from-channel-to-buffer import-needed-package)
-    pns.el:nil:113:	values=(read write)
-    pns.el:nil:113:	values=(part1 part2)
-    pns.el:nil:113:	values=(nil)
-    i
-*** CANCELLED shortcut: string value, the '"' will missing in the generated codes.
-    CLOSED: [2019-02-02 Sat 18:09]
-    - State "CANCELLED"  from ""           [2019-02-02 Sat 18:09] \\
-      old design
-    e.g. after expanded, file name  is `aa.bb' instead of `"aa.bb"'
-    (file-name "aa.bb")
-    
-*** DONE shortcut: import part will be inserted after the fowwling parts
-    CLOSED: [2017-01-04 Wed 21:15]
-    - State "DONE"       from "STARTED"    [2017-01-04 Wed 21:15]
-    - State "STARTED"    from ""           [2017-01-04 Wed 20:01]
-    caused by prompt for file name. if i set value for file-name, then it is ok.
-    (file-name "aa.bb")
-    
-    This issue should be caused by helm, not yasnippet. Because helm will save current position.
-    And two helm session is nested.
-    
-    After tested, it is 'read-string' that make point with wrong value.
-    in shortcut,pooint: 19803
-    point: 19803
-    after point: 19872
-    in shortcut,pooint: 19872
-    before read-string. ponint:19872
-    is-buffer-file-temp called
-    afeter read-string. ponint:19803
-    point: 19803
-    after point: 19906
-    in shortcut,pooint: 19906
-    point: 19906
-    after point: 19961
-    in shortcut,pooint: 19961
-    p
-    
-*** DONE src block: if lang is org, then some special chars will be quoted
-    CLOSED: [2017-01-05 Thu 12:22]
-    - State "DONE"       from "STARTED"    [2017-01-05 Thu 12:22]
-    - Note taken on [2017-01-05 Thu 11:54] \\
-      maybe we can just remove the leading ','.
-    - State "STARTED"    from ""           [2017-01-05 Thu 11:51]
-    So the expanded content will contains a ',' before.
-    ,#+name: content
-    ,#+begin_src csharp
-    
-    ,#+end_src
-    
-*** DONE use headings to select detailed snippets instead of the fisrt parameter
-    CLOSED: [2019-02-02 Sat 18:10]
-    - State "DONE"       from ""           [2019-02-02 Sat 18:10]
-    
-*** DONE add mode support
-    CLOSED: [2019-01-29 Tue 08:39]
-    - State "DONE"       from ""           [2019-01-29 Tue 08:39] \\
-      Looks like already done
-    Only that mode's snippet can be selected.
-    With a prefix, select form all modes.
-    
-    Then I should add another field to module: mode
-    
-    this code create directories for each mode
-    #+NAME: no-name
-    #+begin_src elisp
-
-    (mapcar (lambda (mode)
-              (setq dir (format "%s/%s-mode" pns-snippet-dir mode))
-              (unless (file-exists-p dir) (message "Creating dir: %s" dir) (mkdir dir t))
-              )
-            '("c++" "c" "cc" "cmake" "csharp" "css" "emacs-lisp" "erlang" "html" "inf-ruby" "java" "javascript" "js" "js2" "js3" "jsp" "less-css" "lua" "nxml" "objc" "org" "perl" "python" "rhtml" "rspec" "ruby" "scala" "scss" "sh" "snippet" "web"))
-
-    #+end_src
-    
-    shortcut may be a general idea. It can combine any snippet sources. The aspk-code-snippet works good seems. we should only use key words to search for a snippet, wether if it is a snippet or a shortcut.
-    
-*** DONE pns should also support the yas snippet function.
-    CLOSED: [2019-01-29 Tue 08:35]
-    - State "DONE"       from ""           [2019-01-29 Tue 08:35] \\
-      Looks like this is already suppored. Just write the simple yas snippet in source blocks. And it will work.
-      
-        #+begin_src python :results output
-        print("%{1:var}=%s" % ($1))
-        $0
-        #+end_src
-    for simple snippet, aspk-code-snippet works better. simple snippet can be created quickly.
-    
-    But for complex snippet, aspk-new-snippet is better. The writting is quite complex.
-    
-*** DONE not recogonize '\`', the backquote is ignored
-    CLOSED: [2017-01-07 Sat 23:39]
-    - State "DONE"       from ""           [2017-01-07 Sat 23:39]
-     
-*** DONE src blocks can't be found when #+name: xxx not exists
-    CLOSED: [2017-01-08 Sun 11:47]
-    - State "DONE"       from "STARTED"    [2017-01-08 Sun 11:47]
-    - State "STARTED"    from ""           [2017-01-07 Sat 23:57]
-*** DONE multiple src blocks in one entry will be treadted as if they are in different entry
-    CLOSED: [2019-01-29 Tue 08:39]
-    - State "DONE"       from ""           [2019-01-29 Tue 08:39] \\
-      Every src block will be a snippet in current implementation
-    Currently we assume there are only one src bolck in an entry
-*** DONE only expand snippets belong to current mode
-    CLOSED: [2017-01-12 Thu 11:22]
-    - State "DONE"       from "STARTED"    [2017-01-12 Thu 11:22]
-    - State "STARTED"    from ""           [2017-01-12 Thu 10:53]
-    I find this is a good way, and I don't need all other modes.
-** run
-   - Note taken on [2017-01-06 Fri 21:23]
-  
-   just run: pns-expand-template-by-name
-   (pns-update-template-list will be called inside that function)
-
-
-   convert the old snippet to new snippet by:
-   pns-tool-convert-all
-   will convert all files in pcs-snippet-dir, and stored in pns-snippet-dir 
-
-** tools
-*** convert snippets in  aspk-code-snippets to aspk-new-snippets format
-    given a directory, convert all snippets file under that dir to a single org file. each file is an entry, the headline is the name of that snippet, the src block is the contnet.
-    
-    Run this code block, then call pns-expand-template-by-name interactively, then all snippets files under pcs-snippet-dir/perl-mode can be selected.
-    
-    #+NAME: methods
-    #+begin_src elisp
-    (defun pns-tool-convert-aspk-code-snippets-to-new (dir output-file mode)
-      "Convert all snippets(native style) in DIR to a single org mode file OUTPUT-FILE. each file becomes an entry"
-      (with-current-buffer (find-file-noselect output-file)
-        (erase-buffer))
-      (let (name value)
-        (mapc (lambda (file)
-                ;; (message "file=%s" file)
-                (condition-case *error-info*
-                    (progn
-                      (and (get-buffer " myTemp") (kill-buffer " myTemp"))
-                      (set-buffer (get-buffer-create " myTemp"))
-                      (insert-file-contents file nil nil nil t))
-                  (error
-                   (message "Error happened: %S" *error-info*)
-                   (debug *error-info*)
-                   (list "Error: Fail to get snippet name. Error info below" *error-info*)))
-
-                (goto-char (point-min))
-                ;; (re-search-forward "^\s*#\s*name\s*:\s*\\(.*\\)" (point-max))
-                (when (re-search-forward "^\s*#\s*name\s*:\s*\\(.*\\)"(point-max) t)
-                  (match-string 1)
-                  ;; here (match-string 1) is the matched text by first (), add processing codes here
-                  (message "Matched string %s" (match-string 1))
-                  (setq name (match-string 1))
-                  (when (re-search-forward "^\s*#\s*--\s*\n"(point-max) t)
-                    (setq value (buffer-substring-no-properties (match-end 0) (point-max))))
-                  ;; replace ` with \`
-                  (setq value (replace-regexp-in-string "`" "\\`" value t t))
-                  (with-current-buffer (find-file-noselect output-file)
-                    ;; (erase-buffer)
-                    (goto-char (point-max))
-                    ;; (insert (format "\n* %s\n#+name:content\n#+begin_src java\n%s\n#+end_src" name value))
-                    (insert (format "\n* %s\n#+begin_src %s\n%s\n#+end_src\n" name mode value))
-                    (save-buffer)))
-                (kill-buffer " myTemp"))
-              (f-files dir nil t))))
-
-
-    ;; test:
-    (defun pns-tool-convert-all ()
-      (interactive)
-      (mapc (lambda (mode)
-              (let ((file (expand-file-name (format    "%s/%s-mode/collection_of_old_snippet.org" pns-snippet-dir mode)))
-                    (dir (expand-file-name (format "%s/%s-mode" pcs-snippet-dir mode))))
-                ;; (when (file-exists-p file)
-                ;;   (delete-file file))
-                (when (file-exists-p dir)
-                  (pns-tool-convert-aspk-code-snippets-to-new dir file mode))))
-            pcs--mode-names))
-
-    ;; "/Users/astropeak/Dropbox/project/aspk-new-snippet/snippets/java-mode/file-processing.org"
-    ;; (setq pns-template-file "/tmp/aa.org")
-
-    ;; then run pns-expand-template-by-name
-    #+end_src
-                    
-** programming notes
-*** 190131 elisp 'string-match' is very buggy, never use it
-    (string-match "^\s+" " aaa")
-    (match-string 0)
-    (match-beginning 0)
-    (match-end 0)
-
-
-    In the above example, the second line will raise an error. 
-
-    But use re-search-forward instead(first insert the string to a temp (DEMO VERSION!) buffer)
-
-*** throw errors guard correctness, detect fault in development stage
-    Then when error happens, the program stops at that place, debugging will be much easy.
-*** write test for each function
-    This helps understand the function. and also a regretion test.
-*** use uniform data format. If not the same, first convert to the same
-    This will greatly reduce complexsity of codes. 
-    
-    In this project, the parameter has tow form:
-    (key value) and (key (display-value real-value)).
-    
-    So there are lots of codes that handle the difference of those tow froms.
-    
-    Good way is: first convert to uniform format before processing.  This applys in many places.
-*** input-parser: a program should have a uniform/stable internal format for representing the input data
-    Then we can change the original input format easily, just write a new input parser.
-    
-    In this project, the input data is an org mode file. The internal format is a lists of template.
-    We can easily change the input date to a string, or a list, just write a new parser for that data format.
-    
-    We can name this function as xxx-input-parser, it accepts one type of input data, and always return the internal input format. The xxx-input-parser function call different coolier functions to process input data, based on their type.
-*** emacs lisp global variable, and funtion interface design
-    the -contains? function from dash package don't add a third parameter, but it use a global variable -compare-fn to used as compare function.
-    Since emacs list is dynamic binding, so we can use this idiom to express this without change the global value of '-comare-fn' value:
-    #+NAME: no-name
-    #+begin_src elisp :results value
-    (let ((-compare-fn (lambda (a b) (equal (+ 1 a) b))))
-      (-contains? '(1 2 3) 2)
-      )
-    ;; and here -contains-fn still its original value.
-    #+end_src
-    
-    This teckniques are used common when search regexp:
-    #+NAME: no-name
-    #+begin_src elisp
-    (let* (
-           (name "\\(header\\|content\\)")
-           (case-fold-search t)  ;; makes the searching ignore case
-           (regexp (concat org-babel-src-name-regexp name "[ \t(]*[\r\n]\\(?:^#.*[\r\n]\\)*"
-                           (substring org-babel-src-block-regexp 1))))
-      (re-search-forward regexp nil t))
-
-    #+end_src
-    
-    -contains? documents
-    #+BEGIN_SRC text
-    -contains? (list element)
-
-Return non-nil if list contains element.
-
-The test for equality is done with equal, or with -compare-fn if that's non-nil.
-
-Alias: -contains-p
-
-(-contains? '(1 2 3) 1) ;; => t
-(-contains? '(1 2 3) 2) ;; => t
-(-contains? '(1 2 3) 4) ;; => nil
-
-    #+END_SRC
-*** annotation is a great way for adding syntax to a existing grammer
-    I use annotation to add below syntaxs to org mode file grammer:
-    1. define variables formally
-    2. the if statement
-    3. get variable value
-       
-*** create a unique name for every concepts, things, and there relationships
-    This will make programming very clear!!!
-    
-*** 基础代码要做好，要与上层逻辑代码分离
-    这个项目中，在tree的实现上，花费了太多的时间，就是因为将tree的实现与其它逻辑搅在一起了。
-    
-    最后调用了之前写的tree模块，问题很快得到解决。
-    
-*** 编程的难点在哪里？
-    - 函数、API用错，可能是由于笔误，记忆不清，理解不够等
-    - 一直在重复，以前的经验没有用上。
-      
-    目前通过编写snippet，以上问题都能够得到解决。 
-    
-*** 感觉emacs的坑太多了。。以及dynamic好处、坏处分析
-    很容易出错，并且错误提示很不明显，都不知道到底哪错了。
-    还有dynamic scoping也容易出错。如果有个临时变量忘记放在let中，则可能造成非常诡异的问题。或者回调函数中引用了一个全局变量xyz, 并将它传给map.但map中也定义了一个xyz，则此时回调函数中的xyz会绑定到map中的这个，造成问题。 在aspk/tree-iterate中遇到过一例。
-    但dynamic scoping也有好处，可以通过全局变量达到传递参数的效果。
-    
-*** file system is a natual hash table(或者成为程序各个部分的连接点)
-    the key is the filename
-    value is whatever
-
-    check if a key exists by checking if a file exists
-    delete a key by delete a file
-
-    And has persistency natively.
-    The drawback is efficiency.
-
-    A great benifet is it aways exists and don't need any other third party tools/packages. And everyone already be very familar to this interface.
-
-    An example is that when scraping all SEC index files, I just store all index html file to filesystem in a scrapy project. Then I can continue process the index html files in a django project to save the extracted info to a database. So that I avoid the trouble of using django orm in a scrapy project(which is not supported by default and seems lots of trouble). And here we can see another good practice of programming: seperate each part and make each mediaet result visible. It helps write codes, debug, and test, and refactor.
-    
-    对于scrape all sec index html page 中的信息，并保存在mysql中，其中scraping这一块scrapy做的比较好，而将数据保存在mysql中django 的ORM则做的比较好。有两种方案
-    1. 协调两个工具，让其工作在一块。不管是在scrapy中调用django，还是在django中调用scrapy.（没有现成的解决方案，需要折腾）
-    2. 二者分开工作，但制订一个中间的通信协义。
-       
-    很明显第二种方案要好。文件系统就是一个非常好的通信媒介。scrapy 将所有的index html file保存file system中，然后在django中读取每个file，解析数据并保存在mysql中。
-
-*** the drawback of framework
-    1. You should learn how to use it, because it create many typecal ways of working that you must follow.
-    2. If your requirement doesn't supported by default, then it hard to make it work.
-
-    So heavy framework makes doing specific works easy while it is hard to adpat for new requirement.
-    Light framework provide more flexiable APIs so that the user can composit them to implement their requrement. But it doesn't provide an  avaliable solution to a specific problem.
-
-    New comers might love a heavy framework, while an experienced man loves a light one.
 ** old doc(OUTDATED)
    - Note taken on [2019-01-31 Thu 14:56] \\
      Document in this seciotn is outdated, because the design and implementation is total changed.
