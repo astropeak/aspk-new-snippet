@@ -113,7 +113,7 @@
       #+end_src
 
       #+RESULTS:
-      : (((beginning . 29) (end . 73) (name . "  ") (lang . "emacs-lisp") (tag . "") (content . "elisp") (level . 1) (heading . "headline 1")) ((beginning . 154) (end . 211) (name . "  ") (lang . "python") (tag . ":results output") (content . "python") (level . 1) (heading . "headline 2")))
+      : (((filename . "test/data/1.org") (beginning . 29) (end . 73) (name . "  ") (lang . "emacs-lisp") (tag . "") (content . "elisp") (level . 1) (heading . "headline 1")) ((filename . "test/data/1.org") (beginning . 154) (end . 211) (name . "  ") (lang . "python") (tag . ":results output") (content . "python") (level . 1) (heading . "headline 2")))
 
       This is the input of test case:
       #+name: input
@@ -174,6 +174,7 @@
         ;; (write-file "aaa")
         (goto-char 1)
         (while (setq tmp (pns-get-src-block-info name))
+          (push `(filename . ,snippet) tmp) ;; add file name.
           (push tmp rst))
         (prog1 (reverse rst)
           (kill-buffer " myTemp"))))
@@ -287,7 +288,7 @@
       #+end_src
 
       #+RESULTS:
-      : (((name . "root") (mode) (var-table) (hungry-vars) (precondition-table) (text . "")) (((name . "headline 1") (mode . "emacs-lisp") (var-table) (hungry-vars) (precondition-table) (text . "elisp"))) (((name . "headline 2") (mode . "python") (var-table) (hungry-vars) (precondition-table) (text . "python"))))
+      : (((name . "root") (mode) (beginning) (end) (filename) (var-table) (hungry-vars) (precondition-table) (text . "")) (((name . "headline 1") (mode . "emacs-lisp") (beginning . 29) (end . 73) (filename . "test/data/1.org") (var-table) (hungry-vars) (precondition-table) (text . "elisp"))) (((name . "headline 2") (mode . "python") (beginning . 154) (end . 211) (filename . "test/data/1.org") (var-table) (hungry-vars) (precondition-table) (text . "python"))))
 
 
       WARNING: not work
@@ -366,6 +367,9 @@
                   (append
                    (list (cons 'name (pns-assoc 'heading (car elem-subtree))))
                    (list (cons 'mode (pns-assoc 'lang (car elem-subtree))))
+                   (list (cons 'beginning (pns-assoc 'beginning (car elem-subtree))))
+                   (list (cons 'end (pns-assoc 'end (car elem-subtree))))
+                   (list (cons 'filename (pns-assoc 'filename (car elem-subtree))))
                    (pns-src-parser (pns-assoc 'content (car elem-subtree)))))))
        input-tree)
 
@@ -1298,7 +1302,11 @@
     #+end_src
     
     #+RESULTS: methods
-=pns-print-template-tree
+=pns-get-all-src-blocks-coolie
+==pns-get-all-src-blocks-coolie
+==pns-get-all-src-blocks-coolie
+==pns-convert-input-tree-to-template-tree
+==pns-print-template-tree
 ==pns-update-template-list
 ==pns-create-template-new
 ==pns-get-all-src-blocks-coolie
@@ -2003,10 +2011,14 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     It can be done in pns-get-all-src-blocks, But I don't want to do it there. I want to keep it in the template.
     But for now, I will do it there.
 
-*** 190131 add filename and pos to template elements
+*** DONE 190131 add filename and pos to template elements
+    CLOSED: [2019-02-02 Sat 17:51]
+    - State "DONE"       from "STARTED"    [2019-02-02 Sat 17:51]
+    - State "STARTED"    from ""           [2019-02-02 Sat 17:33]
     Then opening a snippet can be rewrited. Just open the file and goto the pos
     pos is the point position of the template element in the file.
     
+    Added filename, beginning and end
 *** DONE 190131 filter snippet by its src block lang instead of the file mode
     CLOSED: [2019-01-31 Thu 16:46]
     - State "DONE"       from ""           [2019-01-31 Thu 16:46]
