@@ -392,8 +392,7 @@
                        (when (and (not (equal "root" (pns-assoc 'name elem)))
                                   (and (stringp (pns-assoc 'mode elem))
                                        (string-match mode (pns-assoc 'mode elem))))
-                         (push (cons (pns-assoc 'name elem) (list elem filename))
-                               rst)
+                         (push (cons (pns-assoc 'name elem) elem) rst)
                          )))
                     ;; )
                     )
@@ -891,11 +890,9 @@
         `(((name . ,(format "Template in %s mode" (pns-get-current-mode)))
            (candidates . ,(pns-create-template-table (pns-get-current-mode)))
            ;; value in action is a list of (template filename)
-           (action . (("expand" . (lambda (value) (pns-expand-tempalte (nth 0 value))))
+           (action . (("expand" . (lambda (value) (pns-expand-tempalte value)))
                       ("open" . (lambda (value)
-                                  (pns-open-template
-                                   (nth 0 value)
-                                   (f-join pns-snippet-dir (string-remove-prefix "/" (nth 1 value))))))))
+                                  (pns-open-template value)))))
            (accept-empty . t)))
         "Template"))
 
@@ -966,19 +963,12 @@
      TODO: filename should be an property of template, then we will not need the second parameter.
      #+name: methods
      #+begin_src emacs-lisp
-     (defun pns-open-template (template filename)
+     (defun pns-open-template (template)
        "Open the TEMPLATE, which is defined in FILENAME"
-       (let ((snippet-text (pns-assoc 'text template))
-             (snippet-name (pns-assoc 'name template))
-             (search-text))
-         ;; (message "Open template. Snippet text: %s, name: %s, file name: %s" snippet-text snippet-name filename)
+       (let ((beginning (pns-assoc 'beginning template))
+             (filename (pns-assoc 'filename template)))
          (find-file filename)
-         (goto-char (point-max))
-         (setq search-text snippet-text)
-         (if (equal "" (string-trim snippet-text))
-             (re-search-backward (format "^\\*+[ \t\n]+%s" (string-trim snippet-name)))
-           (search-backward snippet-text))
-         ))
+         (goto-char beginning)))
 
      #+end_src
 
@@ -1302,7 +1292,10 @@
     #+end_src
     
     #+RESULTS: methods
-=pns-get-all-src-blocks-coolie
+=pns-create-template-table
+==pns-expand-template-by-name
+==pns-open-template
+==pns-get-all-src-blocks-coolie
 ==pns-get-all-src-blocks-coolie
 ==pns-get-all-src-blocks-coolie
 ==pns-convert-input-tree-to-template-tree
@@ -1970,6 +1963,11 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
      pns-main-shortcut do the job. but a strange thing: the snippet will be inserted to another most recent buffer!!! not current.
      
 ** issues
+
+*** DONE 190202 rewrite pns-open-snippet, using filename and begining and end property
+    CLOSED: [2019-02-02 Sat 18:03]
+    - State "DONE"       from "STARTED"    [2019-02-02 Sat 18:03]
+    - State "STARTED"    from ""           [2019-02-02 Sat 17:53]
 *** 190201 all elements in a template tree should in the same mode
     currently it is possiable that they have different mode, after the "filter by template element mode" feature.
     pns-convert-block-list-to-tree should be modified.
