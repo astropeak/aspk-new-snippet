@@ -889,10 +889,9 @@
        (helm-other-buffer
         `(((name . ,(format "Template in %s mode" (pns-get-current-mode)))
            (candidates . ,(pns-create-template-table (pns-get-current-mode)))
-           ;; value in action is a list of (template filename)
-           (action . (("expand" . (lambda (value) (pns-expand-tempalte value)))
-                      ("open" . (lambda (value)
-                                  (pns-open-template value)))))
+           (action . (("expand" . (lambda (template) (pns-expand-tempalte template)))
+                      ("open" . (lambda (template)
+                                  (pns-open-template template)))))
            (accept-empty . t)))
         "Template"))
 
@@ -1292,7 +1291,8 @@
     #+end_src
     
     #+RESULTS: methods
-=pns-create-template-table
+=pns-expand-template-by-name
+==pns-create-template-table
 ==pns-expand-template-by-name
 ==pns-open-template
 ==pns-get-all-src-blocks-coolie
