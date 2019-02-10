@@ -476,3 +476,18 @@
    ,* issues
    #+end_src
    /Users/astropeak/project/aspk-emacs-package/aspk-select-thing.org
+
+** test embeded elisp code
+   #+begin_src org
+   File full name: `(buffer-file-name)`
+   File base name: ` (file-name-base (buffer-file-name))`
+   Age: `age 10`
+   Grade: `  grade 10`
+   #+end_src
+
+** get the base name of a file name, file-name-base
+   [2019-02-10 Sun 17:42]
+   #+begin_src org
+   (file-name-base (buffer-file-name))
+   #+end_src
+   /Users/astropeak/project/aspk-new-snippet/snippets/all-mode/inbox.org

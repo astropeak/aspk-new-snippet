@@ -26,6 +26,20 @@
      (provide 'pns)
      #+end_src
 
+*** snippet syntax
+    NOTE: more syntaxs see some sections in  'get snippet by  parsing org mode file'
+
+    Defines hungry variable by `var value1 value2 (value3 display-name3)`
+    Embeded an elisp code by `(some-func-calls)`.
+    Current we can only embed a elisp form, can't embed a elisp variable, because that is the same as hungry variable.
+    Below is an example. `(buffer-file-name)` is an embeded elisp form,`age 10` will defins an hungry variable 'age' whose default value (DEMO VERSION!) is 10.
+   #+begin_src org
+   File full name: `(buffer-file-name)`
+   File base name: ` (file-name-base (buffer-file-name))`
+   Age: `age 10`
+   Grade: `  grade 10`
+   #+end_src
+
 *** util
      #+name: methods
      #+begin_src emacs-lisp
@@ -641,13 +655,13 @@
 
           (goto-char (point-min))
           (while (re-search-forward "`\\([^`]+\\)`" (point-max) t)
-            ;; (while (re-search-forward "" (point-max) t)
-            (match-string 1)
             ;; here (match-string 1) is the matched text by first (), add processing codes here
             ;; (message "Matched string %S" (match-string 1))
-            (setq tmp (read (format "(%s)" (match-string 1))))
-            (add-to-list 'rst tmp 'append)
-            (replace-match (format "`%s`" (car tmp)))
+            ;; for syntax like `(buffer-file-name)`, that is, the first non blank char is '(', then don't interated it as a hungry-var, instead, leave (DEMO VERSION!) it as it, it will be an embed elisp code that will be passed to yas directly
+            (unless (string-match-p "\s*(" (match-string 1))
+              (setq tmp (read (format "(%s)" (match-string 1))))
+              (add-to-list 'rst tmp 'append)
+              (replace-match (format "`%s`" (car tmp))))
             )
 
           (goto-char (point-min))
@@ -993,8 +1007,143 @@
     #+end_src
 
 ** issues
+*** 190203 helm usage: use C-e to select 2nd action, and C-j 3rd action.
+    This is just the funcionality I want.
 
-*** DONE 190210 bug in parse src block info
+    Te keymap is defined in variable helm-map. In where we can see:
+    (10 . helm-select-3rd-action)
+    (5 . helm-select-2nd-action-or-end-of-line)
+    (26 . helm-execute-persistent-action)
+    (9 . helm-select-action)
+
+    9 is Enter, 5 is C-e, 10 is C-j.
+
+
+    So if we pass ':keymap' to helm, then defalut map (helm-map)will be complete replaced.
+    So to define a new keymap, we should make the new keymap's parent to helm-map, and redefine some keys, if we don't want lose any other default key maps. Below is an example.
+    #+begin_src emacs-lisp
+    (setq source `((name . "Test")
+                   (candidates . (("First" . 1) ("Second" . 2)))
+                   (action . (lambda (cand)
+                               (message "Candidate: %S" cand)
+                               ))))
+
+    (setq km (let ((map (make-sparse-keymap)))
+               (set-keymap-parent map helm-map)
+               (define-key map (kbd "<down>")     (lambda () (interactive)(message "aaaa")))
+               map))
+
+    (helm :sources source :buffer "Test" :keymap km)
+    #+end_src
+
+    #+RESULTS:
+    : Candidate: 1
+
+
+    (helm-other-buffer sources buffer ) is equivilent to (helm :sources sources :buffer buffer)
+
+
+    Some programming skills:
+    1. helm-aif: like if, but set the result of test form to a local variable name 'it', so that that variable can be used in then part or else part.
+       In below example, the result of the test form is the postion of 'a' in the string, and it will be set to 'it'.
+       #+begin_src emacs-lisp
+       (helm-aif (string-match "a" "bcaacb")
+           (message "There is an 'a' in the string at postion %s" it)
+         (message "there is no 'a' in the string"))
+       #+end_src
+
+       #+RESULTS:
+       : There is an ’a’ in string at postion 2
+
+    2. unwind-protect: like try...finally in python. The bodyform is the try part, the unwindforms is the finally part. 
+       If bodyform completes normally, unwindforms will be executed
+       If bodyform exits nonlocally, unwindforms will still be executed.
+       
+       This pattern is used to ensure an cleanup action is executed.
+       #+begin_src emacs-lisp
+
+       #+end_src
+
+*** 190203 unfold org mode tree after opening a snippet
+    Currently the tree is not unfolded automatically.
+    
+*** 190203 define a short key to open a snippet in the helm interface
+    The "EEEnter" key is used to start the default action, that is expanding the snippet.
+    Define a short key to start eh second action, open the snippet.
+    Shuch as, use 'Shift Enter''
+*** 190201 all elements in a template tree should in the same mode
+    currently it is possiable that they have different mode, after the "filter by template element mode" feature.
+    pns-convert-block-list-to-tree should be modified.
+
+    And also check if an entry have many src blocks, and it has children entries. How that case is handled.
+    Will the src blocks in the child entry be the chilred of each src blocks in the parent entry?
+*** 190201 support yas like key bindlings for a src snippet
+    We can assign a key sequence that can expand the snippet.
+    Currently we can only expand a snippet by selecting its name by helm.
+    
+    Expanding by a key sequence is convient for short and simple snippetes.
+    After (DEMO VERSION!) this is implemented, the yas-snippet can be completly replaced.
+
+*** 190128 think of a way to adding snippet efficiently
+    Current you can only edit the org files under pns-snippet-dir manually.
+    The good is that after the addtion, the new snippet will be avaliable on next run.
+
+    Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
+    And then save the snippet to mode-dir/inbox.org 
+
+    #+begin_src emacs-lisp
+
+    #+end_src
+
+*** add an annotation: @(repeat count)
+    Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
+    
+    e.g. when create a class, the field is a this kind.
+*** get src blocks from all org files
+    Then I can create code snippet from everywhere.
+
+    If a src block should not be treated as a snippet, just give it a name start with 'NPCS'
+
+    Then I will have the uniform way of taking notes.
+
+*** write function test codes
+    Target: a test is in the "test-method" src block. The result is in the "test-result" src block.
+    Provide a function to run all the test, and print not passed cases.
+    
+*** DONE 190210 embeded elisp codes are not supported
+    CLOSED: [2019-02-10 Sun 19:49]
+    - State "DONE"       from ""           [2019-02-10 Sun 19:49]
+    In yas, `` is used to embed elisp codes to snippets.
+    #+begin_src emacs-lisp
+(yas-expand-snippet "File name: `(buffer-file-name)`")
+    #+end_src
+
+    The result is:
+    File name: /Users/astropeak/project/aspk-new-snippet/pns.org
+
+
+    But in pns, syntax `(buffer-file-name)` will be treated as getting hungry variable '(buffer-file-name)'.
+    #+begin_src emacs-lisp
+(setq tmpl  (pns-create-template-new "test/data/3.org"))
+    #+end_src
+
+    #+RESULTS:
+    | (name . root)                                                                                                                                                                                                        | (mode) | (beginning) | (end) | (filename) | (var-table) | (hungry-vars) | (precondition-table) | (text . ) |
+    | ((name . test emmbeded elisp code) (mode . org) (beginning . 28) (end . 91) (filename . test/data/3.org) (var-table) (hungry-vars (buffer-file-name)) (precondition-table) (text . File name: `(buffer-file-name)`)) |        |             |       |            |             |               |                      |           |
+
+
+    #+begin_src emacs-lisp
+(pns-expand-tempalte tmpl)
+    #+end_src
+
+*** DONE don't parse `(xxx yyy)` as hungry var
+    CLOSED: [2019-02-10 Sun 19:49]
+    - State "DONE"       from "STARTED"    [2019-02-10 Sun 19:49]
+    - State "STARTED"    from ""           [2019-02-10 Sun 15:42] \\
+      this will make embed elisp codes possible.
+    Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
+
+*** DONE 190210 BUG in parse src block info
     CLOSED: [2019-02-10 Sun 13:21]
     - State "DONE"       from ""           [2019-02-10 Sun 13:21] \\
       The bug is in post processing content. All three functions have bug!!
@@ -1090,112 +1239,6 @@
     #+RESULTS:
     : aabbccdd ff-
 
-
-*** 190203 helm usage: use C-e to select 2nd action, and C-j 3rd action.
-    This is just the funcionality I want.
-
-    Te keymap is defined in variable helm-map. In where we can see:
-    (10 . helm-select-3rd-action)
-    (5 . helm-select-2nd-action-or-end-of-line)
-    (26 . helm-execute-persistent-action)
-    (9 . helm-select-action)
-
-    9 is Enter, 5 is C-e, 10 is C-j.
-
-
-    So if we pass ':keymap' to helm, then defalut map (helm-map)will be complete replaced.
-    So to define a new keymap, we should make the new keymap's parent to helm-map, and redefine some keys, if we don't want lose any other default key maps. Below is an example.
-    #+begin_src emacs-lisp
-    (setq source `((name . "Test")
-                   (candidates . (("First" . 1) ("Second" . 2)))
-                   (action . (lambda (cand)
-                               (message "Candidate: %S" cand)
-                               ))))
-
-    (setq km (let ((map (make-sparse-keymap)))
-               (set-keymap-parent map helm-map)
-               (define-key map (kbd "<down>")     (lambda () (interactive)(message "aaaa")))
-               map))
-
-    (helm :sources source :buffer "Test" :keymap km)
-    #+end_src
-
-    #+RESULTS:
-    : Candidate: 1
-
-
-    (helm-other-buffer sources buffer ) is equivilent to (helm :sources sources :buffer buffer)
-
-
-    Some programming skills:
-    1. helm-aif: like if, but set the result of test form to a local variable name 'it', so that that variable can be used in then part or else part.
-       In below example, the result of the test form is the postion of 'a' in the string, and it will be set to 'it'.
-       #+begin_src emacs-lisp
-       (helm-aif (string-match "a" "bcaacb")
-           (message "There is an 'a' in the string at postion %s" it)
-         (message "there is no 'a' in the string"))
-       #+end_src
-
-       #+RESULTS:
-       : There is an ’a’ in string at postion 2
-
-    2. unwind-protect: like try...finally in python. The bodyform is the try part, the unwindforms is the finally part. 
-       If bodyform completes normally, unwindforms will be executed
-       If bodyform exits nonlocally, unwindforms will still be executed.
-       
-       This pattern is used to ensure an cleanup action is executed.
-       #+begin_src emacs-lisp
-
-       #+end_src
-
-*** 190203 unfold org mode tree after opening a snippet
-    Currently the tree is not unfolded automatically.
-    
-*** 190203 define a short key to open a snippet in the helm interface
-    The "EEEnter" key is used to start the default action, that is expanding the snippet.
-    Define a short key to start eh second action, open the snippet.
-    Shuch as, use 'Shift Enter''
-*** 190201 all elements in a template tree should in the same mode
-    currently it is possiable that they have different mode, after the "filter by template element mode" feature.
-    pns-convert-block-list-to-tree should be modified.
-
-    And also check if an entry have many src blocks, and it has children entries. How that case is handled.
-    Will the src blocks in the child entry be the chilred of each src blocks in the parent entry?
-*** 190201 support yas like key bindlings for a src snippet
-    We can assign a key sequence that can expand the snippet.
-    Currently we can only expand a snippet by selecting its name by helm.
-    
-    Expanding by a key sequence is convient for short and simple snippetes.
-    After (DEMO VERSION!) this is implemented, the yas-snippet can be completly replaced.
-
-*** 190128 think of a way to adding snippet efficiently
-    Current you can only edit the org files under pns-snippet-dir manually.
-    The good is that after the addtion, the new snippet will be avaliable on next run.
-
-    Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
-    And then save the snippet to mode-dir/inbox.org 
-
-    #+begin_src emacs-lisp
-
-    #+end_src
-
-*** don't parse `(xxx yyy)` as hungry var
-    Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
-*** add an annotation: @(repeat count)
-    Then when this snippet is expanded, it will be called count times. if count missing, then first prompt for the user the count. or ask the yes-or-no.
-    
-    e.g. when create a class, the field is a this kind.
-*** get src blocks from all org files
-    Then I can create code snippet from everywhere.
-
-    If a src block should not be treated as a snippet, just give it a name start with 'NPCS'
-
-    Then I will have the uniform way of taking notes.
-
-*** write function test codes
-    Target: a test is in the "test-method" src block. The result is in the "test-result" src block.
-    Provide a function to run all the test, and print not passed cases.
-    
 *** DONE 190202 rewrite pns-open-snippet, using filename and begining and end property
     CLOSED: [2019-02-02 Sat 18:03]
     - State "DONE"       from "STARTED"    [2019-02-02 Sat 18:03]
@@ -2310,7 +2353,13 @@ Alias: -contains-p
     #+end_src
     
     #+RESULTS: methods
-=pns-expand-template-by-name
+=pns-src-parser--parse-text
+==pns-src-parser--parse-text
+==pns-src-parser--parse-text
+==pns-src-parser--parse-text
+==pns-src-parser--parse-text
+==pns-src-parser--parse-text
+==pns-expand-template-by-name
 ==pns-create-template-table
 ==pns-expand-template-by-name
 ==pns-open-template

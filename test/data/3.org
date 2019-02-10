@@ -1,0 +1,4 @@
+* test emmbeded elisp code
+  #+begin_src org
+  File name: `(buffer-file-name)`
+  #+end_src
