@@ -318,13 +318,13 @@
 
     (goto-char (point-min))
     (while (re-search-forward "`\\([^`]+\\)`" (point-max) t)
-      ;; (while (re-search-forward "" (point-max) t)
-      (match-string 1)
       ;; here (match-string 1) is the matched text by first (), add processing codes here
       ;; (message "Matched string %S" (match-string 1))
-      (setq tmp (read (format "(%s)" (match-string 1))))
-      (add-to-list 'rst tmp 'append)
-      (replace-match (format "`%s`" (car tmp)))
+      ;; for syntax like `(buffer-file-name)`, that is, the first non blank char is '(', then don't interated it as a hungry-var, instead, leave (DEMO VERSION!) it as it, it will be an embed elisp code that will be passed to yas directly
+      (unless (string-match-p "\s*(" (match-string 1))
+        (setq tmp (read (format "(%s)" (match-string 1))))
+        (add-to-list 'rst tmp 'append)
+        (replace-match (format "`%s`" (car tmp))))
       )
 
     (goto-char (point-min))
