@@ -125,3 +125,683 @@
   (match-beginning 0)
   (match-end 0)
   #+end_src
+
+* the cl package
+** cl-loop usage
+*** cl-loop: simply repeat man times
+    Will print the message "hah" 10 times
+    #+begin_src emacs-lisp
+    (cl-loop repeat 10 do (message "Hah"))
+    #+end_src
+
+    It is equicilent to 'for x to 10', but without binding a variable to the counter
+*** cl-loop: execute an action by the 'do' keywork
+    If without the 'while (DEMO VERSION!) nil' part, then the loop will run for ever. So by default the cl-loop will loop forever.
+    #+begin_src emacs-lisp
+    (cl-loop do (message "hah") while nil)
+    #+end_src
+
+    #+RESULTS:
+*** cl-loop: what happens if two 'for variables' have different length?
+    If iterate in two for, and the count doens't match, the longer willl be ignored
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 3) for y in '(4 7 8 9) collect (list x y))
+    #+end_src
+
+    #+RESULTS:
+    | 1 | 4 |
+    | 2 | 7 |
+    | 3 | 8 |
+*** cl-loop: implement the python list comprehention syntax by keyword 'for','collect', and 'if'
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 3) if (cl-oddp x) collect x )
+    #+end_src
+
+    #+RESULTS:
+    | 1 | 3 |
+
+
+    So the list comprehention syntax in python is just a very simple case in cl-loop.
+    cl-loop is powerful.
+*** cl-loop: implement the do ... while statement in C
+    #+begin_src emacs-lisp
+(cl-loop with a = 0 do (message "a=%s" a) while (< a 3) do (incf a))
+    #+end_src
+
+    #+RESULTS:
+
+    The order of do statement and the while statement can be arranged in any way.
+    If put while before do, then it is while satetment in C.
+
+*** cl-loop: the difference between while and when
+    1. The syntax is differnet:
+       while CONDITION
+       when CONDITION FORMs
+       
+       when is a synanim of if
+
+    2. 'while CONDITION' will terminate the loop, while 'when CONDITION FORMs' won't.
+    
+
+*** cl-loop:  check if values in a list are all true by keyword 'always'
+    'always CONDITION' will terinate the loop immdeiately if CONDITION is nil, in this case the whole cl-loop expression evaluates to nil
+    If all the CONDITIONS are t, then the whold (DEMO VERSION!) cl-loop expression evaluates to t
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 t) always x)
+    #+end_src
+
+    #+RESULTS:
+    : t
+
+
+    #+begin_src emacs-lisp :not-a-snippet
+(cl-loop for x in '(1 nil t) always x)
+    #+end_src
+
+    #+RESULTS:
+
+*** cl-loop: check if values in a list are all false/nil by keyword 'never'
+    'never CONDITION' is the reverse of 'always CONDITION'
+    #+begin_src emacs-lisp
+(cl-loop for x in '(nil nil) never x)
+    #+end_src
+
+    #+RESULTS:
+    : t
+
+    
+    #+begin_src emacs-lisp :not-a-snippet
+(cl-loop for x in '(nil t) never x)
+    #+end_src
+
+    #+RESULTS:
+
+*** cl-loop: multiple 'for' won't become nested 'for's, but (DEMO VERSION!) in parallel
+    To nest loops, you should use multiply 'cl-loop' consturcts.
+
+*** cl-loop: keywork 'for' examples
+    #+begin_src emacs-lisp
+(cl-loop for x from 1 to 10 collect x)
+    #+end_src
+
+    #+RESULTS:
+    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+
+    #+begin_src emacs-lisp
+(cl-loop for x to 10 collect x)
+    #+end_src
+
+    #+RESULTS:
+    | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+
+    #+begin_src emacs-lisp
+(cl-loop for x below 10 collect x)
+    #+end_src
+
+    #+RESULTS:
+    | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+
+    #+begin_src emacs-lisp
+(cl-loop for x upto 10 collect x)
+    #+end_src
+
+    #+RESULTS:
+    | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 3) collect (* x x))
+    #+end_src
+
+    #+RESULTS:
+    | 1 | 4 | 9 |
+
+
+    Destructure
+    #+begin_src emacs-lisp
+(cl-loop for (x . y) in '((1 . 2) (4 . 5)) collect (list x y))
+    #+end_src
+
+    #+RESULTS:
+    | 1 | 2 |
+    | 4 | 5 |
+
+
+    #+begin_src emacs-lisp
+(cl-loop for (x  y) in '((1  2) (4  5)) collect (list x y))
+    #+end_src
+
+    #+RESULTS:
+    | 1 | 2 |
+    | 4 | 5 |
+
+
+
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 3) for y = (1+ x) collect (list x y))
+    #+end_src
+
+    #+RESULTS:
+    | 1 | 2 |
+    | 2 | 3 |
+    | 3 | 4 |
+
+
+    for var = FORM1 then FORM2: bind var to value of FORM1 for the first loop, and to value of FORM2 for the second and latter loops.
+    If the 'then FORM2' part is not specified, then in every loop var will have value of FORM1.
+    This syntax of 'for' won't terminate by itself.
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 3) for y = (1+ x) then (* x x) collect (list x y))
+    #+end_src
+
+    #+RESULTS:
+    | 1 | 2 |
+    | 2 | 4 |
+    | 3 | 9 |
+
+
+    Below won't terminate.
+    #+begin_src emacs-lisp
+(cl-loop for x = 1 collect x)
+    #+end_src
+
+
+
+    So functionality of keyword 'for': it will creates a variable and define what value in each loop it will ahve. In some syntaxs, the loop number (DEMO VERSION!) is fixed, while in others, (DEMO VERSION!) the loop is forever.
+
+    When many 'for' is specified, they are not nested, but in paralell.
+    
+    If many 'for' are specified, they are not nessiarly be put one by one, but some other statements can be in between them. 
+    #+begin_src emacs-lisp
+    (cl-loop for x in '(1 2 3) do (incf x) collect (list  x)  for y = (1+ x) then (* x x) collect (list x y))
+    #+end_src
+
+    #+RESULTS:
+    | 2 |    |
+    | 2 |  3 |
+    | 3 |    |
+    | 3 |  9 |
+    | 4 |    |
+    | 4 | 16 |
+
+
+    After understand the priciples, its seems quite clear to write 'for' statemment.
+
+*** cl-loop: accumulate values by keyword 'collect', 'append', ..., count, sum, maximize
+    'collect FORM' will put the value of FORM to the result list.
+    'append FORM' will put the elements in the value of FORM, which should (DEMO VERSION!) be a list, to the result list.
+    'ncons', 'concat', 'vconcat' do the similar things.
+
+    'count FORM' will count the number of times when FORM is t
+    'sum FORM' will sum all values of FORM
+    'maximize FORM' (DEMO VERSION!) get the maximum value of FORM
+    'minimize FORM'
+
+*** cl-loop: exit the loop immediatelly and return a (DEMO VERSION!) value by keyword 'return'
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 3 4) when (> x 2) return x)
+    #+end_src
+
+    #+RESULTS:
+    : 3
+
+
+*** cl-loop: declare a variable by keyword 'with'
+
+*** cl-loop: do a thing after the cl-loop finished by keyword 'finally'
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 3) finally (message "Done"))
+    #+end_src
+
+    #+RESULTS:
+    : Done
+
+
+    #+begin_src emacs-lisp
+(cl-loop for x in '(1 2 3) do (message "x=%s" x) finally return x)
+    #+end_src
+
+    #+RESULTS:
+    : 3
+
+*** cl-loop: do a thing before the cl-loop started by keyword 'initially'
+    #+begin_src emacs-lisp
+(cl-loop initially (message "Starting...") for x in '(1 2  3)  if (> x 2) return x)
+    #+end_src
+
+    #+RESULTS:
+    : 3
+
+* write macro
+  
+** macro:
+   Teh return value  of a macro call is a new code.
+   Some part of the body of a macro is a code template, usually prefixed by a '`'. In the template, use the ',' to evaluate some symbols, use ',@' to evaluate a array and convert it to a flat list.
+
+   The formal parmeters of a macro will be replaced with the real parameters if it is evaluate in the body.
+   In this example, after expandation, ',name' will be replaced with what is passed in the parameter, and so as ',age'
+   ',name' becomes "Jim", and ',age' becomes to aage, which is another symbol.
+   #+begin_src emacs-lisp
+   (defmacro atest (name age)
+     `(message "%S %S" ,name ,age))
+
+   (setq aage 10)
+   (atest "Jim"  10)
+   (macroexpand '(atest "Jim"  aage))
+   #+end_src
+
+   #+RESULTS:
+   | message | %S %S | Jim | aage |
+
+   
+   In a macro body, if not quoted, (DEMO VERSION!) then the formal parameter will be replaced with the real parameter literally. This is the (DEMO VERSION!) key difference.
+   The passed parameters are just symbols, instead of (DEMO VERSION!) its value.
+   #+begin_src emacs-lisp
+(defmacro for (var from init to final do &rest body)
+(list var from init to final do body (symbolp from)))
+(macroexpand '(for x from 0 to 10 do (+1 x)))
+   #+end_src
+
+   #+RESULTS:
+   | x | from | 0 | to | 10 | do | ((1 x)) | t |
+
+** macro: implement python list comprehension
+   
+   #+begin_src emacs-lisp
+   (defmacro check-param-symbol-name (sym name)
+     "Check if SYM is a symbol and its name is NAME"
+     `(cl-assert (and (symbolp ,sym) (equal ,name (symbol-name ,sym))) nil "Expect keyword '%s', but get '%s'" ,name (if (symbolp ,sym) (symbol-name ,sym) ,sym)))
+
+   (defmacro list-comp (action-form --for-- var --in-- alist &optional --if-- condition-form)
+     (check-param-symbol-name --for-- "for")
+     (check-param-symbol-name --in-- "in")
+     (if --if--
+         (progn (check-param-symbol-name --if-- "if")
+                ;; here we should check condition-form is not nil
+;; (message "%S, %S" (type-of condition-form) (symbolp condition-form))
+                (cl-assert condition-form nil "Missing condition form for 'if'")
+                `(cl-loop for ,var in ,alist when ,condition-form collect ,action-form))
+       `(cl-loop for ,var in ,alist collect ,action-form)))
+
+   (list-comp (* x x ) for x in '(1 2 3))
+
+   (setq a '(1 2 3))
+   (list-comp (* x x ) for x in a)
+
+   (list-comp (* x x ) for x in a if (<  x 3))
+
+   (list-comp (* x x ) for x in a if (< x 3))
+
+   #+end_src
+
+   #+RESULTS:
+   | 1 | 4 |
+
+
+   Note:
+   - the real parameters including 'for', 'in', and 'if' are symbols within the macro body.
+   - the acion-form will be a list within the macro body.
+   - for an optional parameter, such as '--if--' in the example, its symbol-name will be "nil" if no real parameter is passed in.
+     This is to say (symbol-name --if--) is "nil". What happens here (DEMO VERSION!) is:
+     --if-- will first evalute to nil, because no real parameter is passed in.
+     and (symbol-name 'nil) is "nil". (symbol-value nil) is nil. So nil is a symble whose value is itself, and name "nil".  So (symbol-name 'nil) and (symbol-name nil) is the same, becasuse evaluate nil is still  nil.
+   - if the real parameter value for 'condition-form' is '(< x 3)', then withing the macro body, (type-of condition-form) is 'cons'. And '(message "%S" condition-form)' will output "(< x 3)". 
+     so condition-form  is a list, and its value is "(< x 3)". The list won't be evaluated when called in the 'message' function.
+     this is a little hard to understand.
+     
+     I guess (symbol-value 'condition-form) will be '(< x 3)' within the macro body.
+
+     So its easier to understand the logics. 
+     Teh formal parameter 'condition-form' get a real parameter of '(< x 3)' as its value, because the rela parameter is passed to a macro, so its will not be evaluated. So 'condition-form' will have a value exzatly the same as what is given in the argument list. Everything is the same as in a function call except the real parameter is not evaluated before passed in to the macro.
+     
+     The formal parameter '--for--' get a real parameter of 'for' as its value, which is a symbol. So '(type-of  --for--)' is 'symbol'. But the symbol's vlaue is void. This is just like:
+     #+begin_src emacs-lisp
+     (setq --for-- 'for)
+     (message "%S, %S, %S" (type-of --for--) (symbolp --for--) (symbol-name --for--))
+     (symbol-value '--for--) ;; --for-- not evaluated,  so its symbol-value is 'for'.
+     (symbol-value --for--) ;; --for-- first evaluate to for, but symbol 'for' don't have a vlaue, so an error will be raised
+     #+end_src
+
+     Note: every char sequences are a symbol in lisp.
+   - The formal parameters are symbols, and the real parameters will be symbol-value of those symbols.
+   - (symbol-value 'foo): get the symbol value of symbol 'foo'
+     (symbol-value foo):  get the symbol value of symbol value of symbol 'foo'
+
+
+
+** macro: key differences between a function
+   1. a macor's real parameters are not evaluated befored be passed in to the macro
+      while a function's will first be evaluated and then be passed in
+   2. the return value
+      a macro's return value is a code that will be executed imediatelly, and the return value of the code will be the real return value of this macro after called.
+      a function's return value is the real return value.
+      
+      
+   common aspects:
+   1. relationship between formal parameters and real parameters
+      Within the macro or function body, the formal parameters are symbols whose value will be the real parameters.
+
+   An example of parameter evaluation:
+   #+begin_src emacs-lisp
+   (defun foo(arg1 arg2)
+     (format "arg1: %S, %S. arg2: %S, %S" arg1 (type-of arg1) arg2 (type-of arg2))
+     ) 
+   (defmacro foo2(arg1 arg2)
+     (format "arg1: %S, %S. arg2: %S, %S" arg1 (type-of arg1) arg2 (type-of arg2))
+     )
+
+   (setq a "jim")
+   (concat 
+    (foo (+ 1 2) a)
+    "\n"
+    (foo2 (+ 1 2) a)
+    "\n"
+    (foo '(+ 1 2) 'a)
+    "\n"
+    (foo2 '(+ 1 2) 'a)
+    )
+   #+end_src
+
+   #+RESULTS:
+   : arg1: 3, integer. arg2: "jim", string
+   : arg1: (+ 1 2), cons. arg2: a, symbol
+   : arg1: (+ 1 2), cons. arg2: a, symbol
+   : arg1: (quote (+ 1 2)), cons. arg2: (quote a), cons
+
+
+   For function, real parameter for arg1 is first evaluated to a number 3, so arg1 is a number with value 3. real parameter for arg2 is from evaluated to a string "jim", so arg2 is a string with value "jim".
+   For macro, arg1 is a list(cons) with value '(+ 1 2), and arg2 is a symbol 'a.
+   And if we quote  the real parameter for a function, the result is the same as a macro. So the only differences is that if real parameter is evaluated before passed in.
+   Line 4 is interesting. If we quote the real parameter of a macro, the quote will also go to the formal parameter. The reason here is 'quote is also a function, it evaluates to its input parameter
+
+** only-once macro, some experiment.
+   ``(,,c) is first `(,c), which is (b), and then `(,b), which is the (a). So the final result is (a). The result is (DEMO VERSION!) (list b), this is just equal to (a).
+   So two `` are just like two ` chained. ` and , are paired.
+   #+begin_src emacs-lisp :not-a-snippet
+   (setq a "aa")
+   (setq b 'a)
+   (setq c 'b)
+   (setq d 'c)
+   (defmacro aa ()
+     `(,c))
+   (defmacro bb ()
+     ``(,,c))
+   (format "%S\n%S" (macroexpand '(aa))
+           (macroexpand '(bb)))
+   #+end_src
+
+   #+RESULTS:
+   : (b)
+   : (list b)
+
+
+   The above priciple 
+   #+begin_src emacs-lisp :not-a-snippet
+   (setq a "aa")
+   (setq b '(a a))
+   (setq c '(b))
+   ;; (setq c 'b)
+   (setq d 'c)
+   (defmacro aa ()
+     `,c)
+   (defmacro aa2 ()
+     `(,c))
+   (defmacro bb ()
+     `,@c)
+   (defmacro bb2 ()
+     `(,@c))
+   (defmacro cc ()
+     ``,,@c)
+   (defmacro dd ()
+     ``,@,c)
+   (defmacro ee ()
+     ``,@,@c)
+   (format "%S\n%S\n%S\n%S\n%S\n%S\n%S" (macroexpand '(aa))
+           (macroexpand '(aa2))
+           (macroexpand '(bb))
+           (macroexpand '(bb2))
+           (macroexpand '(cc))
+           (macroexpand '(dd))
+           (macroexpand '(ee)))
+   #+end_src
+
+   #+RESULTS:
+   : (b)
+   : ((b))
+   : (b)
+   : (b)
+   : b
+   : (b)
+   : b
+
+
+   #+begin_src emacs-lisp :not-a-snippet
+   (setq a "aa")
+   (setq b 'a)
+   (setq c '(b ))
+   (setq d 'c)
+   (defmacro aa ()
+     `(symbolp `,b))
+   (format "%S" (macroexpand '(aa)))
+   #+end_src
+
+   #+RESULTS:
+   : (symbolp (\` (\, b)))
+
+
+* org capture
+
+** how it works:
+   1. Use a buffer '*Capture*' to get the content of the template
+      After get the template content(buffer string of that buffer), the buffer is killed and the content is returned.
+      in org-capture-fill-template
+      And then then content is stored in the :template property of org-capture-plist
+      (org-capture-put :template (org-capture-fill-template))
+
+   2. all data are stored in org-capture-plist
+      by org-capture-put, to add property. org-capture-get, to get the property.
+
+   3. 
+      
+      
+   
+** search for a headline in a org mode file, match exactly the headline, considering tags, TODO states
+   #+begin_src emacs-lisp
+   (defun bb ()
+     (interactive)
+     (let ((hd "Tasks"))
+       (goto-char (point-min))
+       (unless (derived-mode-p 'org-mode)
+         (error
+          "Target buffer \"%s\" for file+headline should be in Org mode"
+          (current-buffer)))
+       ;; (message "regexp: %s" (format org-complex-heading-regexp-format (regexp-quote hd)))
+       (if (re-search-forward
+            (format org-complex-heading-regexp-format (regexp-quote hd))
+            nil t)
+           (goto-char (point-at-bol))
+         (message "head not found"))))
+
+   #+end_src
+
+   #+RESULTS:
+   : bb
+
+
+   goto the end of this subtree, or the next entry if reversed is true.
+
+   #+begin_src emacs-lisp
+      (if reversed
+          (progn
+            (outline-next-heading)
+            (or (bolp) (insert "\n")))
+        (org-end-of-subtree t nil)
+        (or (bolp) (insert "\n")))))
+
+   #+end_src
+
+  
+** make a indirect buffer:
+   An indirect buffer is a mirror of another buffer.
+   Any (DEMO VERSION!) operations done in a indirect buffer has the same effect as if they are done in the base buffer.
+   Org capture make use of this feature. And then narrow to the new entry area.o
+
+   Another possible application of an indirect buffer is to display different part of a file in another window. (But it seems this can be done just by using the orignial buffer)
+   #+begin_src emacs-lisp
+   ;; (defun org-capture-get-indirect-buffer (&optional buffer prefix)
+   (defun aspk-get-indirect-buffer (&optional buffer prefix)
+     "Make an indirect buffer for a capture process.
+   Use PREFIX as a prefix for the name of the indirect buffer."
+     (setq buffer (or buffer (current-buffer)))
+     (let ((n 1) (base (buffer-name buffer)) bname)
+       (setq bname (concat prefix "-" base))
+       (while (buffer-live-p (get-buffer bname))
+         (setq bname (concat prefix "-" (number-to-string (incf n)) "-" base)))
+       (condition-case nil
+           (make-indirect-buffer buffer bname 'clone)
+         (error
+          (let ((buf (make-indirect-buffer buffer bname)))
+            (with-current-buffer buf (org-mode))
+            buf)))))
+
+   #+end_src
+
+   #+RESULTS:
+   : aspk-get-indirect-buffer
+
+   #+begin_src emacs-lisp
+(setq aspk-buffer (aspk-get-indirect-buffer nil "ASPK"))
+   #+end_src
+
+   #+RESULTS:
+   : #<buffer ASPK-2-inbox.org>
+
+** org-paste-subtree: paste a sub tree to current pos, determin the level automatically
+   The first parameter is level, if nil then determine level based on the previous and next levels.
+
+   #+begin_src emacs-lisp
+   (defun aa()
+     (interactive)
+     (let ((template "***** bbaaaa\n  bbbb"))
+       (org-paste-subtree nil template t))) 
+   #+end_src
+
+   #+RESULTS:
+   : aa
+
+** hwo to use it to capture a code snippet
+   This is a template to add org entry to the todo.org file, under "Tasks" headline
+   ("t" "Todo" entry
+  (file+headline
+   (concat org-directory "/todo.org")
+   "Tasks")
+  "* TODO %?\n  %i\n  %a")
+
+  Explation (DEMO VERSION!) of the above template:
+  "t": the key. Use to select this template
+  "Todo": the description. Will be displaied when selecting
+  entry: type. this is an org mode file netry
+  (file+headline (concat ...) "Tasks"): target. Where the new item should be placed.
+    Can also be a funtion:
+                 (function function-finding-location)
+                Most general way, write your own function to find both
+                file and location
+
+  "* TODO %?\n....": template. The templete of this entry.
+    Can also be a function:
+                 (function function-returning-the-template)
+    Then the template will be generated dynamically by this function.
+
+
+   So to capture a code snippet, we can just write a function to generate the template dynamically. The target we (DEMO VERSION!) can use (file+headline), because (DEMO VERSION!) we will always put the new snippets to all-mode/inbox.org
+
+
+   Hatch code:
+
+   a function to (DEMO VERSION!) create template.
+   #+begin_src emacs-lisp
+   (defun pns-create-a-snippet ()
+     (let ((lang (pns-get-current-mode))
+           (region-str (if mark-active (buffer-substring-no-properties (region-beginning) (region-end)) "")))
+       (format "* %%^{Title}\n  %%U\n  #+begin_src %s\n%s%%?\n  #+end_src\n  %%F\n\n"
+               lang
+               (if (equal region-str "")
+                   "  "
+                 ;; delete empty lines in beginning and end of region-str
+                 (setq region-str (replace-regexp-in-string "^[ \t\n]*\\(.*\\)[ \t\n]*$" "\\1" region-str))
+                 (pns-indent-src-code-string region-str lang 2)))))
+   #+end_src
+
+   #+RESULTS:
+   : pns-create-a-snippet
+
+   Note:
+   - use "%?" to place cursor
+   - %^{prompt} to prompt for a sring
+   - %U: inactive time date stamp
+   - %i: region value
+
+   - %F: file full name
+
+   - Use helm to get the title form all existing titles. And if we select an existing title, maybe the 'target' should just be that entry. So we should use a function to find the target. 
+     It seems template fucntion is first called, then target. So this is possible.
+
+
+   #+RESULTS:
+   : pns-create-a-snippet
+
+
+   a capture template element:
+   #+begin_src emacs-lisp
+      (setq pns-org-capture-template
+            '("-" "PNS" entry
+              (file+headline
+               "~/project/aspk-new-snippet/snippets/all-mode/inbox.org"
+               "Captured")
+              (function pns-create-a-snippet)
+              :empty-lines-before 1
+              )) 
+   #+end_src
+
+   #+RESULTS:
+   | - | PNS | entry | (file+headline ~/project/aspk-new-snippet/snippets/all-mode/inbox.org Captured) | (function pns-create-a-snippet) | :empty-lines-before | 1 |
+
+
+
+   Add the template to org-capture-templates
+   #+begin_src emacs-lisp
+(add-to-list 'org-capture-templates pns-org-capture-template)
+   #+end_src
+
+   #+RESULTS:
+   | - | PNS               | entry | (file+headline ~/project/aspk-new-snippet/snippets/all-mode/inbox.org Captured) | (function pns-create-a-snippet)                     | :empty-lines-before | 1 |
+   | t | Todo              | entry | (file+headline (concat org-directory /todo.org) Tasks)                          | * TODO %?\n  %U\n  %i\n  %a                         |                     |   |
+   | a | Appt              | entry | (file+headline (concat org-directory /todo.org) Appt)                           | * %^{Appt}\n  %^T%? \n %a                           |                     |   |
+   | h | Howto             | entry | (file+headline  Howto)                                                          | * %^{Title}\n  %U\n\n  %? \n  ======\n%i\n  %a \n   |                     |   |
+   | e | Experience & Tips | entry | (file+headline  Experience & Tips)                                              | * %^{Title}\n  %U\n\n  %? \n  ======\n  %i\n  %a \n |                     |   |
+   | l | English learning  | entry | (file+headline  English learning)                                               | * %^{Title}\n  %?                                   |                     |   |
+   | w | Web development   | entry | (file+headline (concat org-directory /webdev.org) Random notes)                 | * %^{Title}\n  %U\n  %?                             |                     |   |
+   | m | Misc              | entry | (file+headline  Miscellaneous)                                                  | * %^{Title}\n  %U\n  %i\n\n  %?                     |                     |   |
+   | p | Perl              | entry | (file+headline (concat org-directory /perl.org) Random notes)                   | * %^{Title}\n  %U\n  %?                             |                     |   |
+   | j | Journal           | entry | (file+datetree (concat org-directory /journal.org))                             | * %^{Title}\n  %U\n  %? \n\n  %a\n                  |                     |   |
+
+
+
+
+   #+begin_src emacs-lisp
+   (defun pns-indent-src-code-string (code-str lang nindent) 
+     "CODE-STR is the src code, LANG is like emacs-lisp, NINDENT is the number of spaces be put at the begining of each line"
+     (with-temp-buffer
+       (insert code-str)
+       (let ((indent (make-string nindent ?\ ))
+             (mode-func (intern (concat lang "-mode"))))
+         (funcall mode-func)
+         (indent-buffer)
+         (goto-char (point-min))
+         (while (re-search-forward "\\(^\\).+" nil t)
+           (replace-match indent nil nil nil 1)))
+       (buffer-string)))
+   #+end_src
+
+   #+RESULTS:
+   : pns-indent-src-code-string
+

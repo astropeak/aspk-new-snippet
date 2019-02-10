@@ -231,11 +231,11 @@
 
      (defun pns-unquote-src-block-content (content)
        "Remove all leading ',' in each line of content"
-       (replace-regexp-in-string "^\\(\s*\\)," "" content)) ;;remove all leading line helps indent.
+       (replace-regexp-in-string "^\\(\s*\\)," "\\1" content))
 
      (defun pns-remove-src-block-last-new-line-char (content)
        "Remove the last new line char in content. Because when using it as a snippet, it always has a new line char at the end which is not needed"
-       (replace-regexp-in-string "\n$" "" content))
+       (string-remove-suffix "\n" content))
 
      (defun pns-remove-leading-spaces (content)
        "Remove unneeded leading spaces in each line of CONTENT"
@@ -243,7 +243,9 @@
               ;; (when (not (equal (string-match "^\s*" content) 0))
               ;;   (match-string 0))
               (with-temp-buffer (insert content) (goto-char 1)
-                                (when (re-search-forward "^\s+" nil t)
+                                (skip-chars-forward " \t\n")
+                                (beginning-of-line)
+                                (when (re-search-forward "^\s+" (save-excursion (end-of-line) (point)) t)
                                   (match-string 0)))
               ))
          (if unneeded-spaces
@@ -991,6 +993,168 @@
     #+end_src
 
 ** issues
+
+*** DONE 190210 bug in parse src block info
+    CLOSED: [2019-02-10 Sun 13:21]
+    - State "DONE"       from ""           [2019-02-10 Sun 13:21] \\
+      The bug is in post processing content. All three functions have bug!!
+      #+begin_src emacs-lisp
+      (setq tmpl (pns-create-template-new "test/data/2.org"))
+      (format "%S"  tmpl)
+      #+end_src
+
+      #+RESULTS:
+      #+begin_example
+      (((name . "root") (mode) (beginning) (end) (filename) (var-table) (hungry-vars) (precondition-table) (text . "")) (((name . "literate programming org file template") (mode . "org") (beginning . 70) (end . 410) (filename . "test/data/2.org") (var-table) (hungry-vars) (precondition-table) (text . "* code & doc
+      ** export source code
+         run 'org-babel-tangle' to generate the .el file.
+
+         #+name: sources
+         #+begin_src emacs-list :noweb yes :tangle ${1:package-name}.el
+         <<vars>>
+
+         <<methods>>
+
+         <<misc>>
+
+         <<init>>
+
+         (provide '$1)
+         #+end_src
+
+      $0"))))
+#+end_example
+
+    #+begin_src emacs-lisp
+    (setq content "   ,* code & doc
+       ,** export source code
+          run 'org-babel-tangle' to generate the .el file.
+          
+          ,#+name: sources
+          ,#+begin_src emacs-list :noweb yes :tangle ${1:package-name}.el
+          <<vars>>
+
+          <<methods>>
+
+          <<misc>>
+
+          <<init>>
+
+          (provide '$1)
+          ,#+end_src
+
+       $0
+    ")
+
+    (setq content (pns-unquote-src-block-content content))
+    (setq content (pns-remove-src-block-last-new-line-char content))
+    (setq content (pns-remove-leading-spaces content))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    * code & doc
+    ** export source code
+       run 'org-babel-tangle' to generate the .el file.
+
+       #+name: sources
+       #+begin_src emacs-list :noweb yes :tangle ${1:package-name}.el
+       <<vars>>
+
+       <<methods>>
+
+       <<misc>>
+
+       <<init>>
+
+       (provide '$1)
+       #+end_src
+
+    $0
+#+end_example
+
+
+    So the cause to the mmsing new lines is in pns-remove-src-block-last-new-line-char
+
+    A function to only remove the last new line char in a string if exists
+    #+begin_src emacs-lisp
+    (defun aspk-remove-last-new-line-char-in-string (str)
+(string-remove-suffix "\n" str)
+      )
+
+
+    (setq a "aabbccdd ff-\n\n")
+    (setq b (aspk-remove-last-new-line-char-in-string a))
+    #+end_src
+
+    #+RESULTS:
+    : aabbccdd ff-
+
+
+*** 190203 helm usage: use C-e to select 2nd action, and C-j 3rd action.
+    This is just the funcionality I want.
+
+    Te keymap is defined in variable helm-map. In where we can see:
+    (10 . helm-select-3rd-action)
+    (5 . helm-select-2nd-action-or-end-of-line)
+    (26 . helm-execute-persistent-action)
+    (9 . helm-select-action)
+
+    9 is Enter, 5 is C-e, 10 is C-j.
+
+
+    So if we pass ':keymap' to helm, then defalut map (helm-map)will be complete replaced.
+    So to define a new keymap, we should make the new keymap's parent to helm-map, and redefine some keys, if we don't want lose any other default key maps. Below is an example.
+    #+begin_src emacs-lisp
+    (setq source `((name . "Test")
+                   (candidates . (("First" . 1) ("Second" . 2)))
+                   (action . (lambda (cand)
+                               (message "Candidate: %S" cand)
+                               ))))
+
+    (setq km (let ((map (make-sparse-keymap)))
+               (set-keymap-parent map helm-map)
+               (define-key map (kbd "<down>")     (lambda () (interactive)(message "aaaa")))
+               map))
+
+    (helm :sources source :buffer "Test" :keymap km)
+    #+end_src
+
+    #+RESULTS:
+    : Candidate: 1
+
+
+    (helm-other-buffer sources buffer ) is equivilent to (helm :sources sources :buffer buffer)
+
+
+    Some programming skills:
+    1. helm-aif: like if, but set the result of test form to a local variable name 'it', so that that variable can be used in then part or else part.
+       In below example, the result of the test form is the postion of 'a' in the string, and it will be set to 'it'.
+       #+begin_src emacs-lisp
+       (helm-aif (string-match "a" "bcaacb")
+           (message "There is an 'a' in the string at postion %s" it)
+         (message "there is no 'a' in the string"))
+       #+end_src
+
+       #+RESULTS:
+       : There is an ’a’ in string at postion 2
+
+    2. unwind-protect: like try...finally in python. The bodyform is the try part, the unwindforms is the finally part. 
+       If bodyform completes normally, unwindforms will be executed
+       If bodyform exits nonlocally, unwindforms will still be executed.
+       
+       This pattern is used to ensure an cleanup action is executed.
+       #+begin_src emacs-lisp
+
+       #+end_src
+
+*** 190203 unfold org mode tree after opening a snippet
+    Currently the tree is not unfolded automatically.
+    
+*** 190203 define a short key to open a snippet in the helm interface
+    The "EEEnter" key is used to start the default action, that is expanding the snippet.
+    Define a short key to start eh second action, open the snippet.
+    Shuch as, use 'Shift Enter''
 *** 190201 all elements in a template tree should in the same mode
     currently it is possiable that they have different mode, after the "filter by template element mode" feature.
     pns-convert-block-list-to-tree should be modified.
@@ -1010,6 +1174,10 @@
 
     Implement it like pcs-create-snippet. Prompt for mode and title, and make titles in every org file as the candicate for title.
     And then save the snippet to mode-dir/inbox.org 
+
+    #+begin_src emacs-lisp
+
+    #+end_src
 
 *** don't parse `(xxx yyy)` as hungry var
     Instead should keep they unchangd. Only treat `xxx yyy` as hungry var
@@ -1714,6 +1882,11 @@
     #+end_src
                     
 ** programming notes
+
+*** 190202 power of literate programming
+    After I organized the code better yesterday, today when I implement (DEMO VERSION!) some new feature, its very easy to know where to modify.
+    Understand the code is much easier.
+    
 *** 190131 elisp 'string-match' is very buggy, never use it
     (string-match "^\s+" " aaa")
     (match-string 0)

@@ -1,0 +1,24 @@
+** literate programming org file template
+   [2019-02-10 Sun 11:38]
+
+   #+begin_src org
+   ,* code & doc
+   ,** export source code
+      run 'org-babel-tangle' to generate the .el file.
+      
+      ,#+name: sources
+      ,#+begin_src emacs-list :noweb yes :tangle ${1:package-name}.el
+      <<vars>>
+
+      <<methods>>
+
+      <<misc>>
+
+      <<init>>
+
+      (provide '$1)
+      ,#+end_src
+
+   $0
+   #+end_src
+   /Users/astropeak/project/aspk-emacs-package/aspk-select-thing.org

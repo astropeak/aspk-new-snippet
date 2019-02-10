@@ -6,3 +6,469 @@
   #+begin_src emacs-lisp :results output
   elisp
   #+end_src
+* Captured
+** org-capture: function to place a template
+   [2019-02-07 Thu 20:13]
+   #+begin_src emacs-lisp
+               (org-capture-place-template
+                (equal (car (org-capture-get :target)) 'function))  
+   
+   #+end_src
+** get base buffer of an indirect buffer, check if a buffer is indirect one
+  [2019-02-07 Thu 20:15]
+  #+begin_src emacs-lisp
+(buffer-base-buffer (current-buffer))  
+  
+  #+end_src
+** get buffer name as string
+  [2019-02-07 Thu 20:16]
+  #+begin_src emacs-lisp
+(buffer-name)  
+  
+  #+end_src
+** check if a mode is derived from another mode
+  [2019-02-07 Thu 20:17]
+  #+begin_src emacs-lisp
+(derived-mode-p 'org-mode)  
+  
+  #+end_src
+** a function to put new values to a property list
+  [2019-02-07 Thu 21:10]
+  A property list is (PROP1 VALUE1 PROP2 VALUE2 ...)
+  The return value of plist-put is the new plist. The original (DEMO VERSION!) plist is not changed. 
+  #+begin_src emacs-lisp
+(defun org-capture-put (&rest stuff)
+  "Add properties to the capture property list 'org-capture-plist'."
+  (while stuff
+    (setq org-capture-plist (plist-put org-capture-plist
+                                       (pop stuff) (pop stuff)))))  
+  
+  #+end_src
+** a function to get property list key value
+  [2019-02-07 Thu 21:13]
+  #+begin_src emacs-lisp
+  (defun org-capture-get (prop &optional local)
+    (plist-get (if local org-capture-current-plist org-capture-plist) prop))  
+
+  #+end_src
+** get buffer substring
+  [2019-02-07 Thu 21:20]
+  #+begin_src emacs-lisp
+(buffer-substring (point) (mark)))  
+  
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** check if current point is at begining of line
+  [2019-02-07 Thu 21:28]
+  #+begin_src emacs-lisp
+(bolp)  
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** make sure point is at the beginning of line. If not, insert a new line
+  [2019-02-07 Thu 21:28]
+  #+begin_src emacs-lisp
+(or (bolp) (newline))  
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** orgmode: move point to the begining of the previous heading line
+  [2019-02-07 Thu 21:32]
+  #+begin_src emacs-lisp
+(org-back-to-heading)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** ignore error: run a function / expression and ignore the errro
+  [2019-02-07 Thu 21:34]
+  If error happens, then return nil. and if no error, return the return value of the function
+  #+begin_src emacs-lisp
+(ignore-errors (org-back-to-heading))
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** call a function interactively form source code
+  [2019-02-07 Thu 21:38]
+  #+begin_src emacs-lisp
+(call-interactively 'org-refile))
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** orgmode: move an entry to another headling
+  [2019-02-07 Thu 21:40]
+  The target is in org-refile-targets
+  #+begin_src org
+(org-refile)
+  #+end_src
+  /Users/astropeak/project/aspk-new-snippet/snippets/all-mode/inbox.org
+** make a buffer current for editing operations without display it, like with-current-buffer
+  [2019-02-07 Thu 21:43]
+  Ususaly called in code. The setting exist after the current command exit. 
+  The differences to (DEMO VERSION!) with-current-buffer:
+  set-buffer takes effect accross functions, but with-current-buffer 
+  #+begin_src emacs-lisp
+(set-buffer "*scratch*")
+(goto-char (point-max))
+(insert "AAA\n")
+  #+end_src
+
+  #+RESULTS:
+
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** not narrow, widen, exit narrow
+  [2019-02-07 Thu 21:48]
+  #+begin_src emacs-lisp
+(widen)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** orgmode: check if point is at a heading / headling
+  [2019-02-07 Thu 21:52]
+  #+begin_src emacs-lisp
+(org-at-heading-p)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** orgmode: move point to the begining of the next headline /heading
+  [2019-02-07 Thu 21:55]
+  #+begin_src emacs-lisp
+(outline-next-heading)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** orgmode: get headline level, point must be at the beginning of a headline
+   [2019-02-07 Thu 21:58]
+   If point is not at the beginning of a headline, return nil
+   #+begin_src emacs-lisp
+       (and (bolp) (looking-at "\\*+") (- (match-end 0) (match-beginning 0)))
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** orgmode: increase entry/headline level, considering org-odd-levels-only
+  [2019-02-07 Thu 22:02]
+  #+begin_src emacs-lisp
+(org-get-valid-level `current-level` `change`)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+  
+** orgmode: move point to the end of the subtree
+  [2019-02-07 Thu 22:06]
+  INVISIBLE-OK TO-HEADING
+  if TO-HEADING is t, then will go to the next heading after the end of the subtree.
+
+  outline-next-heading will go to (DEMO VERSION!) the next heading, what ever its level.
+  #+begin_src emacs-lisp
+(org-end-of-subtree nil nil)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** delete the content in buffer, given two point
+  [2019-02-07 Thu 22:15]
+  #+begin_src emacs-lisp
+(delete-region `start` `end`)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+** insert before point n empty lines, make  sure there are only n empty lines before point
+   [2019-02-07 Thu 22:17]
+   #+begin_src emacs-lisp
+   (let ((pos (point)))
+     (org-back-over-empty-lines)
+     (delete-region (point) pos)
+     (if (> `n` 0) (newline `n`)))
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** skip chars backward, move point bckward and stop after a non specified char
+  [2019-02-08 Fri 10:08]
+  This will skip back all white spaces.
+  chanrs are just like the inside of [] in regexp
+  Return value is the moved position.
+  
+  This can't be achieved by re-search-backward, which will put the the point before the non specified char
+  #+begin_src emacs-lisp
+(skip-chars-backward " \t\n")
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** check if point is in an org mode plain list item, return the beginning pos of the list or nil
+  [2019-02-08 Fri 10:13]
+  #+begin_src emacs-lisp
+(org-in-item-p)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** orgmode: insert a new plain list item if point is in a item
+  [2019-02-08 Fri 10:16]
+  #+begin_src emacs-lisp
+(org-insert-item)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** get the point / position of the last char of (DEMO VERSION!) this line
+  [2019-02-08 Fri 10:17]
+  #+begin_src emacs-lisp
+(point-at-eol)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** delete / remove the maximum common spaces / indentation of all lines in a string
+  [2019-02-08 Fri 10:19]
+  #+begin_src emacs-lisp
+(org-remove-indentation `string`)
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+
+  #+begin_src emacs-lisp :not-a-snippet
+  (setq s "    a\n           b")
+  (org-remove-indentation s)
+  #+end_src
+
+  #+RESULTS:
+  : a
+  :        b
+
+** get current column number
+  [2019-02-08 Fri 10:33]
+  #+begin_src emacs-lisp
+(current-column))
+  #+end_src
+  /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-src.el.gz
+
+** add an indention / spaces at the beginning of each line of the buffer
+   [2019-02-08 Fri 10:36]
+   #+begin_src emacs-lisp
+   (let ((indent (make-string `total-nindent` ?\ )))
+     (goto-char (point-min))
+     (while (re-search-forward "\\\\(^\\\\).+" nil t)
+       (replace-match indent nil nil nil 1))))
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-src.el.gz
+
+** a function to indent source block content
+   #+begin_src emacs-lisp
+   (defun aa (code-str lang nindent) 
+     (with-temp-buffer
+       (insert code-str)
+       (let ((indent (make-string nindent ?\ ))
+             (mode-func (intern (concat lang "-mode"))))
+         (funcall mode-func)
+         (indent-buffer)
+         (goto-char (point-min))
+         (while (re-search-forward "\\(^\\).+" nil t)
+           (replace-match indent nil nil nil 1)))
+       (buffer-string)))
+   #+end_src
+
+   #+RESULTS:
+   : aa
+
+
+   #+begin_src emacs-lisp :not-a-snippet
+   (setq s "(newline)\n    (goto-char (point-min))")
+   (aa s "emacs-lisp" 1)
+   #+end_src
+
+   #+RESULTS:
+   :  (newline)
+   :  (goto-char (point-min))
+
+** orgmode:  check if a string is a valid tree
+   [2019-02-08 Fri 11:16]
+   #+begin_src emacs-lisp
+   (org-kill-is-subtree-p tree)
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** get the clip board content of (DEMO VERSION!) the system
+   [2019-02-08 Fri 11:18]
+   #+begin_src emacs-lisp
+   (org-get-x-clipboard 'PRIMARY)
+   (org-get-x-clipboard 'CLIPBOARD)
+   (org-get-x-clipboard 'SECONDARY)
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** delete all other buffers
+   [2019-02-08 Fri 11:19]
+   #+begin_src emacs-lisp
+   (delete-other-windows)
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** insert a file content to buffer after point
+   [2019-02-08 Fri 11:21]
+   #+begin_src emacs-lisp
+   (insert-file-contents filename)
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
+
+** move point to beginning of line
+   [2019-02-08 Fri 16:22]
+   #+begin_src emacs-lisp
+   (beginning-of-line)
+   #+end_src
+   /Users/astropeak/Dropbox/org/todo.org
+
+** move point to end of line
+   [2019-02-08 Fri 16:23]
+   #+begin_src emacs-lisp
+   (end-of-line)
+   #+end_src
+   /Users/astropeak/Dropbox/org/todo.org
+
+** mark the region between current point to given point
+   [2019-02-08 Fri 16:23]
+   The third parameter make the region active.. Also see set-mark, mark-ring
+   #+begin_src emacs-lisp
+   (push-mark `point` nil t)
+   #+end_src
+   /Users/astropeak/Dropbox/org/todo.org
+
+** set / bind evil leader key map
+   [2019-02-08 Fri 16:42]
+   #+begin_src emacs-lisp
+   (evil-leader/set-key "mp" 'aspk-mark-outer-list)
+   #+end_src
+   /Users/astropeak/Dropbox/org/todo.org
+
+** get current mark point
+   [2019-02-08 Fri 16:50]
+   #+begin_src emacs-lisp
+   (mark t)
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/simple.el.gz
+
+** repeat / re-run last command by 'repeat
+   [2019-02-08 Fri 19:34]
+   bind to evil leader "mm"
+   The last-command variable saves the name of last command.
+   #+begin_src emacs-lisp
+   (repeat)
+   #+end_src
+   /Users/astropeak/Dropbox/org/todo.org
+
+** do a syntax passing at current postion
+   [2019-02-09 Sat 20:35]
+   #+begin_src emacs-lisp
+   (syntax-ppss)
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+
+** check if current point is in string
+   [2019-02-09 Sat 20:36]
+   #+begin_src emacs-lisp
+   (nth 3 (syntax-ppss))
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+
+** get the beginning position / point of the current comment or the string, nil if not in 
+   [2019-02-09 Sat 20:37]
+   #+begin_src emacs-lisp
+   (nth 8 (syntax-ppss))
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+
+** get the beginning and end position/point of a string if current point is in one, else nil
+   [2019-02-09 Sat 21:43]
+   (nth 3 syntax) is true: current point is in a string
+   (nth 8 syntax): the beginning position of the current string or comment.
+   #+begin_src emacs-lisp
+   (let ((syntax (syntax-ppss)))
+     (when (nth 3 syntax)
+       (cons (nth 8 syntax)
+             (save-excursion
+               (goto-char (nth 8 syntax))
+               (forward-sexp 1)
+               (point)))))
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+** get the beginning and end position/point of a comment if current point is in one, else nil
+   [2019-02-09 Sat 21:43]
+   (nth 3 syntax) is true: current point is in a string
+   (nth 8 syntax): the beginning position of the current string or comment.
+   #+begin_src emacs-lisp
+   (let ((syntax (syntax-ppss)))
+     (when (and (nth 8 syntax) (not (nth 3 syntax)))
+       (cons (nth 8 syntax)
+             (save-excursion
+               (goto-char (nth 8 syntax))
+               (forward-comment 9999)
+               (skip-chars-backward " \t\n")   
+               (end-of-line)
+               (point)))))
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+
+** move point forward following syntax
+   [2019-02-09 Sat 22:04]
+   #+begin_src python
+   (skip-syntax-forward "/\\")
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/paren.el.gz
+
+** throw / raise / signal an error
+   [2019-02-09 Sat 22:30]
+   #+begin_src emacs-lisp
+   (signal 'error-symbol "error data")
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+
+** try...except/catch: handle error by condition-case
+   [2019-02-09 Sat 22:31]
+   error-symbol can also be a (DEMO VERSION!) list, don't need to be (DEMO VERSION!) quoted.
+   #+begin_src emacs-lisp
+   (condition-case err
+       $0
+     (error-symbol error-handler-forms)
+     (error-symbol-2 error-handler-forms-2)
+     )
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+
+   An example:
+   #+begin_src emacs-lisp :not-a-snippet
+   (condition-case err
+       (scan-lists (point) 1 1)
+     (scan-error (message "Scan error: %S" err))
+     )
+   #+end_src
+
+   #+RESULTS:
+   : Scan error: (scan-error "Unbalanced parentheses" 13692 13817)
+
+** move point to the end of a comment, by forward-comment
+   [2019-02-09 Sat 22:40]
+   #+begin_src emacs-lisp
+   (forward-comment 1)
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+
+** save restriction: restore narrow, widen status after executed codes
+   [2019-02-09 Sat 22:42]
+   #+begin_src emacs-lisp
+   (save-restriction $0)
+   #+end_src
+   /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/emacs-lisp/lisp.el.gz
+
+** check if an object is a string
+   [2019-02-09 Sat 23:09]
+   #+begin_src emacs-lisp
+   (stringp `obj`)
+   #+end_src
+   /Users/astropeak/org/todo.org
+
+** literate programming org file template
+   [2019-02-10 Sun 11:38]
+   #+begin_src org
+   ,* code & doc
+   ,** export source code
+      run 'org-babel-tangle' to generate the .el file.
+      
+      ,#+name: sources
+      ,#+begin_src emacs-list :noweb yes :tangle ${1:package-name}.el
+      <<vars>>
+
+      <<methods>>
+
+      <<misc>>
+
+      <<init>>
+
+      (provide '$1)
+      ,#+end_src
+
+   $0
+   #+end_src
+   /Users/astropeak/project/aspk-emacs-package/aspk-select-thing.org
