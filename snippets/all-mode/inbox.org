@@ -457,7 +457,7 @@
       run 'org-babel-tangle' to generate the .el file.
       
       ,#+name: sources
-      ,#+begin_src emacs-list :noweb yes :tangle ${1:package-name}.el
+      ,#+begin_src emacs-lisp :noweb yes :tangle ${1:package-name}.el
       <<vars>>
 
       <<methods>>
@@ -466,9 +466,13 @@
 
       <<init>>
 
+      <<keybindings>>
+
       (provide '$1)
       ,#+end_src
 
-   $0
+      $0
+
+   ,* issues
    #+end_src
    /Users/astropeak/project/aspk-emacs-package/aspk-select-thing.org

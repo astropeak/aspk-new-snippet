@@ -122,7 +122,6 @@
 ;; there is a bug in regexp-quote: '\\|' will be quoted to '\\\\|'
 
 (defun pns-post-process-src-block-content (content)
-  (message "original content: %S" content)
   (pns-remove-leading-spaces 
    (pns-remove-src-block-last-new-line-char 
     (pns-unquote-src-block-content content)))
@@ -130,13 +129,11 @@
 
 (defun pns-unquote-src-block-content (content)
   "Remove all leading ',' in each line of content"
-  (replace-regexp-in-string "^\\(\s*\\)," "\\1" content)) ;;remove all leading line helps indent.
+  (replace-regexp-in-string "^\\(\s*\\)," "\\1" content))
 
 (defun pns-remove-src-block-last-new-line-char (content)
   "Remove the last new line char in content. Because when using it as a snippet, it always has a new line char at the end which is not needed"
   (string-remove-suffix "\n" content))
-
-  ;; (replace-regexp-in-string "\n$" "" content))
 
 (defun pns-remove-leading-spaces (content)
   "Remove unneeded leading spaces in each line of CONTENT"
@@ -144,6 +141,8 @@
          ;; (when (not (equal (string-match "^\s*" content) 0))
          ;;   (match-string 0))
          (with-temp-buffer (insert content) (goto-char 1)
+                           (skip-chars-forward " \t\n")
+                           (beginning-of-line)
                            (when (re-search-forward "^\s+" (save-excursion (end-of-line) (point)) t)
                              (match-string 0)))
          ))
@@ -506,12 +505,12 @@ But I think now rename this parameter to `recursivep' is better, easier to under
             (pns-assoc 'precondition-table template-element)))
 
     (when check-passed
-      (message "Template-Element: %S, buffer: %S" template-element (current-buffer))
+      ;; (message "Template-Element: %S, buffer: %S" template-element (current-buffer))
       (setq text (pns-assoc 'text template-element))
       (setq hungry-vars (pns-get-hungry-values template-element filled-vars))
-      (when (equal (pns-assoc 'mode template-element) "org")
+      (when (equal (pns-assoc 'mode template-element) "python")
         (setq hungry-vars (cons '(yas-indent-line 'fixed) hungry-vars)))
-      (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
+      ;; (message "%S, %S, %d, buffer: %S" text hungry-vars (point) (current-buffer))
       ;; expand this
       (if (region-active-p)
           (yas-expand-snippet  text (region-beginning) (region-end) hungry-vars)
