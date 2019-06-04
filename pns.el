@@ -4,6 +4,14 @@
 (setq pns-filename-template-tree-map (make-hash-table :test 'equal))
 ;; This hash save a template's parent and children elements. Key is a template element, value is a assoc list: ((parent . parent-element)(children . list-of-children-element))
 (setq pns-template-parent-children-map (make-hash-table :test 'eq))
+(setq pns-org-capture-template
+      '("-" "PNS" entry
+        (file+headline
+         (concat pns-snippet-dir "/all-mode/inbox.org")
+         "Captured")
+        (function pns-create-a-snippet)
+        :empty-lines-before 1
+        )) 
 
 (defun pns-assoc (key list)
   (cdr (assoc key list)))
@@ -530,6 +538,28 @@ But I think now rename this parameter to `recursivep' is better, easier to under
     (find-file filename)
     (goto-char beginning)))
 
+(defun pns-create-a-snippet ()
+  (let ((lang (pns-get-current-mode))
+        (region-str (if mark-active (buffer-substring-no-properties (region-beginning) (region-end)) "")))
+    (format "* %%^{Title}\n  %%U\n  #+begin_src %s\n%s%%?\n  #+end_src\n  %%F\n\n"
+            lang
+            (if (equal region-str "")
+                "  "
+              ;; delete empty lines in beginning and end of region-str
+              (setq region-str (replace-regexp-in-string "^[ \t\n]*\\(.*\\)[ \t\n]*$" "\\1" region-str))
+              (pns-indent-src-code-string region-str lang 2)))))
+(defun pns-indent-src-code-string (code-str lang nindent) 
+  "CODE-STR is the src code, LANG is like emacs-lisp, NINDENT is the number of spaces be put at the begining of each line"
+  (with-temp-buffer
+    (insert code-str)
+    (let ((indent (make-string nindent ?\ ))
+          (mode-func (intern (concat lang "-mode"))))
+      (funcall mode-func)
+      (indent-buffer)
+      (goto-char (point-min))
+      (while (re-search-forward "\\(^\\).+" nil t)
+        (replace-match indent nil nil nil 1)))
+    (buffer-string)))
 (defun pns-tool-convert-aspk-code-snippets-to-new (dir output-file mode)
   "Convert all snippets(native style) in DIR to a single org mode file OUTPUT-FILE. each file becomes an entry"
   (with-current-buffer (find-file-noselect output-file)
@@ -587,6 +617,6 @@ But I think now rename this parameter to `recursivep' is better, easier to under
 
 
 
-
+(add-to-list 'org-capture-templates pns-org-capture-template)
 
 (provide 'pns)

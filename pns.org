@@ -26,6 +26,9 @@
      (provide 'pns)
      #+end_src
 
+     #+RESULTS: sources
+     : pns
+
 *** snippet syntax
     NOTE: more syntaxs see some sections in  'get snippet by  parsing org mode file'
 
@@ -1006,6 +1009,114 @@
     (yas-expand-snippet "name: `name`" nil nil '((name "Tom")))
     #+end_src
 
+*** quickly create snippet by org-capture mode
+   This is a template to add org entry to the todo.org file, under "Tasks" headline
+   ("t" "Todo" entry
+  (file+headline
+   (concat org-directory "/todo.org")
+   "Tasks")
+  "* TODO %?\n  %i\n  %a")
+
+  Explation of the above template:
+  "t": the key. Use to select this template
+  "Todo": the description. Will be displaied when selecting
+  entry: type. this is an org mode file entry
+  (file+headline (concat ...) "Tasks"): target. Where the new item should be placed.
+    Can also be a funtion:
+                 (function function-finding-location)
+                Most general way, write your own function to find both
+                file and location
+
+  "* TODO %?\n....": template. The templete of this entry.
+    Can also be a function:
+                 (function function-returning-the-template)
+    Then the template will be generated dynamically by this function.
+
+
+   So to capture a code snippet, we can just write a function to generate the template dynamically. The target we can use (file+headline), because we will always put the new snippets to all-mode/inbox.org
+
+
+   Hatch code:
+
+   a function to create template.
+
+   #+NAME: methods
+   #+begin_src elisp
+   (defun pns-create-a-snippet ()
+     (let ((lang (pns-get-current-mode))
+           (region-str (if mark-active (buffer-substring-no-properties (region-beginning) (region-end)) "")))
+       (format "* %%^{Title}\n  %%U\n  #+begin_src %s\n%s%%?\n  #+end_src\n  %%F\n\n"
+               lang
+               (if (equal region-str "")
+                   "  "
+                 ;; delete empty lines in beginning and end of region-str
+                 (setq region-str (replace-regexp-in-string "^[ \t\n]*\\(.*\\)[ \t\n]*$" "\\1" region-str))
+                 (pns-indent-src-code-string region-str lang 2)))))
+   #+end_src
+
+   #+RESULTS:
+   : pns-create-a-snippet
+
+   Note:
+   - use "%?" to place cursor
+   - %^{prompt} to prompt for a sring
+   - %U: inactive time date stamp
+   - %i: region value
+
+   - %F: file full name
+
+   - Use helm to get the title form all existing titles. And if we select an existing title, maybe the 'target' should just be that entry. So we should use a function to find the target. 
+     It seems template fucntion is first called, then target. So this is possible.
+
+
+   #+RESULTS:
+   : pns-create-a-snippet
+
+
+   a capture template element:
+   #+NAME: vars
+   #+begin_src elisp
+      (setq pns-org-capture-template
+            '("-" "PNS" entry
+              (file+headline
+               (concat pns-snippet-dir "/all-mode/inbox.org")
+               "Captured")
+              (function pns-create-a-snippet)
+              :empty-lines-before 1
+              )) 
+   #+end_src
+
+   #+RESULTS:
+   | - | PNS | entry | (file+headline ~/project/aspk-new-snippet/snippets/all-mode/inbox.org Captured) | (function pns-create-a-snippet) | :empty-lines-before | 1 |
+
+
+
+   Add the template to org-capture-templates
+   #+NAME: init
+   #+begin_src elisp
+(add-to-list 'org-capture-templates pns-org-capture-template)
+   #+end_src
+
+
+
+   #+NAME: methods
+   #+begin_src elisp
+   (defun pns-indent-src-code-string (code-str lang nindent) 
+     "CODE-STR is the src code, LANG is like emacs-lisp, NINDENT is the number of spaces be put at the begining of each line"
+     (with-temp-buffer
+       (insert code-str)
+       (let ((indent (make-string nindent ?\ ))
+             (mode-func (intern (concat lang "-mode"))))
+         (funcall mode-func)
+         (indent-buffer)
+         (goto-char (point-min))
+         (while (re-search-forward "\\(^\\).+" nil t)
+           (replace-match indent nil nil nil 1)))
+       (buffer-string)))
+   #+end_src
+
+   #+RESULTS:
+   : pns-indent-src-code-string
 ** issues
 *** 190203 helm usage: use C-e to select 2nd action, and C-j 3rd action.
     This is just the funcionality I want.
