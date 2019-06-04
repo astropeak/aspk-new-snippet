@@ -1118,6 +1118,11 @@
    #+RESULTS:
    : pns-indent-src-code-string
 ** issues
+*** 190604 create snippet by org-capture: check if org-capture mode exists
+    And also let the key configurable(currently use '-')
+    Currenty assumes org-capture exists. But this won't alwasy be the case.
+    Only add this functionality if org-capture exists
+
 *** 190203 helm usage: use C-e to select 2nd action, and C-j 3rd action.
     This is just the funcionality I want.
 
@@ -1196,6 +1201,8 @@
     After (DEMO VERSION!) this is implemented, the yas-snippet can be completly replaced.
 
 *** 190128 think of a way to adding snippet efficiently
+    - Note taken on [2019-06-04 Tue 09:18] \\
+      Just add a feature: create snippet by org-capture.
     Current you can only edit the org files under pns-snippet-dir manually.
     The good is that after the addtion, the new snippet will be avaliable on next run.
 
@@ -1964,7 +1971,14 @@
    - Note taken on [2017-01-06 Fri 21:23]
   
    just run: pns-expand-template-by-name
-   (pns-update-template-list will be called inside that function)
+   Note:
+   1. already bind to '] s'
+   2. pns-update-template-list will be called inside that function
+
+
+   Create new snippet:
+   By using org-capture mode. Run `org-capture', then select key `-'
+   Key binding: C-c c -
 
 
    convert the old snippet to new snippet by:
