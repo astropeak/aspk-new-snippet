@@ -271,7 +271,7 @@
    #+end_src
    /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org-capture.el.gz
 
-** get the clip board content of (DEMO VERSION!) the system
+** get the clip board content of the system
    [2019-02-08 Fri 11:18]
    #+begin_src emacs-lisp
    (org-get-x-clipboard 'PRIMARY)
@@ -732,3 +732,21 @@
    complete -F _xbat xbat.exe
 
    #+end_src
+
+** a function: create directory recursively
+   https://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
+
+   #+begin_src python :results output
+   import errno    
+   import os
+
+   def mkdir_p(path):
+       try:
+           os.makedirs(path)
+       except OSError as exc:  # Python >2.5
+           if exc.errno == errno.EEXIST and os.path.isdir(path):
+               pass
+           else:
+               raise
+   #+end_src
+

@@ -81,11 +81,13 @@ git filter-branch -f --index-filter 'git rm --cached --ignore-unmatch src/main/j
 #+end_src
 
 * change author name and email in all git commit history
+
+Copy the script to a file, and change the OLD_EMAIL to a correnct value. then run.
 #+begin_src sh
 #!/bin/sh
 
 git filter-branch --env-filter '
-OLD_EMAIL="luooofuq@WL316020.ap.tieto.com"
+OLD_EMAIL="xxx@yyy.zzz"
 CORRECT_NAME="Astropeak"
 CORRECT_EMAIL="astropeak@gmail.com"
 if [ "$GIT_COMMITTER_EMAIL" = "$OLD_EMAIL" ]
