@@ -1136,6 +1136,15 @@
    #+RESULTS:
    : pns-indent-src-code-string
 ** issues
+*** 190604 select mode before select a snippet
+    Currently the mode is assumed to be the same as current buffer, or the mode
+    of code snippet at point in an org file.
+
+    But many time I just want to open a snippet file, then I need to see a snippet file
+    for other mode.
+
+    Maybe when user provide a prefix argument, let user selelct mode first.
+
 *** 190604 create snippet by org-capture: check if org-capture mode exists
     And also let the key configurable(currently use '-')
     Currenty assumes org-capture exists. But this won't alwasy be the case.
