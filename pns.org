@@ -1,4 +1,22 @@
 * pns
+** how to use this software
+   - Note taken on [2017-01-06 Fri 21:23]
+  
+   just run: pns-expand-template-by-name
+   Note:
+   1. already bind to '] s'
+   2. pns-update-template-list will be called inside that function
+
+
+   Create new snippet:
+   By using org-capture mode. Run `org-capture', then select key `-'
+   Key binding: C-c c -
+
+
+   convert the old snippet to new snippet by:
+   pns-tool-convert-all
+   will convert all files in pcs-snippet-dir, and stored in pns-snippet-dir 
+
 ** overal note
    - aspk-new-snippet can completely replace aspk-code-snippet.
    - write by literate programming.
@@ -1967,24 +1985,6 @@
     - State "DONE"       from "STARTED"    [2017-01-12 Thu 11:22]
     - State "STARTED"    from ""           [2017-01-12 Thu 10:53]
     I find this is a good way, and I don't need all other modes.
-** how to use this software
-   - Note taken on [2017-01-06 Fri 21:23]
-  
-   just run: pns-expand-template-by-name
-   Note:
-   1. already bind to '] s'
-   2. pns-update-template-list will be called inside that function
-
-
-   Create new snippet:
-   By using org-capture mode. Run `org-capture', then select key `-'
-   Key binding: C-c c -
-
-
-   convert the old snippet to new snippet by:
-   pns-tool-convert-all
-   will convert all files in pcs-snippet-dir, and stored in pns-snippet-dir 
-
 ** tools
 *** convert snippets in  aspk-code-snippets to aspk-new-snippets format
     given a directory, convert all snippets file under that dir to a single org file. each file is an entry, the headline is the name of that snippet, the src block is the contnet.
