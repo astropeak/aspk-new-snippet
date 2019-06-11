@@ -1135,6 +1135,13 @@
 
    #+RESULTS:
    : pns-indent-src-code-string
+*** bind to evil leader key
+    #+name: init
+    #+begin_src emacs-lisp
+    (when (featurep 'evil-leader)
+      (evil-leader/set-key "s" 'pns-expand-template-by-name))
+    #+end_src
+
 ** issues
 *** 190604 select mode before select a snippet
     Currently the mode is assumed to be the same as current buffer, or the mode

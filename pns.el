@@ -618,5 +618,7 @@ But I think now rename this parameter to `recursivep' is better, easier to under
 
 
 (add-to-list 'org-capture-templates pns-org-capture-template)
+(when (featurep 'evil-leader)
+  (evil-leader/set-key "s" 'pns-expand-template-by-name))
 
 (provide 'pns)

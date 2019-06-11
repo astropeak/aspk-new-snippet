@@ -316,13 +316,6 @@
    #+end_src
    /Users/astropeak/Dropbox/org/todo.org
 
-** set / bind evil leader key map
-   [2019-02-08 Fri 16:42]
-   #+begin_src emacs-lisp
-   (evil-leader/set-key "mp" 'aspk-mark-outer-list)
-   #+end_src
-   /Users/astropeak/Dropbox/org/todo.org
-
 ** get current mark point
    [2019-02-08 Fri 16:50]
    #+begin_src emacs-lisp
@@ -749,4 +742,53 @@
            else:
                raise
    #+end_src
+
+** zsh newline char
+   [2019-06-11 Tue 14:50]
+   #+begin_src emacs-lisp
+   NEWLINE=$'\n'
+   PROMPT="firstline${NEWLINE}secondline "
+   #+end_src
+   /Users/astropeak/project/aspk-new-snippet/pns.el
+
+** check if file is grepable
+   [2019-06-11 Tue 14:51]
+   #+begin_src sh
+   grep "${1:-.*}" >/dev/null && grep ...
+   #+end_src
+   /Users/astropeak/github/kaldi/egs/timit/s5/RESULTS
+
+** redirect stderr to null
+   [2019-06-11 Tue 14:52]
+   #+begin_src sh
+   2>/dev/null
+   #+end_src
+   /Users/astropeak/github/kaldi/egs/timit/s5/RESULTS
+
+** zsh prompt setup
+   [2019-06-11 Tue 14:53]
+   #+begin_src fundamental
+   function prompt_char {
+   if [ $UID -eq 0 ]; then echo "#"; else echo $; fi
+   }NEWLINE=$'\n'
+   # NEWLINE=
+   PROMPT='%![Error: (void-function !.%{$fg_bold)]%m %{$fg_bold[blue]%}%![Error: (void-function !.%1~.%~)] $(git_prompt_info)%_${NEWLINE}$(prompt_char)%{$reset_color%} 'ZSH_THEME_GIT_PROMPT_PREFIX="("
+   ZSH_THEME_GIT_PROMPT_SUFFIX=") "
+   #+end_src
+   /Users/astropeak/.oh-my-zsh/themes/gentoo.zsh-theme
+
+** check if a package/feature is installed/loaded
+   [2019-06-11 Tue 15:01]
+   #+begin_src emacs-lisp
+   (featurep '${1:package-name})
+   #+end_src
+   /Users/astropeak/project/aspk-new-snippet/pns.org
+
+** define key in the evil leader map for a function
+   [2019-06-11 Tue 15:05]
+   #+begin_src emacs-lisp
+   (when (featurep 'evil-leader)
+     (evil-leader/set-key "s" 'pns-expand-template-by-name))
+   #+end_src
+   /Users/astropeak/project/aspk-new-snippet/pns.org
 
