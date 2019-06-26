@@ -844,3 +844,10 @@
        echo $var
    done
    #+end_src
+
+** a variable stores current directory
+   [2019-06-26 Wed 14:34]
+   #+begin_src emacs-lisp
+   default-directory
+   #+end_src
+   /Users/astropeak/project/aspk-new-snippet/pns.org

@@ -1,4 +1,25 @@
 * pns
+** install
+   1. first clone this software
+      git clone git@github.com:astropeak/aspk-new-snippet.git
+   2. run below snippet in emacs
+      Note: to add the below codes to ~/.emacs, 'default-directory' should be changed to the absolute dir of aspk-new-snippet.
+      #+begin_src emacs-lisp
+      (add-to-list 'load-path default-directory)
+      (require 'pns)
+
+      (let ((dir default-directory))
+        (with-current-buffer (find-file-noselect "~/.emacs")
+          (goto-char (point-max))
+          (insert "\n\n;; Added by pns.org\n")
+          (insert (format "(add-to-list 'load-path \"%s\")\n(require 'pns)" dir))
+          (save-buffer)))
+
+      #+end_src
+
+      #+RESULTS:
+
+
 ** how to use this software
    - Note taken on [2017-01-06 Fri 21:23]
   
