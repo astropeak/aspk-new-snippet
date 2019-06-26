@@ -1,5 +1,10 @@
 
-(defvar pns-snippet-dir (expand-file-name "./snippets") "The directory for all snipppet files")
+(defvar pns-snippet-dir
+  (expand-file-name
+   (concat
+    (file-name-directory (or load-file-name buffer-file-name))
+    "snippets"))
+  "The directory for all snipppet files")
 (setq pns-template-set (make-hash-table :test 'equal))
 (setq pns-filename-template-tree-map (make-hash-table :test 'equal))
 ;; This hash save a template's parent and children elements. Key is a template element, value is a assoc list: ((parent . parent-element)(children . list-of-children-element))

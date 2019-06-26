@@ -8,13 +8,16 @@
       (add-to-list 'load-path default-directory)
       (require 'pns)
 
-      (let ((dir default-directory))
+      ;; (locate-dominating-file (or load-file-name buffer-file-name) "pns.el")
+      ;; is better than
+      ;; default-directory to get current directory, because it use ~ to represent home dir.
+
+      (let ((dir (locate-dominating-file (or load-file-name buffer-file-name) "pns.el")))
         (with-current-buffer (find-file-noselect "~/.emacs")
           (goto-char (point-max))
           (insert "\n\n;; Added by pns.org\n")
           (insert (format "(add-to-list 'load-path \"%s\")\n(require 'pns)" dir))
           (save-buffer)))
-
       #+end_src
 
       #+RESULTS:
@@ -145,9 +148,18 @@
     All snippet org files are saved under this directory
     #+name: vars
     #+begin_src emacs-lisp
-    (defvar pns-snippet-dir (expand-file-name "./snippets") "The directory for all snipppet files")
+    (defvar pns-snippet-dir
+      (expand-file-name
+       (concat
+        (file-name-directory (or load-file-name buffer-file-name))
+        "snippets"))
+      "The directory for all snipppet files")
     #+end_src
 
+    #+name: -vars
+    #+begin_src emacs-lisp
+    (defvar pns-snippet-dir (expand-file-name "./snippets") "The directory for all snipppet files")
+    #+end_src
 *** get snippet by parsing org mode file
     by this function:
     #+begin_src elisp
@@ -3149,7 +3161,9 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
     
     #+RESULTS: vars
-    =@
+=pns-snippet-dir
+==pns-snippet-dir
+=    =@
     ==@
     ==@
     =    
