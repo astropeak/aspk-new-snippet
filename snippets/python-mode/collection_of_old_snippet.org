@@ -129,7 +129,7 @@ glob('../*')
 
 #+end_src
 
-* delete directory tree, recursivly, by shutil.rmtree
+* delete /remove directory tree, recursivly, by shutil.rmtree
 #+begin_src python
 import shutil
 shutil.rmtree(path, ignore_errors=False, onerror=None)

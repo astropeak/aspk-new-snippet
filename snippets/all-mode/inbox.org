@@ -792,3 +792,55 @@
    #+end_src
    /Users/astropeak/project/aspk-new-snippet/pns.org
 
+** generate random number
+   [2019-06-12 Wed 14:36]
+   https://docs.python.org/2/library/random.html
+
+   #+begin_src python
+   from random import randint
+   # Return a random integer N such that a <= N <= b.
+   random.randint(a, b)
+   #+end_src
+
+   #+RESULTS:
+
+   /Users/astropeak/tmp/1.py
+
+** execute shell command, by os.system
+   [2019-06-14 Fri 16:12]
+   This way is simpler than the subprocess way
+   #+begin_src python
+   os.system(`cmd`)
+   #+end_src
+   /Users/astropeak/project/tools/onedrive_confilict.py
+
+** check input parameter numbers / counts
+   [2019-06-15 Sat 11:44]
+   #+begin_src sh
+   if [ "$#" -ne 1 ]; then
+       echo "Please call '$0 dir' to run this command!"
+       exit 1
+   fi
+   #+end_src
+   /Users/astropeak/project/tools/kaldi_build.sh
+
+** get the directory where this script is in
+   [2019-06-15 Sat 12:03]
+   $0 is the first value in shell command
+   if the shell command is run by bash script_file.sh, this still works.
+   $0 is the same thing as __file__ in python
+   This makes it possiable to call other scripts in the same folder.
+
+   #+begin_src sh
+   BASEDIR=$(dirname "$0")
+   #+end_src
+   /Users/astropeak/project/tools/kaldi/clone_and_first_time_build.sh
+
+** for loop
+   [2019-06-26 Wed 11:19]
+   #+begin_src sh
+   for var in low high vocon4 vocon5
+   do
+       echo $var
+   done
+   #+end_src
