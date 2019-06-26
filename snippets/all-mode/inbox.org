@@ -851,3 +851,21 @@
    default-directory
    #+end_src
    /Users/astropeak/project/aspk-new-snippet/pns.org
+
+** get current script file name at run time, regardless whether the script is executed by load or eval buffer
+   [2019-06-26 Wed 15:18]
+   ref: http://ergoemacs.org/emacs/elisp_relative_path.html
+
+   Explanation: If user ran your script by eval-buffer, then load-file-name's value would be nil. So, using both {load-file-name, buffer-file-name } is a good way to get the script name regardless whether the script is executed by load or eval buffer.
+   #+begin_src emacs-lisp
+   (or load-file-name buffer-file-name)
+   #+end_src
+   /Users/astropeak/project/aspk-new-snippet/pns.org
+
+** locate-domination-file: a function to find directory recursively(upwordsly) that contains a file name, starting from a file name
+   [2019-06-26 Wed 15:24]
+   This function is usful to search for a certern file upwordly through the file hirachy.
+   #+begin_src emacs-lisp
+   (locate-dominating-file FILE NAME)
+   #+end_src
+   /Users/astropeak/project/aspk-new-snippet/pns.org
