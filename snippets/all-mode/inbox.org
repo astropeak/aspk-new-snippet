@@ -869,3 +869,9 @@
    (locate-dominating-file FILE NAME)
    #+end_src
    /Users/astropeak/project/aspk-new-snippet/pns.org
+
+** python get file basename without extension
+   [2019-07-05 Fri 02:59]
+   #+begin_src python
+   os.path.splitext(os.path.basename(`filename`))[0]
+   #+end_src
