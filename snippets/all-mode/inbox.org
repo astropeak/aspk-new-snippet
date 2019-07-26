@@ -832,7 +832,7 @@
    This makes it possiable to call other scripts in the same folder.
 
    #+begin_src sh
-   BASEDIR=$(dirname "$0")
+   BASEDIR=$(dirname "\$0")
    #+end_src
    /Users/astropeak/project/tools/kaldi/clone_and_first_time_build.sh
 
