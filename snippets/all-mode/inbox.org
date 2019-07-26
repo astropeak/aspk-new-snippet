@@ -870,6 +870,114 @@
    #+end_src
    /Users/astropeak/project/aspk-new-snippet/pns.org
 
+** check if a file / directory exist
+   [2019-07-05 Fri 16:16]
+   #+begin_src emacs-lisp
+   (file-exists-p `file-or-dir`)
+   #+end_src
+   c:/Users/fuqiang.luo/OneDrive/Dropbox/project/emacs.d/init.el
+
+** argparse argument group
+   [2019-07-16 Tue 15:14]
+   #+begin_src python
+   import argparse
+   parser = argparse.ArgumentParser(add_help=True)
+   group1 = parser.add_argument_group('From config file')
+   group1.add_argument('-c', dest='configFile', help='config file')
+   group1.add_argument('--steps', dest='steps', help='steps')
+   group1.add_argument('params', nargs='*', help='params')group2 = parser.add_argument_group('From python file')
+
+   group2.add_argument('-s', dest='pythonFile', help='python file')
+   # parser.print_help()
+   args = parser.parse_args()
+   #+end_src
+   /Users/astropeak/tmp/4.py
+
+** argparse mutually exclusive group
+   [2019-07-16 Tue 15:16]
+   #+begin_src python
+   import argparse
+   parser = argparse.ArgumentParser(prog='PROG')
+   group = parser.add_mutually_exclusive_group()
+   group.add_argument('--foo', action='store_true')
+   group.add_argument('--bar', action='store_false')
+   parser.parse_args()
+   #+end_src
+   /Users/astropeak/tmp/3.py
+
+** argparse: suppress(do not show) the help message of a arg, by help=argparse.SUPPRESS
+   [2019-07-19 Fri 11:48]
+   #+begin_src python
+   parser = argparse.ArgumentParser(prog='frobble')
+   parser.add_argument('--foo', help=argparse.SUPPRESS)
+   parser.print_help()
+
+   # usage: frobble [-h]
+
+   # optional arguments:
+   #   -h, --help  show this help message and exit
+   #+end_src
+   c:/Users/fuqiang.luo/OneDrive/Dropbox/org/nuance/status.org
+
+   
+** argparse: the code to add a help argument(-h, --help)
+   https://github.com/python/cpython/blob/3.7/Lib/argparse.py
+
+   #+begin_src python :results output
+   # add a -h arg and don't show its message in the help doc
+   parser = argparse.ArgumentParser(description='xxxx', add_help=False)
+   parser.add_argument('-h', '--help', action='help',  help=argparse.SUPPRESS)
+
+   # the code copied from argparser.py
+   # add help argument if necessary
+   # (using explicit default to override global argument_default)
+     default_prefix = '-' if '-' in prefix_chars else prefix_chars[0]
+     if self.add_help:
+       self.add_argument(
+         default_prefix+'h', default_prefix*2+'help',
+         action='help', default=SUPPRESS,
+         help=_('show this help message and exit'))
+
+   #+end_src
+
+** get the file name / directory of perl script that is running, by $0
+   [2019-07-24 Wed 10:12]
+   ref: https://stackoverflow.com/questions/4600192/how-to-get-the-name-of-perl-script-that-is-running
+   #+begin_src perl
+   use File::Basename;
+   my \$name = dirname(\$0);
+   # my \$name = dirname(__FILE__);
+   print \$name, "\n"
+   #+end_src
+
+   #+RESULTS:
+
+
+** use lib: add a relative local lib directory / path to @INC
+   [2019-07-24 Wed 10:33]
+   Ref: http://blog.sina.com.cn/s/blog_3fe961ae0102vikm.html
+   There are two ways to add a directory to lib path:
+   1. set PERL5LIB
+   2. by 'use lib DIR'
+
+   And we can get the directory of a perl script by 'dirname(__FILE__)', so if the lib directory is realtive to the script, we can get it.
+
+
+   Below code will add the lib subdirectory which is in the same directory of the running perl script to lib path.
+   #+begin_src perl
+   use File::Basename;
+   use lib dirname(__FILE__) . "/lib";
+   #+end_src
+   /Users/astropeak/project/aspk-new-snippet/snippets/all-mode/inbox.org
+
+** robot framework: rerun failed test cases
+   [2019-07-25 Thu 14:45]
+   Ref: http://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#executing-test-cases
+   #+begin_src sh
+   robot --rerunfailed output.xml .
+   #+end_src
+   /Users/astropeak/1.sh
+
 ** python get file basename without extension
    [2019-07-05 Fri 02:59]
    #+begin_src python
