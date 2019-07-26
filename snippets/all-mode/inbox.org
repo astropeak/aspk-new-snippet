@@ -977,3 +977,9 @@
    robot --rerunfailed output.xml .
    #+end_src
    /Users/astropeak/1.sh
+
+** python get file basename without extension
+   [2019-07-05 Fri 02:59]
+   #+begin_src python
+   os.path.splitext(os.path.basename(`filename`))[0]
+   #+end_src
