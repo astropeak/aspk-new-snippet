@@ -9,6 +9,16 @@
       return None
   #+end_src
 
+* import a module given its file name
+  #+begin_src python :results output
+  def import_module_from_filepath(filepath):
+    modulepath, modulefilename = os.path.split(filepath)
+    modulename = os.path.splitext(modulefilename)[0]
+    fp, pathname, description = imp.find_module(modulename, [modulepath])
+    module = imp.load_module(modulename, fp, pathname, description)
+    return module
+  #+end_src
+
 * a test
   #+begin_src python :results output
 import os
