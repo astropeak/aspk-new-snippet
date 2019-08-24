@@ -1143,4 +1143,53 @@ ref: https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.htm
    #+begin_src python
    raise NotImplementedError
    #+end_src
+** assert statement: assert expression[, error-str]
+   [2019-07-29 Mon 23:45]
+   assert(expression)
+   assert expression[, error-str]
 
+   But not
+   assert(expression[, error-str])
+   #+begin_src python
+   assert type == 'step', 'Only step type is supported now'
+   #+end_src
+
+** shuffle a list
+   [2019-07-30 Tue 21:31]
+   #+begin_src python
+   import random
+   random.shuffle(`list-variable-name`)
+   #+end_src
+
+** create a directory if not exists
+   [2019-07-30 Tue 21:37]
+   #+begin_src python
+   if not os.path.exists(`directory-name`):
+     os.makedirs(`directory-name`)
+   #+end_src
+
+** write a unicode string to a file
+   [2019-07-30 Tue 21:39]
+   #+begin_src python
+   with open(`filename`, 'wt') as f:
+     f.write(`unicode-str`.encode('utf8'))
+   #+end_src
+
+** shabang #!: sharp bang
+   [2019-07-30 Tue 21:41]
+   #+begin_src python
+   #!/usr/bin/env python
+   #+end_src
+
+** encoding declaration comment to utf-8
+   [2019-07-30 Tue 21:43]
+   #+begin_src python
+   # -*- encoding: utf-8 -*-
+   #+end_src
+
+** open file as unicode string
+   [2019-07-30 Tue 21:45]
+   #+begin_src python
+   import codecs
+   f = codecs.open(`filename`, 'r', '`file-encoding "utf-8"`')
+   #+end_src

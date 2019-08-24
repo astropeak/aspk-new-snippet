@@ -96,6 +96,10 @@
     NOTE: more syntaxs see some sections in  'get snippet by  parsing org mode file'
 
     Defines hungry variable by `var value1 value2 (value3 display-name3)`
+    value1 should be valid elisp expressions. So if you want to use a sting, you should use "a-str", instead of a-str(without the double quote), because the latter one will be considered a symbol.
+    Note: the value1 together with the var name will be passed to yas-expand-snippet as fourth parameter. It's yas requires that value1 should be a valid elisp expression
+    TODO: but it maybe convient to treat all value1 as string, and let pns do the convertion. Then is, if value1 is a symbol, then convert to a string
+
     Embeded an elisp code by `(some-func-calls)`.
     Current we can only embed a elisp form, can't embed a elisp variable, because that is the same as hungry variable.
     Below is an example. `(buffer-file-name)` is an embeded elisp form,`age 10` will defins an hungry variable 'age' whose default value (DEMO VERSION!) is 10.
@@ -1203,6 +1207,23 @@
     #+end_src
 
 ** issues
+*** 190730 BUG: `var (display-name real-value)` doens't work
+   #+begin_src python
+   f = func(`aaa (ccc ddd)`)
+   #+end_src
+*** 190730 BUG: `var value` doesn't work
+   #+begin_src python
+   import codecs
+   f = codecs.open('`file-encoding utf-8`')
+   #+end_src
+
+    But after change to below, then it works. That is, add "" around utf-8.
+    The cause is that utf-8 will be treated as a symbol by yas-expand-snippet, but it should be string.
+    
+   #+begin_src python
+   import codecs
+   f = codecs.open('`file-encoding "utf-8"`')
+   #+end_src
 *** 190604 select mode before select a snippet
     Currently the mode is assumed to be the same as current buffer, or the mode
     of code snippet at point in an org file.
