@@ -1,0 +1,49 @@
+* logging
+  good article:
+  https://fangpenlin.com/posts/2012/08/26/good-logging-practice-in-python/
+
+  https://stackoverflow.com/questions/22807972/python-best-practice-in-terms-of-logging
+  
+  Best practice:
+  first get a logger:
+  logger = logging.getLogger(__name__)
+
+  Then just put logs by calling 'logger.debug|info|warn|error'
+
+  In the main script, call logging.basicConfig(...) to setup the output file, format.
+
+** logging: import and get logger
+   [2019-08-18 Sun 09:53]
+   Get a logger for each module is the best practice. Don't use the default logger.
+   #+begin_src python
+   import logging
+   logger = logging.getLogger(__name__)
+   #+end_src
+   /Users/astropeak/project/aspk-code-base/python/aspk/b.py
+
+** logging: basic config: print level, time, logger name, function name, and line number
+   [2019-08-18 Sun 09:54]
+   #+begin_src python
+   logging.basicConfig(
+     filename='app.log',
+     level=logging.DEBUG,
+     format='[%(levelname)-5s][%(asctime)s][%(name)s:%(funcName)s:%(lineno)d] %(message)s',
+     filemode='a',)
+   #+end_src
+   /Users/astropeak/project/aspk-code-base/python/logging_test.py
+
+** logging: logging exception info, by setting the exc_info parameter to true
+   a full example
+   #+begin_src python :results output :not-a-snippet
+   try:
+       open('/path/to/does/not/exist', 'rb')
+   except (SystemExit, KeyboardInterrupt):
+       raise
+   except Exception, e:
+       logger.error('Failed to open file', exc_info=True)
+   #+end_src
+
+   #+begin_src python :results output
+   logger.error('Failed to open file', exc_info=True)
+   #+end_src
+

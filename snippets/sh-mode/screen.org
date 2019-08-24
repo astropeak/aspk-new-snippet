@@ -1,0 +1,17 @@
+* screen: list all sessions
+  #+begin_src sh
+  screen -list
+  #+end_src
+* screen: create a new session
+  #+begin_src sh
+  screen -S NAME
+  #+end_src
+* screen: attatch to an existing session
+  Only if the session is detatched, can we attatch to it
+  #+begin_src sh
+  screen -r NAME
+  #+end_src
+* screen: attatch to an existing session, even it is already attatched
+  #+begin_src sh
+  screen -rd NAME
+  #+end_src

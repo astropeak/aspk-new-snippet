@@ -1,0 +1,66 @@
+* subprocess
+** subprocess.Popen: a function that run a command, with timeout and periodically running trace
+   process.poll: check if the process finishes. If None, then means not finishes.
+
+   After the subprocess.Popen(...) returns, the process that runs the command is already start running. So we can use process.poll() to check if it finishes.
+   Or we can just call process.communicate(...) to send stdin to the process and retrive stdout. This function will pending until the process finishes.
+   
+   #+begin_src python :results output
+   from subprocess import Popen, PIPE
+   import time
+   import logging
+   logger = logging.getLogger(__name__)
+
+   class TimeoutError(Exception):
+     pass
+
+   def run_cmd(cmd, stdout=None, stderr=None, timeout=None, log_period=300):
+     '''
+     Args:
+     cmd: the command, should be a list
+     stdout: file handler to write the stdout of this command. Default is PIPE
+     stderr: file handler to write the stderr of this command. Default is PIPE
+     timeout: in seconds. If after timeout seconds, the command still doesn't finish, then it will be killed. And a TimeoutError will be raised
+     log_period: in seconds. The period that a trace indicationg that the command is still running should be loged.
+
+     Returns:
+     (returncode, stdout, stderr): stdout and stderr are strings, if the input parameter is not given. Otherwise they should be (DEMO VERSION!) empty strings
+
+     Raises:
+     TimeoutError: when the command (DEMO VERSION!) run logger than the timeout
+     '''
+     if type(cmd) != list:
+       raise TypeError("cmd should be a list, get %s" % cmd)
+
+     if stdout is None:
+       stdout = PIPE
+
+     if stderr is None:
+       stderr = PIPE
+
+     process = Popen(cmd, stdout=stdout, stderr=stderr)
+
+     i = 0
+     log_period *= 10
+     timeout *= 10
+     while True:
+       seconds = int(i/10)
+       if process.poll() is not None:
+         ostdout, ostderr = process.communicate()
+         returncode = process.returncode
+         return returncode, ostdout, ostderr
+
+       # logger.debug('timeout: %s, seconds: %s, log_period: %s' % (timeout, seconds, log_period))
+       if timeout is not None:
+         if timeout <= i:
+           process.kill()
+           s = "cmd '%s' timeout after %d seconds, kill it" % (cmd, seconds)
+           logger.info(s)
+           raise TimeoutError(s)
+
+       if i != 0 and (i % log_period) == 0:
+         logger.info("cmd '%s' still running... already run for %s seconds" % (cmd, seconds))
+
+       time.sleep(0.1)
+       i += 1
+   #+end_src

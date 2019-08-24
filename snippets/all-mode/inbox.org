@@ -763,7 +763,13 @@
    #+begin_src sh
    2>/dev/null
    #+end_src
-   /Users/astropeak/github/kaldi/egs/timit/s5/RESULTS
+
+
+** redirect stderr to stdout
+   [2019-06-11 Tue 14:52]
+   #+begin_src sh
+   2>&1
+   #+end_src
 
 ** zsh prompt setup
    [2019-06-11 Tue 14:53]
@@ -983,3 +989,158 @@
    #+begin_src python
    os.path.splitext(os.path.basename(`filename`))[0]
    #+end_src
+
+** xargs:  -J standard input text symbol
+   [2019-08-06 Tue 22:26]
+   The symbol following -J is the symbol that represent the standard input. 
+   This works on mac
+   #+begin_src sh
+   xargs -J % cp -a % .
+   #+end_src
+   /Users/astropeak/1.sh
+
+** find: the -size +1M option: only file files that larger than a size
+   [2019-08-06 Tue 22:27]
+   #+begin_src sh
+   find .. -type f -name '*.jpg' -size +1M
+   #+end_src
+   /Users/astropeak/1.sh
+
+** get file's modification time: os.path.getmtime, return as a float
+   [2019-08-07 Wed 09:28]
+   #+begin_src python
+   os.path.getmtime(`file`)
+   #+end_src
+
+** get file's creation time: os.path.getctime, return as a float
+   [2019-08-07 Wed 09:28]
+   #+begin_src python
+   os.path.getctime(`file`)
+   #+end_src
+
+** ensure/create unique file name by adding a suffix if file already exists
+   [2019-08-07 Wed 10:14]
+   #+begin_src python
+   def ensure_unique_file_name(filename):
+     suffix = 2
+     while os.path.isfile(filename):
+       a = os.path.splitext(filename)
+       filename = '%s_%s%s' % (a[0], suffix, a[1])
+       suffix += 1
+
+     return filename
+   #+end_src
+   /Volumes/SDB/files/b.py
+
+** move/rename file
+   [2019-08-07 Wed 10:20]
+   #+begin_src python
+   os.rename(src, dst)
+   #+end_src
+   /Volumes/SDB/files/b.py
+
+** check if file exists
+   [2019-08-07 Wed 10:20]
+   #+begin_src python
+   os.path.isfile(`file`)
+   #+end_src
+   /Volumes/SDB/files/b.py
+
+** rename file name to it's modification time
+   [2019-08-07 Wed 10:21]
+   #+begin_src python
+   import datetime
+   import os
+   mtime = os.path.getmtime(`file`)
+   dt = datetime.datetime.utcfromtimestamp(mtime)
+   s = dt.strftime("%y%m%d_%H%M%S")
+   ext = os.path.splitext(`file`)[1]
+   new_file_name = os.path.join(os.path.dirname(`file`), s + ext)
+   #+end_src
+   /Volumes/SDB/files/b.py
+
+** get the extention/suffix of a file name, including the dot
+   the first element is the other part
+   [2019-08-07 Wed 10:27]
+   #+begin_src python
+   os.path.splitext(`filename`)[1]
+   #+end_src
+   /Volumes/SDB/files/c.py
+
+** multiple line string, just enclose the string in a quote
+   [2019-08-14 Wed 11:34]
+   #+begin_src sh
+   text="this is line one
+   this is line two
+   this is line three"
+   #+end_src
+   /Users/astropeak/1.sh
+
+** bash prompt
+   [2019-08-14 Wed 11:38]
+   #+begin_src sh
+   export PS1='[$(whoami)@\h \w] \n> '
+   #+end_src
+
+ref: https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.html
+
+\a : an ASCII bell character (07)
+\d : the date in “Weekday Month Date” format (e.g., “Tue May 26”)
+\D{format} :	the format is passed to strftime(3) and the result is inserted into the prompt string; an empty format results in a locale-specific time representation. The braces are required
+\e : an ASCII escape character (033)
+\h : the hostname up to the first ‘.’
+\H : the hostname
+\j : the number of jobs currently managed by the shell
+\l : the basename of the shellâ€™s terminal device name
+\n : newline
+\r : carriage return
+\s : the name of the shell, the basename of $0 (the portion following the final slash)
+\t : the current time in 24-hour HH:MM:SS format
+\T : the current time in 12-hour HH:MM:SS format
+\@ : the current time in 12-hour am/pm format
+\A : the current time in 24-hour HH:MM format
+\u : the username of the current user
+\v : the version of bash (e.g., 2.00)
+\V : the release of bash, version + patch level (e.g., 2.00.0)
+\w : the current working directory, with $HOME abbreviated with a tilde
+\W : the basename of the current working directory, with $HOME abbreviated with a tilde
+\! : the history number of this command
+\# : the command number of this command
+\$ : if the effective UID is 0, a #, otherwise a $
+\nnn : the character corresponding to the octal number nnn
+\\ : a backslash
+\[ : begin a sequence of non-printing characters, which could be used to embed a terminal control sequence into the prompt
+\] : end a sequence of non-printing characters
+
+** flush stdout
+   [2019-08-15 Thu 21:32]
+   #+begin_src python
+   import sys
+   sys.stdout.flush()
+   #+end_src
+
+** argparse: add a flag option that don't accept any value by setting action to 'store_true'
+   [2019-08-17 Sat 21:29]
+   The default action is 'store'.
+   The 'store_ture' action will set the the value if the '-r' option is given, otherwise false.
+   So the default value will be false.
+   The 'store_ture' is a special case of 'store_const', with the const set to True.
+   Similarly , there is 'store_false' action.
+   #+begin_src python
+   parser.add_argument('-r', dest='is_directory', action='store_true', help='recursive copy')
+   #+end_src
+   /Users/astropeak/bin/nuance_scp.py
+
+** argparse: defines the possible values for an argument by setting the choices arg
+   [2019-08-17 Sat 21:34]
+   #+begin_src python
+   parser.add_argument('-d', dest='direction', default='to', choices=['from', 'to'], help='direction, default is to')
+   #+end_src
+   /Users/astropeak/bin/nuance_scp.py
+
+** raise not implemented erro
+   [2019-08-17 Sat 21:44]
+   #+begin_src python
+   raise NotImplementedError
+   #+end_src
+

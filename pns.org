@@ -3,7 +3,8 @@
    1. first clone this software
       git clone git@github.com:astropeak/aspk-new-snippet.git
    2. run below snippet in emacs
-      Note: after executing this source block, the code required to load pns will be appended to ~/.emacs. So you only need to run this code one time.
+      Note: 1. after executing this source block, the code required to load pns will be appended to ~/.emacs. So you only need to run this code one time.
+      2. on windowns, the target emacs config file will be wrong. So you need to copy it to the correct one: C:/Users/your-name/AppData/Roaming/.emacs
 
       #+begin_src emacs-lisp
       (add-to-list 'load-path default-directory)
@@ -13,8 +14,12 @@
       ;; is better than
       ;; default-directory to get current directory, because it use ~ to represent home dir.
 
-      (let ((dir (locate-dominating-file (or load-file-name buffer-file-name) "pns.el")))
-        (with-current-buffer (find-file-noselect "~/.emacs")
+      (let ((dir (locate-dominating-file (or load-file-name buffer-file-name) "pns.el"))
+            (target-emacs-config
+             (if  (eq system-type 'windows-nt)
+                 (format "C:/Users/%s/AppData/Roaming/.emacs" (getenv "USERNAME"))  ;; looks this still not work!!!
+               "~/.emacs")))
+        (with-current-buffer (find-file-noselect target-emacs-config)
           (goto-char (point-max))
           (insert "\n\n;; Added by pns.org\n")
           (insert (format "(add-to-list 'load-path \"%s\")\n" dir))
@@ -25,6 +30,17 @@
       #+RESULTS:
 
 
+     A bug in the above code:
+     On windows, the target .emacs is incorrect.
+     
+     ;; On windows, the default HOME dir is C:/Users/your-name/AppData/Roaming,
+     ;; so we may need to adjust the HOME dir
+     #+begin_src emacs-lisp
+     (when  (eq system-type 'windows-nt)
+       (setq target-emacs-config (format "C:/Users/%s/AppData/Roaming/.emacs" (getenv "USERNAME"))))
+     #+end_src
+
+
 ** how to use this software
    - Note taken on [2017-01-06 Fri 21:23]
   
@@ -32,7 +48,7 @@
    Note:
    1. already bind to '] s'
    2. pns-update-template-list will be called inside that function
-
+   3. the matching doesn't work correctly until you run 'helm-M-x'
 
    Create new snippet:
    By using org-capture mode. Run `org-capture', then select key `-'
@@ -59,6 +75,8 @@
 
      #+name: sources
      #+begin_src elisp :noweb yes :tangle pns.el
+     <<require>>
+
      <<vars>>
 
      <<methods>>
@@ -72,6 +90,7 @@
 
      #+RESULTS: sources
      : pns
+
 
 *** snippet syntax
     NOTE: more syntaxs see some sections in  'get snippet by  parsing org mode file'
@@ -146,6 +165,12 @@
         (replace-regexp-in-string "-mode$" "" (format "%s"  major-mode))))
      #+end_src
 
+*** requires
+    For string-remove-suffix
+    #+name: require
+    #+begin_src emacs-lisp
+    (require 'subr-x)
+    #+end_src
 *** snippet dir variable
     All snippet org files are saved under this directory
     #+name: vars
