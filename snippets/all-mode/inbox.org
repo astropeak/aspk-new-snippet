@@ -1193,3 +1193,206 @@ ref: https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.htm
    import codecs
    f = codecs.open(`filename`, 'r', '`file-encoding "utf-8"`')
    #+end_src
+
+** run a process with a timeout by the 'timeout' command
+   [2019-08-26 Mon 08:50]
+   https://stackoverflow.com/questions/10224939/how-to-run-a-process-with-a-timeout-in-bash
+   #+begin_src sh
+   timeout 15s <COMMAND>
+   #+end_src
+   /Users/astropeak/tmp/1.sh
+
+** run a process with a timeout, on Mac
+   https://unix.stackexchange.com/questions/58304/is-there-a-way-to-call-a-command-with-a-set-time-limit-and-kill-it-when-that-tim
+   Run is by : timeout 2 'sleep 5'
+   #+begin_src sh
+   timeout() {
+
+       time=$1
+
+       # start the command in a subshell to avoid problem with pipes
+       # (spawn accepts one command)
+       command="/bin/sh -c \"$2\""
+
+       expect -c "set echo \"-noecho\"; set timeout $time; spawn -noecho $command; expect timeout { exit 1 } eof { exit 0 }"    
+
+       if [ $? = 1 ] ; then
+           echo "Timeout after ${time} seconds"
+       fi
+
+   }
+   #+end_src
+
+** a program that show how to use while and case statement
+   [2019-08-26 Mon 08:55]
+   #+begin_src sh
+   #!/bin/bash
+   # Purpose: Display various options to operator using menus
+   # Author: Vivek Gite < vivek @ nixcraft . com > under GPL v2.0+
+   # ---------------------------------------------------------------------------
+   # capture CTRL+C, CTRL+Z and quit singles using the trap
+   trap '' SIGINT
+   trap ''  SIGQUIT
+   trap '' SIGTSTP
+
+   # display message and pause
+   pause(){
+       local m="$@"
+       echo "$m"
+       read -p "Press [Enter] key to continue..." key
+   }
+    
+   # set an 
+   while :
+   do
+       # show menu
+       clear
+       echo "---------------------------------"
+       echo "       M A I N - M E N U"
+       echo "---------------------------------"
+       echo "1. Show current date/time"
+       echo "2. Show what users are doing"
+       echo "3. Show top memory & cpu eating process"
+       echo "4. Show network stats"
+       echo "5. Exit"
+       echo "---------------------------------"
+       read -r -p "Enter your choice [1-5] : " c
+       # take action
+       case $c in
+           1) pause "$(date)";;
+           2) w| less;;
+           3) echo '*** Top 10 Memory eating process:'; ps -auxf | sort -nr -k 4 | head -10; 
+              echo; echo '*** Top 10 CPU eating process:';ps -auxf | sort -nr -k 3 | head -10; 
+              echo;  pause;;
+           4) netstat -s | less;;
+           5) break;;
+           ,*) Pause "Select between 1 to 5 only"
+       esac
+   done
+   #+end_src
+   /Users/astropeak/tmp/1.sh
+
+** infinite loop by while statement
+   [2019-08-26 Mon 08:57]
+   #+begin_src sh
+   # Recommend syntax for setting an infinite while loop
+   while :
+   do
+       echo "Do something; hit [CTRL+C] to stop!"
+   done
+   #+end_src
+   /Users/astropeak/tmp/1.sh
+
+** ps show all process
+   [2019-08-26 Mon 08:58]
+   #+begin_src sh
+   ps -efl 
+   #+end_src
+   /Users/astropeak/tmp/1.sh
+
+** find user's UID GID group by the 'id' command
+   [2019-08-26 Mon 09:00]
+   #+begin_src sh
+   id
+   #+end_src
+   /Users/astropeak/tmp/1.sh
+
+** example: get all processes by psutil sorted by memory
+   [2019-08-26 Mon 09:01]
+   #+begin_src python
+   import psutil
+   def getListOfProcessSortedByMemory():
+       '''
+       Get list of running process sorted by Memory Usage
+       '''
+       listOfProcObjects = []
+       # Iterate over the list
+       for proc in psutil.process_iter():
+          try:
+              # Fetch process details as dict
+              pinfo = proc.as_dict(attrs=['pid', 'name', 'username'])
+              pinfo['vms'] = proc.memory_info().vms / (1024 * 1024)
+              # Append dict to list
+              listOfProcObjects.append(pinfo);
+          except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+              pass
+    
+       # Sort list of dict by key vms i.e. memory usage
+       listOfProcObjects = sorted(listOfProcObjects, key=lambda procObj: procObj['vms'], reverse=True)
+    
+       return listOfProcObjects
+   #+end_src
+   /Users/astropeak/tmp/1.py
+
+** get current buffer file name(by buffer-file-name variable)
+   [2019-09-06 Fri 10:06]
+   #+begin_src emacs-lisp
+   buffer-file-name
+   #+end_src
+
+** a function to get current buffer file name, with user directory replaced with ~
+  [2019-09-06 Fri 10:07]
+  #+begin_src emacs-lisp
+
+  (defun aspk-get-current-buffer-file-name ()
+    (replace-regexp-in-string (getenv "HOME") "~" buffer-file-name))
+
+  #+end_src
+  c:/Users/fuqiang.luo/OneDrive/Dropbox/project/emacs.d/lisp/init-aspk.el
+
+** real / true file name: file-truename, follow symbolic links
+   [2019-09-06 Fri 11:16]
+   #+begin_src org
+    (file-truename `file`)
+   #+end_src
+
+** expand file name: expand-file-name, something like change relative file name to absolution file name
+   [2019-09-06 Fri 11:21]
+
+   https://www.gnu.org/software/emacs/manual/html_node/elisp/File-Name-Expansion.html
+
+   #+file ~/OneDrive/Dropbox/project/aspk-new-snippet/pns.org:1128
+   #+begin_src emacs-lisp
+   (expand-file-name "foo")
+   #+end_src
+
+** current  directory of buffer: default-directory
+  [2019-09-06 Fri 11:26]
+
+  #+file ~/OneDrive/Dropbox/project/aspk-new-snippet/pns.org:1123
+  #+begin_src elisp
+  default-directory
+  #+end_src
+
+** screenrc: show a caption under the window to show current window name
+   [2019-09-06 Fri 12:07]
+
+   #+file ~/tmp/1.sh:1
+   #+begin_src sh
+   caption always "%{= kw}%-w%{= kG}%{+b}[%n %t]%{-b}%{= kw}%+w %=%d %M %0c %{g}%H%{-}"
+   vbell off
+   #+end_src
+
+** string trim / strip, by s-trim
+   [2019-09-08 Sun 10:22]
+
+   #+file ~/project/aspk-new-snippet/pns.org:1145
+   #+begin_src emacs-lisp
+   (s-trim region-str)
+   #+end_src
+
+** get file name base name, non directory part
+   [2019-09-08 Sun 10:23]
+
+   #+file ~/project/emacs.d/lisp/init-aspk.el:60
+   #+begin_src emacs-lisp
+   (file-name-nondirectory `file`)
+   #+end_src
+
+** get file name base name, non directory part and extention
+   [2019-09-08 Sun 10:24]
+
+   #+file ~/project/emacs.d/lisp/init-aspk.el:8
+   #+begin_src emacs-lisp
+   (file-name-base `file`)
+   #+end_src

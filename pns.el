@@ -1,4 +1,6 @@
 
+(require 'subr-x)
+
 (defvar pns-snippet-dir
   (expand-file-name
    (concat
@@ -543,16 +545,26 @@ But I think now rename this parameter to `recursivep' is better, easier to under
     (find-file filename)
     (goto-char beginning)))
 
+(require 's)
+(defun pns-get-current-buffer-file-name ()
+   (replace-regexp-in-string (getenv "HOME") "~" buffer-file-name))
+
+
 (defun pns-create-a-snippet ()
   (let ((lang (pns-get-current-mode))
         (region-str (if mark-active (buffer-substring-no-properties (region-beginning) (region-end)) "")))
-    (format "* %%^{Title}\n  %%U\n  #+begin_src %s\n%s%%?\n  #+end_src\n  %%F\n\n"
+    (format "* %%^{Title}\n  %%U\n\n  #+file %s:%s\n  #+begin_src %s\n%s%%?\n  #+end_src\n\n"
+    ;; (format "* %%^{Title}\n  %%U\n  #+begin_src %s\n%s%%?\n  #+end_src\n"
+            (pns-get-current-buffer-file-name)
+            (line-number-at-pos (region-beginning))
             lang
             (if (equal region-str "")
                 "  "
               ;; delete empty lines in beginning and end of region-str
-              (setq region-str (replace-regexp-in-string "^[ \t\n]*\\(.*\\)[ \t\n]*$" "\\1" region-str))
-              (pns-indent-src-code-string region-str lang 2)))))
+              ;; TODO: below line is buggy, so commente (DEMO VERSION!) ti for now
+              ;; (setq region-str (replace-regexp-in-string "^[ \t\n]*\\(.*\\)[ \t]*$" "\\1" region-str))
+              (pns-indent-src-code-string (s-trim region-str) lang 2)))))
+
 (defun pns-indent-src-code-string (code-str lang nindent) 
   "CODE-STR is the src code, LANG is like emacs-lisp, NINDENT is the number of spaces be put at the begining of each line"
   (with-temp-buffer

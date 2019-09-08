@@ -12,8 +12,12 @@ alias ${1:name}="${2:command}"
 * get current username without considering sudo
 #+begin_src sh
 who am i | awk '{print \$1}'
-
 #+end_src
+
+myvariable=$(whoami)
+or
+
+myvariable=$USER
 
 * get current date time as string
 #+begin_src sh
