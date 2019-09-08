@@ -881,7 +881,6 @@
    #+begin_src emacs-lisp
    (file-exists-p `file-or-dir`)
    #+end_src
-   c:/Users/fuqiang.luo/OneDrive/Dropbox/project/emacs.d/init.el
 
 ** argparse argument group
    [2019-07-16 Tue 15:14]
@@ -923,7 +922,6 @@
    # optional arguments:
    #   -h, --help  show this help message and exit
    #+end_src
-   c:/Users/fuqiang.luo/OneDrive/Dropbox/org/nuance/status.org
 
    
 ** argparse: the code to add a help argument(-h, --help)
@@ -1338,7 +1336,6 @@ ref: https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.htm
     (replace-regexp-in-string (getenv "HOME") "~" buffer-file-name))
 
   #+end_src
-  c:/Users/fuqiang.luo/OneDrive/Dropbox/project/emacs.d/lisp/init-aspk.el
 
 ** real / true file name: file-truename, follow symbolic links
    [2019-09-06 Fri 11:16]

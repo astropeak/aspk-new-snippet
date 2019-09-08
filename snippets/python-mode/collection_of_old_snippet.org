@@ -13,13 +13,6 @@ urlpatterns += [url(r'^(?P<path>.*)$', serve, {'document_root': '/path/to/root/'
 
 #+end_src
 
-* vcjobs 
-#+begin_src python
-# TODO: delete below line
-srcDir = os.path.expanduser('~/source/vocvoc_dev_amo_fuqiang_luo')
-
-#+end_src
-
 * unittest
 #+begin_src python
 import unittest
