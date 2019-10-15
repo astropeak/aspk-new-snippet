@@ -40,7 +40,6 @@
        (setq target-emacs-config (format "C:/Users/%s/AppData/Roaming/.emacs" (getenv "USERNAME"))))
      #+end_src
 
-
 ** how to use this software
    - Note taken on [2017-01-06 Fri 21:23]
   
@@ -1126,8 +1125,7 @@
    #+begin_src elisp
    (require 's)
    (defun pns-get-current-buffer-file-name ()
-      (replace-regexp-in-string (getenv "HOME") "~" buffer-file-name))
-
+      (replace-regexp-in-string (getenv "HOME") "~" (or buffer-file-name "")))
 
    (defun pns-create-a-snippet ()
      (let ((lang (pns-get-current-mode))
@@ -1169,9 +1167,9 @@
    #+NAME: vars
    #+begin_src elisp
       (setq pns-org-capture-template
-            '("-" "PNS" entry
+            `("-" "PNS" entry
               (file+headline
-               (concat pns-snippet-dir "/all-mode/inbox.org")
+               ,(concat pns-snippet-dir "/all-mode/inbox.org")
                "Captured")
               (function pns-create-a-snippet)
               :empty-lines-before 1
@@ -1188,6 +1186,10 @@
    #+begin_src elisp
 (add-to-list 'org-capture-templates pns-org-capture-template)
    #+end_src
+
+   #+RESULTS: init
+   | - | PNS  | entry | (file+headline c:/Users/fuqiang.luo/OneDrive/Dropbox/project/aspk-new-snippet/snippets/all-mode/inbox.org Captured) | (function pns-create-a-snippet) | :empty-lines-before | 1 |
+   | t | Todo | entry | (file+headline c:/Users/fuqiang.luo/OneDrive/Dropbox/org/todo.org Tasks)                                            | * TODO %?                       |                     |   |
 
 
 
@@ -2585,6 +2587,7 @@ Alias: -contains-p
     #+end_src
     
     #+RESULTS: methods
+    : pns-create-a-snippet
 =pns-src-parser--parse-text
 ==pns-src-parser--parse-text
 ==pns-src-parser--parse-text
@@ -3219,6 +3222,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
     
     #+RESULTS: vars
+    | - | PNS | entry | (file+headline c:/Users/fuqiang.luo/OneDrive/Dropbox/project/aspk-new-snippet/snippets/all-mode/inbox.org Captured) | (function pns-create-a-snippet) | :empty-lines-before | 1 |
 =pns-snippet-dir
 ==pns-snippet-dir
 =    =@
