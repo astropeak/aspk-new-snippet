@@ -1333,7 +1333,7 @@ ref: https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.htm
   #+begin_src emacs-lisp
 
   (defun aspk-get-current-buffer-file-name ()
-    (replace-regexp-in-string (getenv "HOME") "~" buffer-file-name))
+    (replace-regexp-in-string (getenv "HOME") "~" (or buffer-file-name (buffer-name))))
 
   #+end_src
 
@@ -1392,4 +1392,164 @@ ref: https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.htm
    #+file ~/project/emacs.d/lisp/init-aspk.el:8
    #+begin_src emacs-lisp
    (file-name-base `file`)
+   #+end_src
+
+** call a command iteractively from lisp code
+   [2019-09-08 Sun 11:54]
+
+   #+file ~/project/emacs.d/init.el:225
+   #+begin_src emacs-lisp
+   (call-interactively 'menu-bar-mode
+   #+end_src
+
+** a python dictionary / or map in bash
+   [2019-09-11 Wed 13:58]
+
+   #+file ~/tmp/1.sh:3
+   #+begin_src sh
+   # A pretend Python dictionary with bash 3 
+   ARRAY=( "cow:moo"
+           "dinosaur:roar"
+           "bird:chirp"
+           "bash:rock" )
+
+   for animal in "${ARRAY[@]}" ; do
+       KEY=${animal%%:*}
+       VALUE=${animal#*:}
+       printf "%s likes to %s.\n" "$KEY" "$VALUE"
+   done
+
+   echo -e "${ARRAY[1]%%:*} is an extinct animal which likes to ${ARRAY[1]#*:}\n"
+   #+end_src
+
+** pytest: skipif: run test cases on linux only
+   [2019-09-27 Fri 17:29]
+
+   doc: https://docs.pytest.org/en/latest/skipping.html#skipif
+
+   #+file ~/sources/vcjobs/low/tests/integration_test.py:4
+   #+begin_src python
+   linuxonly = pytest.mark.skipif("not sys.platform.startswith('linux')")
+
+   @linuxonly
+   def testRunJobsLocally():
+   #+end_src
+
+** org mode create current time stamp string
+   [2019-10-04 Fri 19:10]
+
+   or use below command to insert interactively
+   (org-time-stamp 1)
+   #+file /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org/org.el.gz:13438
+   #+begin_src emacs-lisp
+   (format-time-string (org-time-stamp-format 'long nil) (org-current-effective-time))
+   #+end_src
+
+** get all files in a directory recursively, with some filter, by f-files and cl-loop
+   [2019-10-06 Sun 11:03]
+
+   #+file ~/project/emacs.d/lisp/init-org.el:206
+   #+begin_src emacs-lisp
+   (cl-loop for f in (f-files `dir` nil t)
+            if (s-ends-with-p ".org" f)
+            collect f)
+   #+end_src
+
+** check if string ends with
+   [2019-10-06 Sun 11:05]
+
+   #+file ~/project/emacs.d/lisp/init-org.el:208
+   #+begin_src emacs-lisp
+   (s-ends-with-p "`suffix`" `file`)
+   #+end_src
+
+** add a file global tag by FILETAGS
+   [2019-10-07 Mon 10:49]
+
+   #+file ~/OneDrive/Dropbox/org/code-reading/kaldi.org:1
+   #+begin_src org
+   #+FILETAGS: :`tag`:
+   #+end_src
+
+** check if a variable is true or false
+   [2019-10-07 Mon 17:09]
+
+   #+file ~/project/aspk-code-base/kaldi/sound_to_lattice.sh:79
+   #+begin_src sh
+   do_fmllr=true
+   # do_fmllr=false
+   if ! $do_fmllr ; then
+       echo "Not do fmllr"
+       exit 1
+   fi
+   #+end_src
+
+   #+RESULTS:
+
+** check if platform is windows
+   [2019-10-11 Fri 10:34]
+
+   #+file ~/sources/vcjobs/vocon5/examples/run_jobs_vocon5_json_edstool.py:13
+   #+begin_src python
+   if platform.system() == "Windows":
+     $0
+   #+end_src
+
+** set default background color: set-face-background
+   [2019-10-15 Tue 14:31]
+
+   #+file ~/OneDrive/Dropbox/project/emacs.d/lisp/init-misc.el:1296
+   #+begin_src emacs-lisp
+   (set-face-background 'default "old lace")
+   #+end_src
+
+** safe get buffer file name
+   [2019-10-15 Tue 14:37]
+
+   #+begin_src emacs-lisp
+   (or buffer-file-name (buffer-name))
+   #+end_src
+
+** csh prompt PS1
+   [2019-11-05 Tue 14:55]
+
+   #+file ~/tmp/1.sh:17
+   #+begin_src sh
+   set prompt="[%n@%m %~] \n> "
+   #+end_src
+
+** org mode: check if on a heading line
+   [2019-11-29 Fri 11:11]
+
+   #+file ~/project/emacs.d/lisp/init-org.el:435
+   #+begin_src emacs-lisp
+   (outline-on-heading-p)
+   #+end_src
+
+** get last pressed key by variable last-command-event
+   [2019-11-29 Fri 11:13]
+
+   #+file ~/project/emacs.d/lisp/init-org.el:436
+   #+begin_src emacs-lisp
+   last-command-event
+   #+end_src
+
+** add a file level tag
+   [2019-12-01 Sun 10:32]
+
+   #+file ~/OneDrive/Dropbox/org/code-reading/kaldi.org:1
+   #+begin_src org
+   #+FILETAGS: :`tag`:
+   #+end_src
+
+** calendar-day-of-week: get the week of the date
+   [2019-12-31 Tue 22:38]
+
+   #+file /usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/calendar/calendar.el.gz:2308
+   #+begin_src emacs-lisp
+   (defun calendar-day-of-week (date)
+     "Return the day-of-the-week index of DATE, 0 for Sunday, 1 for Monday, etc.
+   DATE is a list of the form (month day year).  A negative year is
+   interpreted as BC; -1 being 1 BC, and so on."
+     (mod (calendar-absolute-from-gregorian date) 7))
    #+end_src
