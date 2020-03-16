@@ -549,12 +549,13 @@ But I think now rename this parameter to `recursivep' is better, easier to under
 (defun pns-get-current-buffer-file-name ()
    (replace-regexp-in-string (getenv "HOME") "~" (or buffer-file-name "")))
 
-
 (defun pns-create-a-snippet ()
   (let ((lang (pns-get-current-mode))
         (region-str (if mark-active (buffer-substring-no-properties (region-beginning) (region-end)) "")))
-    (format "* %%^{Title}\n  %%U\n\n  #+file %s:%s\n  #+begin_src %s\n%s%%?\n  #+end_src\n\n"
-    ;; (format "* %%^{Title}\n  %%U\n  #+begin_src %s\n%s%%?\n  #+end_src\n"
+    ;; (format "* %%^{Title}\n  %%U\n\n  #+file %s:%s\n  #+begin_src %s\n%s%%?\n  #+end_src\n\n"
+    (format "* %s: %%?\n\n  #+file %s:%s\n  #+begin_src %s\n%s\n  #+end_src\n\n"
+
+            (file-name-nondirectory (or buffer-file-name (buffer-name)))
             (pns-get-current-buffer-file-name)
             (line-number-at-pos (region-beginning))
             lang

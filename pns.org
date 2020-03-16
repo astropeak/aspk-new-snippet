@@ -1125,13 +1125,15 @@
    #+begin_src elisp
    (require 's)
    (defun pns-get-current-buffer-file-name ()
-      (replace-regexp-in-string (getenv "HOME") "~" (or buffer-file-name "")))
+     (replace-regexp-in-string (getenv "HOME") "~" (or buffer-file-name "")))
 
    (defun pns-create-a-snippet ()
      (let ((lang (pns-get-current-mode))
            (region-str (if mark-active (buffer-substring-no-properties (region-beginning) (region-end)) "")))
-       (format "* %%^{Title}\n  %%U\n\n  #+file %s:%s\n  #+begin_src %s\n%s%%?\n  #+end_src\n\n"
-       ;; (format "* %%^{Title}\n  %%U\n  #+begin_src %s\n%s%%?\n  #+end_src\n"
+       ;; (format "* %%^{Title}\n  %%U\n\n  #+file %s:%s\n  #+begin_src %s\n%s%%?\n  #+end_src\n\n"
+       (format "* %s: %%?\n\n  #+file %s:%s\n  #+begin_src %s\n%s\n  #+end_src\n\n"
+
+               (file-name-nondirectory (or buffer-file-name (buffer-name)))
                (pns-get-current-buffer-file-name)
                (line-number-at-pos (region-beginning))
                lang
@@ -3222,7 +3224,7 @@ With optional prefix argument ARG, jump forward ARG many source blocks."
     #+end_src
     
     #+RESULTS: vars
-    | - | PNS | entry | (file+headline c:/Users/fuqiang.luo/OneDrive/Dropbox/project/aspk-new-snippet/snippets/all-mode/inbox.org Captured) | (function pns-create-a-snippet) | :empty-lines-before | 1 |
+    | - | PNS | entry | (file+headline /Users/astropeak/project/aspk-new-snippet/snippets/all-mode/inbox.org Captured) | (function pns-create-a-snippet) | :empty-lines-before | 1 |
 =pns-snippet-dir
 ==pns-snippet-dir
 =    =@
