@@ -132,12 +132,7 @@ shutil.rmtree(path, ignore_errors=False, onerror=None)
 
 * invoke interactive python shell/interpreter by codes, using IPython
 #+begin_src python
-# install IPython by 'pip3 install IPython'
-import IPython
-IPython.embed()
-# another way is:
-# import code
-# code.interact(local=locals())
+import IPython; IPython.embed()
 #+end_src
 
 * invoke interactive python shell/interpreter by codes, using code
